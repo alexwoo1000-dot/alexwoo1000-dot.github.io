@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Hornfiller</title>
+<meta name="description" content="A puzzle game that teaches higher category theory. One move: fill the missing side.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 5 L5 33 H35' fill='none' stroke='%23111' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M20 5 L35 33' stroke='%23d6336c' stroke-width='4' stroke-dasharray='3 4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="components.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" crossorigin="anonymous" id="katex-js"></script>
+</head>
+<body data-screen="map">
+<header class="topbar">
+  <button class="brand" id="brand" type="button" aria-label="Hornfiller: back to the level list">
+    <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+      <path class="logo-side" d="M20 5 L5 33 H35"/>
+      <path class="logo-miss" d="M20 5 L35 33"/>
+      <circle cx="20" cy="5" r="3"/><circle cx="5" cy="33" r="3"/><circle cx="35" cy="33" r="3"/>
+    </svg>
+    <span class="brand-name">horn<b>filler</b></span>
+  </button>
+  <button id="btn-goback" class="ghost goback" type="button" hidden><span aria-hidden="true">←</span> Back</button>
+  <nav class="top-actions" aria-label="Settings">
+    <button id="btn-mode" class="ghost mode" type="button" aria-pressed="false" title="Plain words or formal math">math / <b>plain</b></button>
+    <button id="btn-glossary" class="ghost" type="button">Glossary</button>
+    <button id="btn-help" class="ghost" type="button" title="Keyboard shortcuts (?)" aria-keyshortcuts="?">keys</button>
+    <button id="btn-theme" class="ghost icon" type="button" aria-label="Switch light or dark theme">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4 A8 8 0 0 1 12 20 Z" class="half"/></svg>
+    </button>
+  </nav>
+</header>
+
+<main id="main">
+  <section id="screen-map" class="screen" aria-label="Levels">
+    <h1>Fill the missing side.</h1>
+    <p class="lede">A puzzle game about higher category theory. The only move is to complete a shape that has a side missing, and each level you solve is a proof.</p>
+    <p id="progress-text" class="progress"></p>
+    <div id="worlds" class="worlds"></div>
+    <p id="ending-link" class="ending-link" hidden><button type="button" class="linklike" id="btn-ending">Read the ending</button></p>
+  </section>
+
+  <section id="screen-play" class="screen" aria-label="Puzzle" hidden>
+    <div class="play-head">
+      <button id="btn-back" class="ghost back" type="button"><span aria-hidden="true">←</span> Levels</button>
+      <h2 id="lvl-title"></h2>
+      <span id="lvl-tag" class="tag"></span>
+      <span class="lvl-nav"><button id="btn-prev" class="ghost" type="button">‹ previous</button> <button id="btn-next" class="ghost" type="button">next ›</button></span>
+    </div>
+    <p id="offer" class="offer" hidden></p>
+    <div class="play-grid">
+      <aside class="col-words" aria-label="About this level">
+        <p id="bullets" class="bullets"></p>
+        <section id="briefing" class="panel briefing" aria-label="World briefing" hidden></section>
+        <section id="explain" class="panel explain" aria-label="Explain" hidden></section>
+      </aside>
+      <div class="col-main">
+        <p id="setting" class="setting"></p>
+        <div id="toolbar" class="toolbar" role="toolbar" aria-label="Tools"></div>
+        <div id="toolhint" class="toolhint" aria-live="polite"></div>
+        <div id="showbar" class="showbar" aria-label="What to show on the board"></div>
+        <div class="board-wrap" id="board-wrap">
+          <svg id="board" role="group" aria-label="Board of dots and arrows"></svg>
+          <div id="tetrapop" class="tetrapop" hidden aria-hidden="true"></div>
+          <div id="chooser" class="chooser" hidden></div>
+        </div>
+        <section id="trip" class="trip" hidden aria-live="polite" aria-label="Tetrahedron"></section>
+        <div id="winbox" class="winbox" hidden aria-live="polite"></div>
+        <div class="under">
+          <span id="moves" class="moves"></span>
+          <span id="skel" class="skel" hidden></span>
+        </div>
+        <div class="actions">
+          <button id="btn-undo" class="btn" type="button" title="Undo (Z or Ctrl+Z)">Undo</button>
+          <button id="btn-reset" class="btn" type="button">Reset</button>
+          <span class="spacer"></span>
+          <button id="btn-claim" class="btn" type="button" hidden>This can't be done</button>
+          <button id="btn-hint" class="btn" type="button" title="Hint (H)">Hint</button>
+        </div>
+        <div id="why" class="why" hidden></div>
+        <ol id="hints" class="hints" aria-live="polite"></ol>
+      </div>
+      <aside class="col-side" aria-label="Level notes">
+        <section class="panel" aria-labelledby="goal-h">
+          <h3 id="goal-h">Goal <span class="count">hover to see it</span></h3>
+          <ul id="goals" class="goals"></ul>
+        </section>
+        <section class="panel" id="rulebook-panel" aria-labelledby="rule-h" hidden>
+          <h3 id="rule-h">Composition table</h3>
+          <ul id="rulebook" class="rulebook"></ul>
+        </section>
+        <section class="panel" aria-labelledby="facts-h">
+          <h3 id="facts-h">Facts <span id="facts-count" class="count"></span></h3>
+          <div id="facts" class="facts"></div>
+        </section>
+      </aside>
+    </div>
+  </section>
+
+  <section id="screen-note" class="screen" aria-label="Note" hidden>
+    <div class="play-head">
+      <button id="btn-note-back" class="ghost back" type="button"><span aria-hidden="true">←</span> Back</button>
+      <span class="lvl-nav"><button id="btn-prevn" class="ghost" type="button">‹ previous</button> <button id="btn-nextn" class="ghost" type="button">next ›</button></span>
+    </div>
+    <article id="note" class="ending notepage"></article>
+  </section>
+
+  <section id="screen-ending" class="screen" aria-label="Ending" hidden>
+    <div class="play-head">
+      <button id="btn-ending-back" class="ghost back" type="button"><span aria-hidden="true">←</span> Levels</button>
+    </div>
+    <article id="ending" class="ending"></article>
+  </section>
+</main>
+
+<footer class="foot">
+  <span></span>
+  <span class="foot-links">
+    <button id="btn-unlock" class="linklike" type="button">Unlock all levels</button>
+    <button id="btn-resetprog" class="linklike" type="button">Reset progress</button>
+  </span>
+</footer>
+
+<div id="glossary" class="drawer-shade" hidden>
+  <aside class="drawer drawer-gloss" role="dialog" aria-modal="true" aria-labelledby="glossary-title">
+    <div class="drawer-head">
+      <h2 id="glossary-title">Glossary</h2>
+      <button id="glossary-close" class="ghost" type="button">close</button>
+    </div>
+    <p id="glossary-sub" class="note"></p>
+    <div class="gl-tools">
+      <input id="glossary-search" class="gl-search" type="search" placeholder="Search the glossary…" autocomplete="off" spellcheck="false" aria-label="Search the glossary">
+      <div id="glossary-index" class="gl-index" role="group" aria-label="Filter by world"></div>
+    </div>
+    <div id="glossary-list" class="gl-list"></div>
+  </aside>
+</div>
+
+<div id="help" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="drawer-head"><h2 id="help-title">Keys</h2><button id="help-close" class="ghost" type="button">close</button></div>
+    <dl id="help-list" class="keys"></dl>
+  </div>
+</div>
+
+<div id="t3d" class="modal" hidden>
+  <div class="modal-card t3d-card" role="dialog" aria-modal="true" aria-label="A solid in 3D">
+    <div class="drawer-head"><p class="t3d-title"></p><button class="ghost" type="button" data-act="t3d-close">close</button></div>
+    <div class="t3d-view"></div>
+    <p class="t3d-nav"><button type="button" class="btn" data-act="t3d-prev">previous</button> <button type="button" class="btn" data-act="t3d-next">next</button> <span class="note">Drag to turn it.</span></p>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="engine.js"></script>
+<script src="levels.js"></script>
+<script src="text.js"></script>
+<script src="tetra3d.js"></script>
+<script src="notesview.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

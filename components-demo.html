@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hornfiller components</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="components.css">
+<style>
+  .cd-wrap h2 { overflow-wrap: anywhere; }
+  .cd-wrap { max-width: 760px; margin: 0 auto; padding: 0 16px 40px; }
+  .cd-row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  .cd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 20px; }
+  .cd-grid figure { margin: 0; }
+  .cd-grid figcaption { font-size: 14px; color: var(--muted); }
+  #t3-log { font-size: 14px; color: var(--muted); min-height: 1.5em; }
+</style>
+</head>
+<body>
+<div class="cd-wrap">
+  <h1>Components</h1>
+  <p class="cd-row"><button class="linklike" type="button" id="theme">Toggle dark/light</button></p>
+
+  <h2>HC.Tetra3D</h2>
+  <p class="muted">Corners a, b, b, c. Face 0 known, 1 chosen, 2 missing, 3 locked. Drag to turn, tap a face.</p>
+  <div id="t3"></div>
+  <p id="t3-log" aria-live="polite"></p>
+  <p class="cd-row">
+    <button class="mini" type="button" id="fill">Fill face 2 (status → new)</button>
+    <button class="mini" type="button" id="unfill">Back to missing</button>
+    <button class="mini" type="button" id="hl">Highlight face 0</button>
+  </p>
+
+  <h2>HC.NotesView.renderDiagram</h2>
+  <div class="cd-grid" id="diagrams"></div>
+
+  <h2>HC.NotesView.mountDemo</h2>
+  <div id="demos"></div>
+</div>
+<script src="tetra3d.js"></script>
+<script src="notesview.js"></script>
+<script>
+(function () {
+  var root = document.documentElement;
+  document.getElementById('theme').onclick = function () {
+    var dark = root.getAttribute('data-theme') === 'dark' || (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+    root.setAttribute('data-theme', dark ? 'light' : 'dark');
+  };
+
+  var log = document.getElementById('t3-log');
+  var model = {
+    corners: [{ label: 'a' }, { label: 'b' }, { label: 'b' }, { label: 'c' }],
+    edges: [
+      { i: 0, j: 1, label: 'f', kind: 'given' },
+      { i: 1, j: 2, label: '1_b', kind: 'identity' },
+      { i: 2, j: 3, label: 'g', kind: 'given' },
+      { i: 0, j: 2, label: 'f′', kind: 'solved' },
+      { i: 1, j: 3, label: 'g′', kind: 'given' },
+      { i: 0, j: 3, label: 'f·g', kind: 'composite' }
+    ],
+    faces: [
+      { index: 0, status: 'known', label: '1_b·g ≃ g′' },
+      { index: 1, status: 'chosen', label: 'f′·g ≃ f·g' },
+      { index: 2, status: 'missing', label: 'f·g′ ≃ f·g' },
+      { index: 3, status: 'locked', label: 'f ≃ f′' }
+    ]
+  };
+  var hl = null;
+  var t3 = HC.Tetra3D.mount(document.getElementById('t3'), model, {
+    size: 300,
+    onFaceClick: function (k) { var h = HC.Tetra3D.hornName(k); log.textContent = 'clicked face ' + k + ' — ' + h.plain + ' (tex ' + h.tex + ')'; },
+    onFaceHover: function (k) { log.textContent = k == null ? '' : 'hover face ' + k; }
+  });
+  function setFace2(st) { model.faces[2].status = st; t3.update(model); }
+  document.getElementById('fill').onclick = function () { setFace2('new'); };
+  document.getElementById('unfill').onclick = function () { setFace2('missing'); };
+  document.getElementById('hl').onclick = function () { hl = hl === 0 ? null : 0; t3.highlight(hl); };
+
+  var D = [
+    ['A filled triangle (fill, auto labels)', {
+      dots: [{ id: 'a', label: 'a', x: 10, y: 50 }, { id: 'b', label: 'b', x: 50, y: 8 }, { id: 'c', label: 'c', x: 90, y: 50 }],
+      arrows: [{ from: 'a', to: 'b', label: 'f' }, { from: 'b', to: 'c', label: 'g' }, { from: 'a', to: 'c', label: 'f·g', kind: 'composite' }],
+      fills: [['a', 'b', 'c']] }],
+    ['A horn with a ghost', {
+      dots: [{ id: 'a', label: 'a', x: 10, y: 50 }, { id: 'b', label: 'b', x: 50, y: 8 }, { id: 'c', label: 'c', x: 90, y: 50 }],
+      arrows: [{ from: 'a', to: 'b', label: 'f' }, { from: 'b', to: 'c', label: 'g' }],
+      ghost: [['a', 'b', 'c']] }],
+    ['Parallel arrows, auto-curved', {
+      dots: [{ id: 'a', label: 'a', x: 10, y: 30 }, { id: 'b', label: 'b', x: 90, y: 30 }],
+      arrows: [{ from: 'a', to: 'b', label: 'x' }, { from: 'a', to: 'b', label: 'y' }, { from: 'b', to: 'a', label: 'z' }] }],
+    ['Identity (dashed), loop, explicit bend', {
+      dots: [{ id: 'a', label: 'a', x: 15, y: 45 }, { id: 'b', label: 'b', x: 85, y: 45 }],
+      arrows: [{ from: 'a', to: 'a', label: '1_a', dashed: true }, { from: 'a', to: 'b', label: 'f', bend: 0.25 }, { from: 'b', to: 'a', label: 'f⁻¹', bend: 0.25, kind: 'solved' }] }],
+    ['Degenerate triangle (x, 1_c, y)', {
+      dots: [{ id: 'a', label: 'a', x: 10, y: 40 }, { id: 'c', label: 'c', x: 60, y: 40 }, { id: 'c2', label: 'c′', x: 90, y: 12 }],
+      arrows: [{ from: 'a', to: 'c', label: 'x' }, { from: 'c', to: 'c2', label: '1_c', dashed: true }, { from: 'a', to: 'c2', label: 'y' }],
+      fills: [['a', 'c', 'c2']] }],
+    ['Bad spec (no crash)', { dots: [{ id: 'a', x: 50, y: 30 }], arrows: [{ from: 'a', to: 'zz', label: 'q' }], fills: [['a', 'b', 'c']] }]
+  ];
+  var grid = document.getElementById('diagrams');
+  D.forEach(function (d) {
+    var fig = document.createElement('figure');
+    fig.appendChild(HC.NotesView.renderDiagram(d[1]));
+    var c = document.createElement('figcaption'); c.textContent = d[0]; fig.appendChild(c);
+    grid.appendChild(fig);
+  });
+
+  var demos = document.getElementById('demos');
+  ['horn-fill', 'split-vertex', 'tetra-3d', 'order-maps', 'no-such-demo'].forEach(function (id) {
+    var h = document.createElement('h3'); h.textContent = id; demos.appendChild(h);
+    HC.NotesView.mountDemo(demos, id);
+  });
+})();
+</script>
+</body>
+</html>
