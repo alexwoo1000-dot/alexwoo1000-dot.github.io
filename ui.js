@@ -865,10 +865,9 @@
       ex.hidden = false;
       if (openIt) { progress.explained[lkey(lv)] = true; saveProgress(); }
     } else { ex.hidden = true; ex.innerHTML = ''; }
-    // world briefing, the first time a world is entered
+    // world briefing: the full panel the first time, then one click to bring it back
     progress.briefed = progress.briefed || {};
-    var bf = $('briefing'), bh = !progress.briefed[lv.world] ? briefingHTML(lv.world, true) : '';
-    bf.innerHTML = bh; bf.hidden = !bh;
+    var bh = paintBriefing();
     // one thing at a time: with a briefing up (it links the note), Explain starts closed and no note is offered
     if (bh) { var dd = ex.querySelector('details'); if (dd) dd.open = false; }
     // a note that comes before this level is offered, never forced
@@ -883,6 +882,25 @@
     $('rulebook-panel').hidden = !(lv.strict || lv.table);
     closeWhy();
     renderHints();
+  }
+
+  // the briefing can be put away and brought back: it collapses to one line, it is not thrown out
+  function paintBriefing() {
+    var bf = $('briefing'), lv = P.level;
+    if (!bf) return '';
+    if (!lv || !briefingFor(lv.world)) { bf.hidden = true; bf.innerHTML = ''; bf.className = 'panel briefing'; return ''; }
+    progress.briefed = progress.briefed || {};
+    var open = !progress.briefed[lv.world];
+    if (open) {
+      bf.className = 'panel briefing';
+      bf.innerHTML = briefingHTML(lv.world, true);
+    } else {
+      bf.className = 'panel brief-closed';
+      bf.innerHTML = '<button type="button" class="brief-open" data-act="brief-show" aria-expanded="false">' +
+        '<span class="brief-open-i" aria-hidden="true">ⓘ</span> About this world: ' + prose(worldInfo(lv.world).title) + '</button>';
+    }
+    bf.hidden = false;
+    return open ? 'open' : '';
   }
 
   function renderAll() {
@@ -2714,15 +2732,36 @@
   }
   function glossaryHit(g, q) {
     if (!q) return true;
-    var hay = (stripTags(g.term || '') + ' ' + stripTags(g.plain || '') + ' ' + stripTags(g.formal || '')).replace(/\$/g, '').toLowerCase();
+    var hay = [g.term, g.plain, g.formal, g.eg, arr(g.see).join(' ')].map(function (x) { return stripTags(String(x || '')); }).join(' ');
+    hay = hay.replace(/\$/g, '').toLowerCase();
     return q.split(/\s+/).every(function (w) { return hay.indexOf(w) >= 0; });
+  }
+  function normTerm(s) {
+    return stripTags(String(s || '')).replace(/\$[^$]*\$/g, ' ').replace(/[^A-Za-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+  // a term is "met" in the level that introduces it (its text has a `term` of the same name)
+  function glossaryLevel(g) {
+    var want = normTerm(String(g.term || '').split(' (')[0]);
+    if (!want) return -1;
+    var hit = -1;
+    levels().forEach(function (lv, i) {
+      if (hit >= 0) return;
+      var t = normTerm(textFor(lv).term);
+      if (!t) return;
+      if (t === want || t.indexOf(want) === 0) hit = i;
+    });
+    return hit;
   }
   function resetGlossary() {
     GL.q = ''; GL.world = null;
     var s = $('glossary-search'); if (s) s.value = '';
   }
   function renderGlossary() {
-    var list = $('glossary-list'), G = glossaryEntries();
+    var list = $('glossary-list'), ALL = glossaryEntries();
+    // group by world, keeping the order terms are met in; the data may be appended out of order
+    var G = ALL.map(function (g, i) { return { g: g, i: i }; }).sort(function (a, b) {
+      return ((a.g.world == null ? 99 : a.g.world) - (b.g.world == null ? 99 : b.g.world)) || (a.i - b.i);
+    }).map(function (o) { return o.g; });
     if (!list) return;
     var q = (GL.q || '').trim().toLowerCase();
     var open = G.filter(termUnlocked).length;
@@ -2765,11 +2804,20 @@
       var card = hEl('article', { class: 'gl-card' + (g.essential ? ' essential' : '') + (unlocked ? '' : ' locked'), 'data-term': stripTags(g.term || '') });
       var body;
       if (!unlocked && !q) {
-        body = '<p class="gl-lock">You meet this one in ' + (w == null ? 'a later world' : 'world ' + esc(w)) + '.</p>';
-      } else if (mathMode()) {
-        body = (g.formal ? '<p class="gl-formal first">' + prose(g.formal) + '</p>' : '') + (g.plain ? '<p class="gl-plain">' + prose(g.plain) + '</p>' : '');
+        // still readable on a fresh save: the plain sentence, plus where the term turns up
+        body = (g.plain ? '<p class="gl-plain gl-plain-locked">' + prose(g.plain) + '</p>' : '') +
+          '<p class="gl-lock">You meet this one in ' + (w == null ? 'a later world' : 'world ' + esc(w)) + '.</p>';
       } else {
-        body = (g.plain ? '<p class="gl-plain">' + prose(g.plain) + '</p>' : '') + (g.formal ? '<p class="gl-formal">' + prose(g.formal) + '</p>' : '');
+        var main = mathMode()
+          ? (g.formal ? '<p class="gl-formal first">' + prose(g.formal) + '</p>' : '') + (g.plain ? '<p class="gl-plain">' + prose(g.plain) + '</p>' : '')
+          : (g.plain ? '<p class="gl-plain">' + prose(g.plain) + '</p>' : '') + (g.formal ? '<p class="gl-formal">' + prose(g.formal) + '</p>' : '');
+        var eg = g.eg ? '<p class="gl-eg"><span class="gl-lbl">e.g.</span> ' + prose(g.eg) + '</p>' : '';
+        var li = glossaryLevel(g);
+        var met = (li >= 0 && isUnlocked(li)) ? '<p class="gl-met"><span class="gl-lbl">met in</span> ' +
+          '<button type="button" class="linklike" data-level="' + li + '">' + prose(titleFor(levels()[li])) + '</button></p>' : '';
+        var see = arr(g.see).length ? '<p class="gl-see"><span class="gl-lbl">see</span> ' +
+          arr(g.see).map(function (s) { return '<button type="button" class="gl-ref" data-ref="' + esc(s) + '">' + esc(s) + '</button>'; }).join(' ') + '</p>' : '';
+        body = main + eg + met + see;
       }
       card.innerHTML = '<h4 class="gl-term">' + prose(g.term || '?') + (unlocked ? '' : ' <span class="gl-tag">locked</span>') + '</h4>' + body;
       grid.appendChild(card);
@@ -2789,6 +2837,21 @@
     wids.sort(function (a, b) { return a - b; });
     var current = -1;
     for (var i = 0; i < L.length; i++) if (isUnlocked(i) && !progress.solved[lkey(L[i])]) { current = i; break; }
+    // one obvious thing to click: the next level. The list below is for choosing something else.
+    var sh = $('starthere');
+    if (sh) {
+      if (current >= 0) {
+        var clv = L[current], cw = clv.world || 1, started = Object.keys(progress.solved).length > 0;
+        sh.innerHTML = '<button type="button" class="sh-card" data-level="' + current + '">' +
+          '<span class="sh-k">' + (started ? 'Next up' : 'Start here') + '</span>' +
+          '<span class="sh-t">' + prose(titleFor(clv)) + '</span>' +
+          '<span class="sh-w">world ' + esc(cw) + ' · ' + prose(worldInfo(cw).title) +
+          (clv.par != null && !(clv.parHidden || clv.claimable) ? ' · par ' + esc(clv.par) : '') + '</span>' +
+          '<span class="sh-go" aria-hidden="true">→</span>' +
+          '</button>' + (started ? '' : '<p class="sh-hint">New here? Click the card to start, and the arrows on the board will show you what to do. Every other level is in the list below.</p>');
+        sh.hidden = false;
+      } else { sh.hidden = true; sh.innerHTML = ''; }
+    }
     wids.forEach(function (w) {
       var info = worldInfo(w), idxs = byW[w];
       var done = idxs.filter(function (i) { return progress.solved[lkey(L[i])]; }).length;
@@ -3095,7 +3158,14 @@
       if (nb) { e.preventDefault(); var ret = P.level ? { level: P.idx } : null; if (nb.closest('#winbox')) ret = { level: P.idx + 1 }; showNote(nb.getAttribute('data-note'), ret); return; }
       var tl = e.target.closest && e.target.closest('[data-term]');
       if (tl && tl.closest('#toast')) { openGlossaryAt(tl.getAttribute('data-term')); return; }
-      if (e.target.closest && e.target.closest('[data-act="brief-ok"]')) { if (P.level) { progress.briefed = progress.briefed || {}; progress.briefed[P.level.world] = true; saveProgress(); } $('briefing').hidden = true; return; }
+      if (e.target.closest && e.target.closest('[data-act="brief-ok"]')) {
+        if (P.level) { progress.briefed = progress.briefed || {}; progress.briefed[P.level.world] = true; saveProgress(); paintBriefing(); }
+        return;
+      }
+      if (e.target.closest && e.target.closest('[data-act="brief-show"]')) {
+        if (P.level) { progress.briefed = progress.briefed || {}; progress.briefed[P.level.world] = false; saveProgress(); paintBriefing(); }
+        return;
+      }
       if (e.target.closest && e.target.closest('[data-act="offer-skip"]')) { $('offer').hidden = true; return; }
       if (e.target.closest && e.target.closest('[data-act="note-back"]')) { noteBack(); return; }
       var pl = e.target.closest && e.target.closest('[data-play]');
@@ -3111,6 +3181,13 @@
       var b = e.target.closest('[data-level]'); if (!b) return;
       var i = +b.getAttribute('data-level');
       if (!isUnlocked(i)) { nudge(b); toast(worldOpen(levels()[i].world || 1) ? 'Solve the one before it first.' : 'This world opens after the worlds listed under its title.', 'info'); return; }
+      startLevel(i);
+    });
+    var shBox = $('starthere');
+    if (shBox) shBox.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-level]'); if (!b) return;
+      var i = +b.getAttribute('data-level');
+      if (!isUnlocked(i)) { toast('Solve the one before it first.', 'info'); return; }
       startLevel(i);
     });
     $('btn-unlock').addEventListener('click', function () { progress.unlockAll = !progress.unlockAll; saveProgress(); renderMap(); });
@@ -3145,7 +3222,18 @@
         if (sec) try { gl.scrollTop = 0; } catch (err) {}
       });
       if (gl) gl.addEventListener('click', function (e) {
-        if (e.target.closest('[data-act="gl-clear"]')) { resetGlossary(); renderGlossary(); try { $('glossary-search').focus(); } catch (err) {} }
+        if (e.target.closest('[data-act="gl-clear"]')) { resetGlossary(); renderGlossary(); try { $('glossary-search').focus(); } catch (err) {} return; }
+        var ref = e.target.closest('[data-ref]');
+        if (ref) {                       // "see also": jump to that term
+          GL.world = null;
+          GL.q = ref.getAttribute('data-ref');
+          if (gs) gs.value = GL.q;
+          renderGlossary();
+          try { gl.scrollTop = 0; } catch (err) {}
+          return;
+        }
+        var go = e.target.closest('[data-level]');
+        if (go) { var i = +go.getAttribute('data-level'); closeModal('glossary'); if (isUnlocked(i)) startLevel(i); }
       });
     })();
     $('glossary-close').addEventListener('click', function () { closeModal('glossary'); });
@@ -3179,19 +3267,9 @@
     applyTheme();
     applyMode();
     bind();
-    var startIdx = -1, ending = false;
-    try {
-      var h = location.hash || '';
-      var mm = /^#level-(.+)$/.exec(h);
-      if (mm) { var id = decodeURIComponent(mm[1]); levels().forEach(function (lv, i) { if (lkey(lv) === id && isUnlocked(i)) startIdx = i; }); }
-      if (h === '#ending' && endingUnlocked()) ending = true;
-      var nm = /^#note-(.+)$/.exec(h);
-      if (nm && noteById(decodeURIComponent(nm[1]))) { showNote(decodeURIComponent(nm[1])); return; }
-    } catch (e) {}
-    if (startIdx >= 0) startLevel(startIdx);
-    else if (ending) showScreen('ending');
-    else if (!Object.keys(progress.solved).length && levels().length) startLevel(0); // first visit: straight into level 1
-    else showScreen('map');
+    // a refresh always lands on the level select, never inside a level
+    try { if (location.hash) history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    showScreen('map');
     if (!HC.Engine) toast('engine.js did not load.', 'warn');
   }
 

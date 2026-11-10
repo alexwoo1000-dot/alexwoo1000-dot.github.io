@@ -338,7 +338,7 @@ body.mode-math .tetrapop { width: min(220px, 56%); }
 body.mode-math .tp-cap { font-size: 13px; }
 
 /* ending */
-.ending { max-width: 640px; }
+.ending { max-width: 660px; margin: 0 auto; }
 .ending h1 { font-size: 28px; margin: 10px 0 10px; }
 .ending-body p { margin: 0 0 12px; }
 
@@ -370,10 +370,20 @@ body.mode-math .tp-cap { font-size: 13px; }
 .gl-term { margin: 0; font-size: 16px; font-weight: bold; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
 .gl-tag { font-weight: normal; font-size: 11px; color: var(--muted); border: 1px solid var(--line); padding: 0 4px; border-radius: 3px; }
 .gl-plain { margin: 4px 0 0; font-size: 15px; }
+.gl-plain-locked { color: var(--ink-soft); }
 .gl-formal { margin: 5px 0 0; font-size: 14px; color: var(--ink-soft); }
 .gl-formal.first { color: var(--ink); font-size: 15px; }
 .gl-lock { margin: 4px 0 0; font-size: 14px; color: var(--muted); font-style: italic; }
 .gl-card.locked .gl-term { color: var(--ink-soft); }
+.gl-lbl { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.gl-eg { margin: 6px 0 0; font-size: 14px; color: var(--ink); }
+.gl-eg .gl-lbl { color: var(--k-composite); }
+.gl-met { margin: 5px 0 0; font-size: 13px; color: var(--muted); }
+.gl-met .linklike { font-size: 13px; }
+.gl-see { margin: 6px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; }
+.gl-ref { font: inherit; font-size: 12px; line-height: 1.4; padding: 0 7px; border: 1px solid var(--line); border-radius: 10px; background: none; color: var(--ink-soft); cursor: pointer; }
+.gl-ref:hover { border-color: var(--ink); color: var(--ink); }
+.gl-go { text-align: left; }
 .gl-empty { margin: 16px 0; font-size: 16px; }
 .gl-card.flash { animation: flourish 1.4s ease-out; }
 
@@ -591,6 +601,25 @@ body.mode-math .tp-cap { font-size: 13px; }
 .why-h .linklike { margin-left: auto; }
 .why-r { justify-content: flex-start; text-align: left; }
 
+/* level select: one obvious thing to click */
+.starthere { margin: 18px 0 26px; max-width: 640px; }
+.sh-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "k k" "t go" "w go"; gap: 1px 16px; width: 100%; text-align: left; padding: 12px 16px; border: 1px solid var(--ink); border-left: 5px solid var(--accent); background: var(--paper); cursor: pointer; }
+.sh-card:hover, .sh-card:focus-visible { background: var(--hi-soft); }
+.sh-k { grid-area: k; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.sh-t { grid-area: t; font-size: 21px; font-weight: bold; line-height: 1.25; }
+.sh-w { grid-area: w; font-size: 14px; color: var(--muted); }
+.sh-go { grid-area: go; align-self: center; font-size: 26px; line-height: 1; color: var(--ink); }
+.sh-hint { margin: 8px 0 0; font-size: 14px; color: var(--ink-soft); }
+
+/* briefing put away: one line to bring it back */
+.brief-closed { border: 0; padding: 0; }
+.brief-open { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 15px; color: var(--ink-soft); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: underline; }
+.brief-open:hover { color: var(--ink); }
+.brief-open-i { font-style: normal; }
+
+/* note pages: a centred reading column */
+#screen-note .play-head, #screen-ending .play-head { max-width: 660px; margin: 0 auto; }
+
 /* modals */
 .modal { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, .35); }
 .modal-card { width: min(520px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; background: var(--paper); border: 1px solid var(--ink); padding: 12px 16px; }
@@ -607,9 +636,9 @@ body.mode-math .tp-cap { font-size: 13px; }
 .brief-map .brief-body { font-size: 15px; }
 
 /* note pages */
-.notepage p { max-width: 640px; }
-.note-fig { margin: 10px 0; }
-.note-fig svg { max-width: 420px; width: 100%; height: auto; }
+.notepage p { max-width: 660px; }
+.note-fig { margin: 14px auto; text-align: center; }
+.note-fig svg { max-width: 420px; width: 100%; height: auto; display: block; margin: 0 auto; }
 .note-fig figcaption { font-size: 14px; color: var(--muted); }
 .note-foot { margin-top: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .sp-dot { fill: var(--dot); } .sp-dl { font: italic 14px var(--font-math); fill: var(--ink); }
