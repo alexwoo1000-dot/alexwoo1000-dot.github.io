@@ -1,0 +1,32 @@
+#!/bin/sh
+# pre-push: one syntax error in any JS file breaks the whole live site (text.js included).
+# This check takes about a second, so it is safe to run on every push.
+#
+# Enable once, in this repository:
+#   git config core.hooksPath git-hooks
+# Turn it off with:
+#   git config --unset core.hooksPath
+#
+# The level tests are NOT run here: they take ~3 minutes and text.js does not affect the levels.
+# Run them yourself (node test.js) after changing engine.js or levels.js.
+
+NODE=$(command -v node 2>/dev/null || true)
+if [ -z "$NODE" ] && [ -x "/c/Users/imidazoliumeow/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/node/bin/node.exe" ]; then
+    NODE="/c/Users/imidazoliumeow/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/node/bin/node.exe"
+fi
+if [ -z "$NODE" ]; then
+    echo "pre-push: node not found, skipping the syntax check"
+    exit 0
+fi
+
+for f in engine.js levels.js text.js tetra3d.js notesview.js ui.js make-site.js; do
+    if [ -f "$f" ]; then
+        if ! "$NODE" --check "$f"; then
+            echo ""
+            echo "pre-push: $f does not parse. Not pushing."
+            echo "          (a stray quote is the usual cause; the line above says where)"
+            exit 1
+        fi
+    fi
+done
+echo "pre-push: all JS files parse"

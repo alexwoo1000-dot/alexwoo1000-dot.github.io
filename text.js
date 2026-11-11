@@ -1087,7 +1087,7 @@ HC.Reasons = {
 HC.Notes = [
 
   { id: "simplicial", before: "faces", title: "Dots, arrows, triangles", body: [
-    { p: "A <b>simplicial set</b> is a collection of directed "triangles" of every dimension: dots, arrows, triangles, tetrahedra, and so on. We call these <b>simplexes</b>, which we will formally define later. 
+    { p: "A <b>simplicial set</b> is a collection of directed triangles of every dimension: dots, arrows, triangles, tetrahedra, and so on. We call these <b>simplexes</b>, which we will formally define later. 
 	
 	Note the boundary of each simplex consists of simplicies of lower dimension" },
     { diagram: { dots: [{id:"a",label:"0",x:15,y:44},{id:"b",label:"1",x:50,y:10},{id:"c",label:"2",x:85,y:44}],
