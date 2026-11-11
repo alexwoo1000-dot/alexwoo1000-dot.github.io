@@ -233,6 +233,35 @@
   var progress = loadProgress();
   function saveProgress() { try { window.localStorage.setItem(STORE_KEY, JSON.stringify(progress)); } catch (e) {} }
 
+  /* ---------- the session: where the player is, so a refresh resumes instead of resetting ---------- */
+  var SESSION_KEY = 'hornfiller.session.v1', restoringSession = false;
+  function loadSession() {
+    try {
+      var raw = window.localStorage.getItem(SESSION_KEY);
+      if (!raw) return null;
+      var s = JSON.parse(raw);
+      return s && typeof s === 'object' ? s : null;
+    } catch (e) { return null; }
+  }
+  function clearSession() { try { window.localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+  // the whole session is small: the level's simplices, its undo trail and the move count
+  function saveSession() {
+    if (restoringSession) return;
+    var scr = document.body.getAttribute('data-screen'), out = { t: 'map' };
+    try {
+      if (scr === 'play' && P.level && P.state) {
+        var st = P.state, copy = {};
+        ['vertices', 'edges', 'triangles', 'tetras', 'counters', 'proj', 'flags'].forEach(function (k) { if (st[k] !== undefined) copy[k] = st[k]; });
+        copy.history = arr(st.history).slice(-60);
+        out = { t: 'level', level: P.idx, moves: P.moves || 0, hints: P.hintsShown || 0, state: copy };
+      } else if (scr === 'note' && P.noteId) {
+        out = { t: 'note', note: P.noteId };
+      }
+      window.localStorage.setItem(SESSION_KEY, JSON.stringify(out));
+    } catch (e) {}
+  }
+
+
   /* ---------- data access ---------- */
   function levels() { return (HC.Levels && HC.Levels.length) ? HC.Levels : []; }
   function lkey(lv) { return lv ? String(lv.name != null && lv.name !== '' ? lv.name : lv.id) : ''; }
@@ -461,9 +490,10 @@
   function isIntro(lv) { return !lv || !lv.kind || lv.kind === 'intro' || lv.kind === 'sandbox'; }
   function mathMode() { return progress.mode === 'math'; }
 
-  function startLevel(i) {
+  function startLevel(i, restore) {
     var lv = levels()[i];
     if (!lv) return;
+    restoringSession = !!(restore && restore.state);
     var st;
     try { st = freshState(lv); } catch (e) { toast('Could not load this level.', 'warn'); return; }
     P.idx = i; P.level = lv; P.state = st; P.moves = 0;
@@ -486,7 +516,29 @@
     renderPlayStatic();
     renderAll();
     P.blanksPrev = currentBlanks();
+    if (restoringSession) {
+      // put the board back the way the player left it, undo trail included
+      var s = restore.state;
+      s.level = P.level;
+      s.base = P.level.base || null;
+      s.history = arr(s.history);
+      if (!s.flags || typeof s.flags !== 'object') s.flags = {};
+      if (!s.counters) s.counters = { e: 0, t: 0, T: 0, v: 0 };
+      P.state = s;
+      P.moves = restore.moves || 0;
+      P.hintsShown = restore.hints || 0;
+      P.blanksPrev = currentBlanks();
+      renderAll();
+      renderMoves();
+      renderHints();
+      P.blanksPrev = currentBlanks();
+      P.pulse = false;
+      // a board that was already solved should still say so, not sit there silently
+      try { checkWin(0); } catch (e) {}
+    }
+    restoringSession = false;
     try { history.replaceState(null, '', '#level-' + encodeURIComponent(lkey(lv))); } catch (e) {}
+    saveSession();
     announceNewWords();
   }
   function emptyFresh() { return { edges: {}, triangles: {}, vertices: {}, tetras: {} }; }
@@ -915,6 +967,7 @@
     renderMoves();
     var u = $('btn-undo');
     if (u) u.disabled = engineHas('canUndo') ? !HC.Engine.canUndo(P.state) : !P.moves;
+    saveSession();
   }
 
   function renderMoves() {
@@ -2526,6 +2579,7 @@
     P.noteId = id;
     showScreen('note');
     renderNote(id);
+    saveSession();
     try { history.replaceState(null, '', '#note-' + encodeURIComponent(id)); } catch (e) {}
   }
 
@@ -2897,6 +2951,7 @@
     if (name !== 'play') { P.level = null; hideTetra(); hideWin(); }
     if (name === 'map') { renderMap(); try { if (location.hash) history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
     if (name === 'ending') { renderEnding(); try { history.replaceState(null, '', '#ending'); } catch (e) {} }
+    saveSession();
     try { window.scrollTo(0, 0); } catch (e) {}
   }
   function openModal(id) { $(id).hidden = false; }
@@ -3195,7 +3250,7 @@
       if (!window.confirm('Erase all progress on this device?')) return;
       progress.solved = {}; progress.best = {}; progress.seenTools = {}; progress.unlockAll = false; progress.pos = {};
       progress.briefed = {}; progress.notesRead = {}; progress.wordsSeen = {}; progress.explained = {};
-      saveProgress(); renderMap();
+      clearSession(); saveProgress(); renderMap();
     });
     $('btn-glossary').addEventListener('click', function () {
       resetGlossary(); renderGlossary(); openModal('glossary');
@@ -3267,8 +3322,16 @@
     applyTheme();
     applyMode();
     bind();
-    // a refresh always lands on the level select, never inside a level
+    // a refresh resumes where the player was: same level with the same board, same note, or the map
+    var sess = loadSession();
     try { if (location.hash) history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    if (sess && sess.t === 'note' && noteById(sess.note)) { showNote(sess.note); return; }
+    if (sess && sess.t === 'level' && levels()[sess.level] && isUnlocked(sess.level) && sess.state) { startLevel(sess.level, sess); return; }
+    if (sess) { showScreen('map'); return; }
+    // first visit: open on the exposition that introduces the game, then "Play" starts level 1
+    var played = Object.keys(progress.solved || {}).length > 0;
+    var first = levels()[0], opening = first && noteBefore(first.name);
+    if (!played && opening) { showNote(opening.id); return; }
     showScreen('map');
     if (!HC.Engine) toast('engine.js did not load.', 'warn');
   }
