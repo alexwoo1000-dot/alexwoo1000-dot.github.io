@@ -596,7 +596,7 @@
       solution: [['compose', 'ali', 'f'], ['divide', 'G1', 'G4'], ['trip', ['ali', 'f', 'be'], { A: 't1', B: 'G3', D: 't2' }],
         ['divide', 'G2', 't3']] },
 
-    // ---- World 11: Playground ----
+    // ---- World 11: Sandbox ----
     { id: 51, name: 'sandbox', kind: 'sandbox', world: 11, par: 0, vertices: tet4(),
       edges: [E('f', 'a', 'b'), E('g', 'b', 'c'), E('h', 'c', 'd'), E('x', 'a', 'c'), E('y', 'b', 'd')],
       triangles: [],

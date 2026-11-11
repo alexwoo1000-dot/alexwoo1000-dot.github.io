@@ -13,8 +13,9 @@
   try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 
   var DEFAULT_WORLDS = {
-    1: 'Arrows', 2: 'Triangles are proofs', 3: 'Undo everything', 4: 'Nerves of categories',
-    5: 'Bones', 6: 'Possible or not?', 7: 'The licence', 8: 'Playground'
+    1: 'Simplicial sets', 2: 'Composition', 3: 'Tetrahedra', 4: 'Homotopy',
+    5: 'Kan complexes', 6: 'Nerves of categories', 7: 'Skeleta and cells', 8: 'Anodyne maps',
+    9: 'Left fibrations', 10: 'Joyal\'s theorem', 11: 'Natural transformations', 12: 'Sandbox'
   };
   var KIND_NAMES = { given: 'given', compose: 'made', thin: 'degenerate', solved: 'solved', filled: 'deduced', cell: 'glued', trip: 'trip', theorem: 'theorem' };
 
@@ -274,8 +275,8 @@
   function worldInfo(id) {
     var w = null;
     arr(HC.Worlds).forEach(function (x) { if (x && x.id == id) w = x; });
-    var t = (w && w.title) || DEFAULT_WORLDS[id] || 'World ' + id;
-    if (mathMode() && w && w.mathTitle) t = w.mathTitle;
+    // the mathematical name of each world is the one we show, in both reading modes
+    var t = (w && (w.mathTitle || w.title)) || DEFAULT_WORLDS[id] || 'World ' + id;
     return { id: id, title: t, blurb: (w && w.blurb) || '' };
   }
   function isSandbox(lv) {

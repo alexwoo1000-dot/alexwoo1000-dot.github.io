@@ -25,7 +25,7 @@ HC.Worlds = [
         arrows: [{ from: "a", to: "b", label: "f" }, { from: "b", to: "c", label: "g" }, { from: "a", to: "c", label: "x" }],
         fills: [["a", "b", "c"]] } } },
 
-  { id: 2, title: "Composition", mathTitle: "The inner horn $\\Lambda^2_1$", blurb: "",
+  { id: 2, title: "Composition", mathTitle: "Composition", blurb: "",
     definition: "Let $f:a\\to b$ and $g:b\\to c$ be arrows. A <b>composite</b> of $f$ and $g$ is an arrow $x:a\\to c$ together with a triangle $\\sigma=(f,g\\,;\\,x)$ that witnesses it. The two arrows $f,g$ form the <b>horn</b> $\\Lambda^2_1$, a triangle with its long side removed, and a <b>filler</b> of the horn is a triangle with those two sides. In this world every such horn has a filler, but nothing says the filler is unique: a pair may have several composites, each with its own witness.",
     definitionDiagram: { dots: [{id:"a",label:"a",x:12,y:44},{id:"b",label:"b",x:50,y:8},{id:"c",label:"c",x:88,y:44}],
       arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"a",to:"c",label:"x",dashed:true}], ghost: [["a","b","c"]] },
@@ -40,7 +40,7 @@ HC.Worlds = [
         arrows: [{ from: "a", to: "b", label: "f" }, { from: "b", to: "c", label: "g" }, { from: "a", to: "c", label: "?", dashed: true }],
         fills: [], ghost: [["a", "b", "c"]] } } },
 
-  { id: 3, title: "Tetrahedra", mathTitle: "Inner horns $\\Lambda^3_1,\\Lambda^3_2$", blurb: "",
+  { id: 3, title: "Tetrahedra", mathTitle: "Tetrahedra", blurb: "",
     definition: "A <b>tetrahedron</b> is a 3-simplex with corners $0,1,2,3$ and four triangular faces $d_0,\\dots,d_3$, where $d_i$ is the face omitting corner $i$. Its corners may lie over the same vertex, and then some faces are degenerate. If three faces of a tetrahedron are known and the fourth is $d_1$ or $d_2$, the three form an inner horn $\\Lambda^3_1$ or $\\Lambda^3_2$. In this world every such horn has a filler, which is a tetrahedron, and the filler's remaining face is a new triangle. The same tetrahedra define homotopy: parallel arrows $x,y:a\\to b$ are <b>homotopic</b>, $x\\simeq y$, if a triangle $(x,1_b\\,;\\,y)$ exists. That is only a definition; the next world studies the relation.",
     definitionDiagram: { dots: [{id:"a",label:"0",x:8,y:46},{id:"b",label:"1",x:50,y:6},{id:"c",label:"2",x:50,y:32},{id:"d",label:"3",x:92,y:46}],
       arrows: [{from:"a",to:"b",label:""},{from:"b",to:"d",label:""},{from:"a",to:"d",label:""},{from:"a",to:"c",label:""},{from:"c",to:"d",label:""},{from:"b",to:"c",label:""}], fills: [["a","b","c"],["b","c","d"],["a","c","d"]] },
@@ -55,7 +55,7 @@ HC.Worlds = [
         arrows: [{ from: "a", to: "b", label: "" }, { from: "b", to: "d", label: "" }, { from: "a", to: "d", label: "" }, { from: "a", to: "c", label: "" }, { from: "c", to: "d", label: "" }, { from: "b", to: "c", label: "" }],
         fills: [["a", "b", "c"], ["b", "c", "d"], ["a", "c", "d"]] } } },
 
-  { id: 4, title: "Homotopy", mathTitle: "Homotopy of morphisms", blurb: "",
+  { id: 4, title: "Homotopy", mathTitle: "Homotopy", blurb: "",
     definition: "Let $x,y:a\\to b$ be parallel arrows. We say $x$ is <b>homotopic</b> to $y$, and write $x\\simeq y$, if there is a triangle with boundary $(x,1_b\\,;\\,y)$. This is the whole definition, and different triangles give different witnesses. Symmetry, transitivity and compatibility with composition are not part of it. They are theorems, proved in this world by filling inner horns $\\Lambda^3_k$. Each proof becomes a tool: Flip, Link, Swap in.",
     definitionDiagram: { dots: [{id:"a",label:"0 = a",x:10,y:44},{id:"b",label:"1 = b",x:50,y:8},{id:"c",label:"2 = b",x:90,y:44}],
       arrows: [{from:"a",to:"b",label:"x"},{from:"b",to:"c",label:"1_b",kind:"identity",dashed:true},{from:"a",to:"c",label:"y"}], fills: [["a","b","c"]] },
@@ -175,20 +175,11 @@ HC.Worlds = [
         arrows: [{ from: "a", to: "b", label: "f" }, { from: "a", to: "c", label: "α" }, { from: "b", to: "d", label: "β" }, { from: "c", to: "d", label: "f′" }, { from: "a", to: "d", label: "d" }],
         fills: [["a", "b", "d"], ["a", "c", "d"]] } } },
 
-  { id: 12, title: "Playground", mathTitle: "Simplicial sets", blurb: "",
-    definition: "Every tool is available and no goal has to be met. The playground is a simplicial set that you modify: add vertices and arrows, fill horns, glue and peel cells. Whatever you build is a legitimate simplicial set, and with the Kan option on every horn can be filled.",
+  { id: 12, title: "Sandbox", mathTitle: "Sandbox", blurb: "",
+    definition: "Every tool is available and no goal has to be met. The sandbox is a simplicial set that you modify: add vertices and arrows, fill horns, glue and peel cells. Whatever you build is a legitimate simplicial set, and with the Kan option on every horn can be filled.",
     definitionDiagram: { dots: [{id:"a",label:"0",x:14,y:44},{id:"b",label:"1",x:50,y:10},{id:"c",label:"2",x:86,y:44}],
       arrows: [{from:"a",to:"b",label:""},{from:"b",to:"c",label:""},{from:"a",to:"c",label:""}], fills: [["a","b","c"]] },
-    hornsFill: "all",
-    brief: {
-      sofar: "You have used every tool.",
-      now: "You can build whatever you like, to test a guess about a shape or to construct one you have not seen.",
-      new: "Nothing is new here.",
-      about: "No goal has to be met. It is a place to test a guess about a shape you have met, or to build one you have not.",
-      picture: { caption: "No goal: build any shape you like.",
-        dots: [{ id: "a", label: "a", x: 14, y: 44 }, { id: "b", label: "b", x: 50, y: 10 }, { id: "c", label: "c", x: 86, y: 44 }],
-        arrows: [{ from: "a", to: "b", label: "" }, { from: "b", to: "c", label: "" }, { from: "a", to: "c", label: "" }],
-        fills: [["a", "b", "c"]] } } }
+    hornsFill: "all" }
 ];
 
 HC.Text = {
@@ -596,7 +587,7 @@ HC.Text = {
   },
 
   hollowtet: {
-    title: "A hollow tetrahedron",
+    title: "Sphere",
     bullets: ["Given six arrows on four vertices.", "Glue the four faces of a tetrahedron and nothing inside."],
     explain: "The boundary of a tetrahedron is four triangles glued along their shared edges, with no solid inside. A face needs three arrows that close up: two end to end and one going straight across. Among the twenty ways to choose three of the six arrows, only four close up in this way. The result is $\\partial\\Delta^3$, which is topologically a sphere. The goal checks both that the four faces are present and that there is no tetrahedron.",
     hints: ["A face is two arrows end to end plus the arrow across.", "Glue triangle: $f,g,x$. $g,h,y$. $x,h,z$. $f,y,z$."],
@@ -605,6 +596,19 @@ HC.Text = {
     math: {
       say: "$\\partial\\Delta^n$ is the union of the $n+1$ faces of $\\Delta^n$ glued along their pairwise intersections. For $n=3$: four 2-simplices along six edges, and $|\\partial\\Delta^3|\\cong S^2$.",
       proof: "Attach four 2-cells to $\\mathrm{sk}_1\\Delta^3$ along the four subcomplexes $\\partial\\Delta^2$ spanned by three vertices."
+    }
+  },
+
+  ball: {
+    title: "Ball",
+    bullets: ["Given the six arrows of a hollow tetrahedron.", "Glue its four faces, then glue the solid they bound."],
+    explain: "A tetrahedron's boundary is four triangles glued along their edges, with nothing inside. Glue triangle adds one face whenever three arrows close up, so four moves make $\\partial\\Delta^3$; Glue solid then adds the single 3-simplex whose four faces those are. That is attaching a 3-cell along the boundary, and the result is the ball $\\Delta^3$.",
+    hints: ["Glue triangle takes three arrows that close up.", "Once the four faces exist, Glue solid takes all four at once."],
+    win: ["Four faces and one solid: $\\Delta^3$, a ball."],
+    term: "Cell",
+    math: {
+      say: "$\\Delta^3$ is $\\partial\\Delta^3$ with one 3-cell attached along its boundary; its geometric realisation is the ball $D^3$.",
+      proof: "Glue four 2-cells onto the six edges, then one 3-cell onto the four faces."
     }
   },
 
@@ -646,6 +650,19 @@ HC.Text = {
     math: {
       say: "The spine inclusion $\\mathrm{Spine}^3\\hookrightarrow\\Delta^3$ is inner anodyne: it lies in the saturated class generated by inner horn inclusions $\\Lambda^n_i\\hookrightarrow\\Delta^n$. So it has the left lifting property against inner fibrations.",
       proof: "Fill $\\Lambda^2_1$ three times for the composites; then $\\Lambda^3_2$ gives the 3-simplex on $(a,b,c,d)$."
+    }
+  },
+
+  halfspine: {
+    title: "Half a spine",
+    bullets: ["Given $f,g,h$ end to end, and a triangle $(g,h\\,;\\,y)$.", "Build the composites $x$ of $f,g$ and $z$ of $f,y$, then close the solid."],
+    explain: "A spine is a chain of arrows with none of its faces filled in, and here half of it already is: $(g,h\\,;\\,y)$ says $y$ is the composite of $g$ then $h$. Compose $f$ with $g$ for $x$, and $f$ with $y$ for $z$. The tetrahedron on the path $f,g,h$ then has three faces and forces the fourth, $(x,h\\,;\\,z)$: the composite of the chain does not depend on how you bracket it.",
+    hints: ["Compose $f,g$ and $f,y$ first.", "Tetrahedron: path $f,g,h$; slots $(f,g\\,;\\,x)$, $(g,h\\,;\\,y)$, $(f,y\\,;\\,z)$."],
+    win: ["The fourth face came free: the spine's composite is $z$ either way."],
+    term: "Spine",
+    math: {
+      say: "The spine inclusion $\\mathrm{Spine}^3\\hookrightarrow\\Delta^3$ is inner anodyne. Given $(f,g\\,;\\,x)$, $(g,h\\,;\\,y)$ and $(f,y\\,;\\,z)$, the missing face $(x,h\\,;\\,z)$ is forced.",
+      proof: "Compose $f,g$ and $f,y$, then fill the one missing face of the tetrahedron on $f,g,h$."
     }
   },
 
@@ -1006,7 +1023,7 @@ HC.Text = {
     }
   },
 
-  /* ---------------- World 12: Playground ---------------- */
+  /* ---------------- World 12: Sandbox ---------------- */
 
   sandbox: {
     title: "Sandbox",
