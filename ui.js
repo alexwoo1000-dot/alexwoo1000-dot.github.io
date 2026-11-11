@@ -312,6 +312,7 @@
     if (progress.unlockAll || i === 0) return true;
     if (!L[i]) return false;
     if (progress.solved[lkey(L[i])]) return true;
+    if (progress.forceOpen && progress.forceOpen[lkey(L[i])]) return true;
     var w = L[i].world || 1;
     if (progress.worldAll && progress.worldAll[w]) return true;
     if (!worldOpen(w)) return false;
@@ -882,6 +883,7 @@
     progress.solved[key] = true;
     if (!(progress.best[key] <= P.moves)) progress.best[key] = P.moves;
     saveProgress();
+    try { updBack(); } catch (e) {}
     var lvAt = P.level;
     var wrap = $('board-wrap');
     wrap.classList.remove('won'); void wrap.offsetWidth; wrap.classList.add('won');
@@ -1173,8 +1175,8 @@
     var el = $('moves');
     if (!P.level || isSandbox(P.level)) { el.textContent = ''; return; }
     var par = P.level.par;
-    var hidePar = (P.level.parHidden || P.level.claimable) && !progress.solved[lkey(P.level)];
-    el.innerHTML = 'moves ' + P.moves + (par != null ? ' \u00B7 par ' + (hidePar ? '?' : par) : '');
+    if (P.level.goal && P.level.goal.impossible) par = 2;        // shown as 2 so the par doesn't give the answer away
+    el.innerHTML = 'moves ' + P.moves + (par != null ? ' \u00B7 par ' + par : '');
     el.classList.toggle('over', par != null && P.moves > par);
   }
 
@@ -2783,72 +2785,118 @@
     for (var i = rs.length - 1; i > 0; i--) { seed = (seed * 1103515245 + 12345) >>> 0; var j = seed % (i + 1); var t = rs[i]; rs[i] = rs[j]; rs[j] = t; }
     return rs;
   }
-  /* --- counterexamples: prove "it can't be done" by placing the starting picture in a small test world --- */
+  /* --- "It can't be done": the player BUILDS a category in which the givens hold and the goal fails.
+     Objects, arrows and a composition table, checked for being a category (every composite defined,
+     associative), then the level's starting picture is placed in it. One such category settles it,
+     because every move in the game is a horn filling that the nerve of a category can also do. --- */
   var CE = null;
-  function usesModels(lv) { return !!(lv && lv.claimable && !lv.base && !(lv.reasons && lv.reasons.length) && engineHas('checkModel') && arr(HC.Models).length); }
-  function ceModel() { return CE && CE.model ? arr(HC.Models).filter(function (m) { return m.id === CE.model; })[0] : null; }
-  function ceAutofill() {
-    var lv = P.level;
-    arr(lv.edges).forEach(function (ed) {
-      if (ed.kind === 'identity') return;
-      var a = CE.v[ed.src], b = CE.v[ed.dst];
-      if (a == null || b == null) { delete CE.e[ed.id]; return; }
-      var opts = HC.Engine.modelArrowsBetween(CE.model, a, b);
-      if (opts.length === 1) CE.e[ed.id] = opts[0].id;
-      else if (!opts.some(function (o) { return o.id === CE.e[ed.id]; })) delete CE.e[ed.id];
+  function usesModels(lv) { return !!(lv && lv.claimable && !lv.base && !(lv.reasons && lv.reasons.length) && engineHas('checkModel') && engineHas('checkCategory')); }
+  var CE_NAMES = 'pqrstuvwklmnjzyxabcde'.split('');
+  function ceFresh() {
+    var lv = P.level, vs = arr(lv.vertices);
+    var objs = vs.map(function (v, i) { return String(i); });
+    var vmap = {}; vs.forEach(function (v, i) { vmap[v.id] = String(i); });
+    return { level: lv, objects: objs, arrows: [], comp: {}, v: vmap, e: {}, msg: null, n: 0 };
+  }
+  function ceNextName() {
+    var used = {}; CE.arrows.forEach(function (a) { used[a.label] = 1; });
+    for (var i = 0; i < CE_NAMES.length; i++) if (!used[CE_NAMES[i]]) return CE_NAMES[i];
+    return 'a' + (CE.arrows.length + 1);
+  }
+  function ceModelObj() { return { objects: CE.objects.slice(), arrows: CE.arrows.map(function (a) { return { id: a.id, src: a.src, dst: a.dst, label: a.label }; }), comp: Object.assign({}, CE.comp) }; }
+  function ceEnds(a) { if (a.indexOf('id:') === 0) return { src: a.slice(3), dst: a.slice(3), label: '1_' + a.slice(3) }; return CE.arrows.filter(function (x) { return x.id === a; })[0]; }
+  function ceBetween(s, d) {
+    var out = []; if (s != null && s === d) out.push({ id: 'id:' + s, label: '1_' + s });
+    CE.arrows.forEach(function (a) { if (a.src === s && a.dst === d) out.push({ id: a.id, label: a.label }); });
+    return out;
+  }
+  function ceTidy() {
+    // forget table entries and placements that no longer make sense
+    Object.keys(CE.comp).forEach(function (k) {
+      var p = k.split(','), A = ceEnds(p[0]), B = ceEnds(p[1]), c = CE.comp[k], C = c && ceEnds(c);
+      if (!A || !B || A.dst !== B.src || !C || C.src !== A.src || C.dst !== B.dst) delete CE.comp[k];
+    });
+    Object.keys(CE.e).forEach(function (k) {
+      var ed = arr(P.level.edges).filter(function (x) { return x.id === k; })[0], x = ceEnds(CE.e[k]);
+      if (!ed || !x || x.src !== CE.v[ed.src] || x.dst !== CE.v[ed.dst]) delete CE.e[k];
+    });
+    // a pair with only one possible composite is filled in automatically; once there is a real
+    // choice again, an automatic entry is cleared so the player has to decide
+    CE.auto = CE.auto || {};
+    CE.arrows.forEach(function (a) { CE.arrows.forEach(function (b) {
+      if (a.dst !== b.src) return; var k = a.id + ',' + b.id;
+      var opts = ceBetween(a.src, b.dst);
+      if (CE.auto[k] && opts.length > 1) { delete CE.comp[k]; delete CE.auto[k]; }
+      if (!CE.comp[k] && opts.length === 1) { CE.comp[k] = opts[0].id; CE.auto[k] = true; }
+    }); });
+    arr(P.level.edges).forEach(function (ed) {
+      if (ed.kind === 'identity' || CE.e[ed.id]) return;
+      var opts = ceBetween(CE.v[ed.src], CE.v[ed.dst]); if (opts.length === 1) CE.e[ed.id] = opts[0].id;
     });
   }
   function openCounter() {
-    if (!CE || CE.level !== P.level) CE = { level: P.level, model: null, v: {}, e: {}, msg: null };
+    if (!CE || CE.level !== P.level) CE = ceFresh();
     renderCounter();
     try { $('why').scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' }); } catch (e) {}
   }
+  function ceSelect(attr, key, opts, cur) {
+    return '<select ' + attr + '="' + esc(key) + '">' + (!opts.some(function (o) { return o.id === cur; }) ? '<option value="">?</option>' : '') +
+      opts.map(function (o) { return '<option value="' + esc(o.id) + '"' + (o.id === cur ? ' selected' : '') + '>' + esc(o.label) + '</option>'; }).join('') + '</select>';
+  }
   function renderCounter() {
-    var box = $('why'), lv = P.level, M = ceModel(), vl = {};
+    var box = $('why'), lv = P.level, vl = {};
     arr(lv.vertices).forEach(function (v) { vl[v.id] = v.label || v.id; });
-    var html = '<p class="why-h"><b>Prove it can’t be done.</b> <button type="button" class="linklike" data-act="why-close">cancel</button></p>' +
-      '<p class="ce-note">Give a <b>counterexample</b>: choose a category and send the <i>starting</i> picture into its nerve so that every given triangle holds there. If the goal fails in that category, no sequence of moves can reach it, because every move is also valid in the nerve of a category.</p>' +
-      '<div class="ce-models">' + arr(HC.Models).map(function (m) {
-        return '<button type="button" class="ce-model' + (CE.model === m.id ? ' on' : '') + '" data-model="' + esc(m.id) + '"><span class="ce-pic" data-pic="' + esc(m.id) + '"></span><span class="ce-name">' + esc(m.name) + '</span></button>';
-      }).join('') + '</div>';
-    if (M) {
-      if (M.note) html += '<p class="ce-note">In this category: ' + esc(M.note) + '</p>';
-      html += '<div class="ce-place"><div><p class="ce-h">Vertices</p>' + arr(lv.vertices).map(function (v) {
-        return '<label class="ce-row">' + math(labTeX(vl[v.id])) + ' <span class="note">goes to</span> <select data-cev="' + esc(v.id) + '"><option value="">?</option>' +
-          M.objects.map(function (o) { return '<option value="' + esc(o) + '"' + (CE.v[v.id] === o ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select></label>';
-      }).join('') + '</div><div><p class="ce-h">Arrows</p>' + arr(lv.edges).filter(function (ed) { return ed.kind !== 'identity'; }).map(function (ed) {
-        var a = CE.v[ed.src], b = CE.v[ed.dst], opts = (a != null && b != null) ? HC.Engine.modelArrowsBetween(CE.model, a, b) : null;
-        var body;
-        if (!opts) body = '<span class="note">place its vertices first</span>';
-        else if (!opts.length) body = '<span class="ce-bad">nothing goes from ' + esc(a) + ' to ' + esc(b) + '</span>';
-        else body = '<select data-cee="' + esc(ed.id) + '">' + (opts.length > 1 ? '<option value="">?</option>' : '') + opts.map(function (o) {
-          return '<option value="' + esc(o.id) + '"' + (CE.e[ed.id] === o.id ? ' selected' : '') + '>' + esc(o.label.replace(/^1_/, 'identity at ')) + '</option>'; }).join('') + '</select>';
-        return '<div class="ce-row">' + math(labTeX(ed.label) + ' : ' + labTeX(vl[ed.src]) + ' \\to ' + labTeX(vl[ed.dst])) + ' <span class="note">goes to</span> ' + body + '</div>';
-      }).join('') + '</div></div>' +
-      '<p><button type="button" class="btn primary" data-act="ce-check">Check this counterexample</button> ' + (CE.msg ? '<span class="ce-msg">' + esc(CE.msg) + '</span>' : '') + '</p>';
-    }
+    ceTidy();
+    var objOpts = CE.objects.map(function (o) { return { id: o, label: o }; });
+    var html = '<p class="why-h"><b>Prove it can’t be done: build a category where it fails.</b> <button type="button" class="linklike" data-act="why-close">cancel</button></p>' +
+      '<p class="ce-note">Make a small category, place this level’s starting picture inside it so that every given triangle becomes a true equation in your composition table, and make sure the goal is false there. Every move in the game also works inside the nerve of a category, so if the goal fails in yours, no sequence of moves can ever reach it.</p>';
+    html += '<div class="ce-build"><div class="ce-col"><p class="ce-h">Objects</p><p class="ce-row">' + CE.objects.map(function (o) { return '<span class="ce-obj">' + esc(o) + '</span>'; }).join(' ') +
+      ' <button type="button" class="mini" data-act="ce-addobj">+ object</button>' + (CE.objects.length > 1 ? ' <button type="button" class="mini" data-act="ce-delobj">− last</button>' : '') + '</p>';
+    html += '<p class="ce-h">Arrows <span class="note">(identities are built in)</span></p>' + (CE.arrows.length ? '' : '<p class="ce-row note">None yet.</p>') +
+      CE.arrows.map(function (a) { return '<p class="ce-row">' + math(labTeX(a.label) + ' : ' + a.src + ' \\to ' + a.dst) + ' <button type="button" class="linklike" data-cedel="' + esc(a.id) + '">remove</button></p>'; }).join('') +
+      '<p class="ce-row">new arrow from ' + ceSelect('data-cenew', 'src', objOpts, CE.newSrc || CE.objects[0]) + ' to ' + ceSelect('data-cenew', 'dst', objOpts, CE.newDst || CE.objects[Math.min(1, CE.objects.length - 1)]) +
+      ' <button type="button" class="mini" data-act="ce-addarrow">+ arrow</button></p></div>';
+    var pairs = [];
+    CE.arrows.forEach(function (a) { CE.arrows.forEach(function (b) { if (a.dst === b.src) pairs.push([a, b]); }); });
+    html += '<div class="ce-col"><p class="ce-h">Composition table <span class="note">(first, then second)</span></p>' + (pairs.length ? '' : '<p class="ce-row note">No two arrows meet end to end yet, so there is nothing to fill in.</p>') +
+      pairs.map(function (p) { var k = p[0].id + ',' + p[1].id, opts = ceBetween(p[0].src, p[1].dst);
+        return '<p class="ce-row">' + math(labTeX(p[0].label) + '\\text{ then }' + labTeX(p[1].label)) + ' = ' +
+          (opts.length ? ceSelect('data-cecomp', k, opts, CE.comp[k]) : '<span class="ce-bad">no arrow from ' + esc(p[0].src) + ' to ' + esc(p[1].dst) + ' yet</span>') + '</p>'; }).join('') + '</div>';
+    html += '<div class="ce-col"><p class="ce-h">Place the starting picture</p>' + arr(lv.vertices).map(function (v) {
+        return '<p class="ce-row">' + math(labTeX(vl[v.id])) + ' ↦ ' + ceSelect('data-cev', v.id, objOpts, CE.v[v.id]) + '</p>'; }).join('') +
+      arr(lv.edges).filter(function (ed) { return ed.kind !== 'identity'; }).map(function (ed) {
+        var opts = ceBetween(CE.v[ed.src], CE.v[ed.dst]);
+        return '<p class="ce-row">' + math(labTeX(ed.label) + (ed.iso ? '\\ (\\cong)' : '')) + ' ↦ ' + (opts.length ? ceSelect('data-cee', ed.id, opts, CE.e[ed.id]) : '<span class="ce-bad">no arrow from ' + esc(CE.v[ed.src]) + ' to ' + esc(CE.v[ed.dst]) + '</span>') + '</p>';
+      }).join('') + '</div></div>';
+    html += '<p><button type="button" class="btn primary" data-act="ce-check">Check</button> ' + (CE.msg ? '<span class="ce-msg">' + prose(CE.msg) + '</span>' : '') + '</p>';
     box.innerHTML = html; box.hidden = false;
-    Array.prototype.forEach.call(box.querySelectorAll('[data-pic]'), function (n) {
-      var m = arr(HC.Models).filter(function (x) { return x.id === n.getAttribute('data-pic'); })[0];
-      try { if (m && m.diagram && HC.NotesView && HC.NotesView.renderDiagram) n.appendChild(HC.NotesView.renderDiagram(m.diagram)); } catch (e) {}
+    function on(sel, ev, fn) { Array.prototype.forEach.call(box.querySelectorAll(sel), function (n) { n.addEventListener(ev, function () { fn(n); }); }); }
+    on('[data-act="ce-addobj"]', 'click', function () { CE.objects.push(String(CE.objects.length)); CE.msg = null; renderCounter(); });
+    on('[data-act="ce-delobj"]', 'click', function () {
+      var o = CE.objects.pop();
+      CE.arrows = CE.arrows.filter(function (a) { return a.src !== o && a.dst !== o; });
+      Object.keys(CE.v).forEach(function (k) { if (CE.v[k] === o) delete CE.v[k]; });
+      CE.msg = null; renderCounter();
     });
-    Array.prototype.forEach.call(box.querySelectorAll('[data-model]'), function (b) {
-      b.addEventListener('click', function () { CE.model = b.getAttribute('data-model'); CE.v = {}; CE.e = {}; CE.msg = null; renderCounter(); });
+    on('[data-cenew]', 'change', function (n) { if (n.getAttribute('data-cenew') === 'src') CE.newSrc = n.value; else CE.newDst = n.value; });
+    on('[data-act="ce-addarrow"]', 'click', function () {
+      var s = CE.newSrc || CE.objects[0], d = CE.newDst || CE.objects[Math.min(1, CE.objects.length - 1)];
+      CE.arrows.push({ id: 'u' + (++CE.n), src: s, dst: d, label: ceNextName() }); CE.msg = null; renderCounter();
     });
-    Array.prototype.forEach.call(box.querySelectorAll('[data-cev]'), function (sel) {
-      sel.addEventListener('change', function () { var k = sel.getAttribute('data-cev'); if (sel.value === '') delete CE.v[k]; else CE.v[k] = sel.value; CE.msg = null; ceAutofill(); renderCounter(); });
-    });
-    Array.prototype.forEach.call(box.querySelectorAll('[data-cee]'), function (sel) {
-      sel.addEventListener('change', function () { var k = sel.getAttribute('data-cee'); if (sel.value === '') delete CE.e[k]; else CE.e[k] = sel.value; CE.msg = null; renderCounter(); });
-    });
-    var ck = box.querySelector('[data-act="ce-check"]');
-    if (ck) ck.addEventListener('click', ceCheck);
+    on('[data-cedel]', 'click', function (n) { var id = n.getAttribute('data-cedel'); CE.arrows = CE.arrows.filter(function (a) { return a.id !== id; }); CE.msg = null; renderCounter(); });
+    on('[data-cecomp]', 'change', function (n) { var k = n.getAttribute('data-cecomp'); if (CE.auto) delete CE.auto[k]; if (n.value) CE.comp[k] = n.value; else delete CE.comp[k]; CE.msg = null; renderCounter(); });
+    on('[data-cev]', 'change', function (n) { var k = n.getAttribute('data-cev'); if (n.value) CE.v[k] = n.value; else delete CE.v[k]; CE.msg = null; renderCounter(); });
+    on('[data-cee]', 'change', function (n) { var k = n.getAttribute('data-cee'); if (n.value) CE.e[k] = n.value; else delete CE.e[k]; CE.msg = null; renderCounter(); });
+    on('[data-act="ce-check"]', 'click', ceCheck);
   }
   function ceCheck() {
-    if (!CE || !CE.model) return;
-    var arg = { model: CE.model, paint: { vertices: Object.assign({}, CE.v), edges: Object.assign({}, CE.e) } };
+    if (!CE) return;
+    var arg = { model: ceModelObj(), paint: { vertices: Object.assign({}, CE.v), edges: Object.assign({}, CE.e) } };
     var res = HC.Engine.checkModel(P.level, arg.model, arg.paint);
-    if (!res.ok) { CE.msg = res.reason; renderCounter(); return; }
+    if (!res.ok) {
+      CE.msg = res.goalHolds ? 'The goal is true in this category, so it isn’t a counterexample yet. Change the category so that it fails.' : res.reason;
+      renderCounter(); return;
+    }
     closeWhy(); CE = null;
     doMove(['claimImpossible', arg]);
   }
@@ -3410,11 +3458,7 @@
   function winShown() { var b = $('winbox'); return !!b && !b.hidden; }
   // "Next" walks the same reading order as the ‹ › buttons: if a note introduces the next level,
   // it comes first, and the note's own "Play" button starts the level.
-  function nextLevel() {
-    var s = stepOrder(1);
-    if (s) { if (s.t === 'note') showNote(s.k); else startLevel(s.k); return; }
-    showScreen('map');
-  }
+  function nextLevel() { goNext(); }
 
   /* ---------- glossary ---------- */
   // the drawer is a reference, not a scroll: search it, or filter it by the world a word belongs to
@@ -3605,7 +3649,7 @@
           '<span class="sh-k">' + (started ? 'Next up' : 'Start here') + '</span>' +
           '<span class="sh-t">' + prose(titleFor(clv)) + '</span>' +
           '<span class="sh-w">world ' + esc(cw) + ' · ' + prose(worldInfo(cw).title) +
-          (clv.par != null && !(clv.parHidden || clv.claimable) ? ' · par ' + esc(clv.par) : '') + '</span>' +
+          (clv.par != null ? ' · par ' + esc(clv.goal && clv.goal.impossible ? 2 : clv.par) : '') + '</span>' +
           '<span class="sh-go" aria-hidden="true">→</span>' +
           '</button>' + (started ? '' : '<p class="sh-hint">New here? Click the card to start, and the arrows on the board will show you what to do. Every other level is in the list below.</p>');
         sh.hidden = false;
@@ -4105,7 +4149,26 @@
     return null;
   }
   function goStep(dir) {
+    if (dir > 0) { goNext(); return; }
     var s = stepOrder(dir); if (!s) return;
+    if (s.t === 'note') showNote(s.k); else startLevel(s.k);
+  }
+  // The item right after this one in reading order (a note or a level), never skipping ahead to some
+  // later "unlocked" one. Going there unlocks it.
+  function nextInOrder() {
+    var R = readingOrder(), i = hereInOrder();
+    return i >= 0 && i + 1 < R.length ? R[i + 1] : null;
+  }
+  function nextAllowed() {
+    var scr = document.body.getAttribute('data-screen');
+    if (scr === 'note') return !!nextInOrder();
+    return !!(P.level && progress.solved[lkey(P.level)] && nextInOrder());
+  }
+  function goNext() {
+    var s = nextInOrder();
+    if (!s) { showScreen('map'); return; }
+    var L = levels(), lv = L[s.t === 'note' ? s.lv : s.k];
+    if (lv) { progress.forceOpen = progress.forceOpen || {}; progress.forceOpen[lkey(lv)] = true; saveProgress(); }
     if (s.t === 'note') showNote(s.k); else startLevel(s.k);
   }
   function updBack() {
@@ -4113,10 +4176,10 @@
     ['', 'n'].forEach(function (sfx) {
       var pv = $('btn-prev' + sfx), nx = $('btn-next' + sfx);
       if (!pv || !nx) return;
-      var p = stepOrder(-1), n = stepOrder(1);
-      pv.disabled = !p; nx.disabled = !n;
+      var p = stepOrder(-1), n = nextInOrder();
+      pv.disabled = !p; nx.disabled = !nextAllowed();
       pv.title = p ? (p.t === 'note' ? 'Note: ' : '') + stripTags(p.t === 'note' ? (noteById(p.k).title || '') : titleFor(levels()[p.k])) : '';
-      nx.title = n ? (n.t === 'note' ? 'Note: ' : '') + stripTags(n.t === 'note' ? (noteById(n.k).title || '') : titleFor(levels()[n.k])) : '';
+      nx.title = !n ? '' : !nextAllowed() ? 'Solve this level first' : (n.t === 'note' ? 'Note: ' : '') + stripTags(n.t === 'note' ? (noteById(n.k).title || '') : titleFor(levels()[n.k]));
     });
   }
   function goBack() {

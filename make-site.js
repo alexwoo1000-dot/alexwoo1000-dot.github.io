@@ -2,7 +2,7 @@
 // and ./hornfiller.zip (the same files, with index.html at the top, for itch.io).
 // usage: node make-site.js
 const fs = require('fs'), path = require('path'), zlib = require('zlib');
-const FILES = ['index.html', 'style.css', 'components.css', 'engine.js', 'levels.js', 'text.js', 'tetra3d.js', 'notesview.js', 'ui.js'];
+const FILES = ['index.html', 'style.css', 'components.css', 'engine.js', 'levels.js', 'copy.js', 'text.js', 'tetra3d.js', 'notesview.js', 'ui.js'];
 const out = path.join(__dirname, 'site');
 fs.mkdirSync(out, { recursive: true });
 let total = 0;

@@ -500,7 +500,38 @@
       diagram: { dots: [{ id: '0', label: '0', x: 25, y: 12 }, { id: '1', label: '1', x: 75, y: 12 }, { id: '2', label: '2', x: 25, y: 48 }, { id: '3', label: '3', x: 75, y: 48 }],
         arrows: [{ from: '0', to: '1', label: 'f' }, { from: '1', to: '3', label: 'v' }, { from: '0', to: '2', label: 'u' }] } }
   ];
-  function modelById(id) { for (var i = 0; i < HC.Models.length; i++) if (HC.Models[i].id === id) return HC.Models[i]; return null; }
+  function modelById(id) {
+    if (id && typeof id === 'object') return id;                 // a category the player built
+    for (var i = 0; i < HC.Models.length; i++) if (HC.Models[i].id === id) return HC.Models[i]; return null;
+  }
+  // Is M a category? Every composable pair of arrows needs a composite with the right ends, and
+  // composition must be associative (identities are built in). Returns {ok} or {ok:false, reason, where}.
+  Engine.checkCategory = function (M) {
+    if (!M || !Array.isArray(M.objects) || !Array.isArray(M.arrows)) return { ok: false, reason: 'Build a category first.' };
+    if (!M.objects.length) return { ok: false, reason: 'Your category needs at least one object.' };
+    var lab = function (a) { return a.indexOf('id:') === 0 ? '1_' + a.slice(3) : (mEnds(M, a) || {}).label || a; };
+    var all = mAll(M), i, j, k;
+    for (i = 0; i < M.arrows.length; i++) {
+      var x = M.arrows[i];
+      if (M.objects.indexOf(x.src) < 0 || M.objects.indexOf(x.dst) < 0) return { ok: false, reason: lab(x.id) + ' has an end that is not an object.' };
+    }
+    for (i = 0; i < all.length; i++) for (j = 0; j < all.length; j++) {
+      var A = mEnds(M, all[i]), B = mEnds(M, all[j]);
+      if (A.dst !== B.src) continue;
+      var c = mComp(M, all[i], all[j]);
+      if (!c) return { ok: false, reason: 'Say what ' + lab(all[i]) + ' then ' + lab(all[j]) + ' is.', where: [all[i], all[j]] };
+      var C = mEnds(M, c);
+      if (!C || C.src !== A.src || C.dst !== B.dst) return { ok: false, reason: lab(all[i]) + ' then ' + lab(all[j]) + ' must go from ' + A.src + ' to ' + B.dst + '.', where: [all[i], all[j]] };
+    }
+    for (i = 0; i < all.length; i++) for (j = 0; j < all.length; j++) for (k = 0; k < all.length; k++) {
+      var ab = mComp(M, all[i], all[j]), bc = mComp(M, all[j], all[k]);
+      if (!ab || !bc) continue;
+      var l1 = mComp(M, ab, all[k]), l2 = mComp(M, all[i], bc);
+      if (l1 !== l2) return { ok: false, reason: 'Not associative: (' + lab(all[i]) + ' then ' + lab(all[j]) + ') then ' + lab(all[k]) + ' is ' + lab(l1) +
+        ', but ' + lab(all[i]) + ' then (' + lab(all[j]) + ' then ' + lab(all[k]) + ') is ' + lab(l2) + '.', where: [all[i], all[j], all[k]] };
+    }
+    return { ok: true };
+  };
   function mEnds(M, a) {
     if (a.indexOf('id:') === 0) return { src: a.slice(3), dst: a.slice(3) };
     for (var i = 0; i < M.arrows.length; i++) if (M.arrows[i].id === a) return M.arrows[i];
@@ -529,6 +560,7 @@
   Engine.checkModel = function (level, modelId, paint) {
     var M = modelById(modelId), lv = level || {};
     if (!M) return { ok: false, reason: 'Pick a counterexample first.' };
+    if (typeof modelId === 'object') { var cc = Engine.checkCategory(M); if (!cc.ok) return { ok: false, reason: cc.reason, notCategory: true }; }
     if (lv.base || lv.strict) return { ok: false, reason: 'Counterexamples are not used on this level.' };
     paint = paint || {}; var pv = paint.vertices || {}, pe = paint.edges || {};
     var img = {}, i, missing = false;
