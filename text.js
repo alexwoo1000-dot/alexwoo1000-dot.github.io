@@ -1088,7 +1088,7 @@ HC.Notes = [
 
   { id: "simplicial", before: "faces", title: "Dots, arrows, triangles", body: [
     { p: "A <b>simplicial set</b> is a collection of directed triangles of every dimension: dots, arrows, triangles, tetrahedra, and so on. We call these <b>simplexes</b>." },
-		{p: "Note the boundary of each simplex consists of simplexes of lower dimension."},
+		{p: "The boundary of each simplex consists of simplexes of lower dimension: here's a triangle with arrows as boundaries."},
     { diagram: { dots: [{id:"a",label:"0",x:15,y:44},{id:"b",label:"1",x:50,y:10},{id:"c",label:"2",x:85,y:44}],
                  arrows: [{from:"a",to:"b",label:"d₂"},{from:"b",to:"c",label:"d₀"},{from:"a",to:"c",label:"d₁"}], fills: [["a","b","c"]] } },
     { p: "For example, an arrow ($1$-simplex) has a source and a target, which are both $0$-simplices. A triangle has three corners numbered $0,1,2$ and three faces, each an arrow: $d_2$ joins corners $0$ and $1$, $d_0$ joins $1$ and $2$, and $d_1$ joins $0$ and $2$." },
