@@ -401,7 +401,7 @@
     var A = { x: 14, y: 36 }, C = { x: 80, y: 36 }, REST = { x: 82.4, y: 38.4 };
     var cp = { x: REST.x, y: REST.y }, vel = { x: 0, y: 0 }, dragging = false, raf = 0, hold = 0, geo = null;
     var CAP = {
-      idle: 'A triangle whose third side is the identity 1<sub><i>c</i></sub>: it says <i>x</i> ≃ <i>y</i>. Drag <i>c′</i> off <i>c</i>.',
+      idle: 'A triangle whose second leg is the identity 1<sub><i>c</i></sub>: it says <i>x</i> ≃ <i>y</i>. Drag <i>c′</i> off <i>c</i>.',
       open: 'The triangle opens into a sheet between <i>x</i> and <i>y</i>: a homotopy, <i>x</i> ≃ <i>y</i>.',
       back: 'Let go and <i>c′</i> springs back: the same triangle, drawn squashed flat (degenerate).'
     };

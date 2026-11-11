@@ -29,7 +29,7 @@ function relayOld() { return En.createState(RELAY_OLD); }
 function findT(s, a, b, c) { return s.triangles.filter(function (t) { return t.e01 === a && t.e12 === b && t.e02 === c; })[0]; }
 function edgeOf(s, id) { return s.edges.filter(function (e) { return e.id === id; })[0]; }
 
-var MOVE = { claim: 'claimImpossible', trip: 'claimRoute' };
+var MOVE = { claim: 'claimImpossible', trip: 'claimRoute', select: 'checkSelect' };
 function runStep(s, step) {
   var bang = step[0] === '!';
   var st = bang ? step.slice(1) : step;
@@ -39,7 +39,7 @@ function runStep(s, step) {
 
 // does `cands` offer this arrow-pick (a dot counts for 'id:v')?
 function offers(c, id) {
-  return has(c.edges, id) || has(c.triangles, id) || (id.indexOf('id:') === 0 && has(c.vertices, id.slice(3))) || has(c.vertices, id);
+  return has(c.edges, id) || has(c.triangles, id) || has(c.solids || [], id) || (id.indexOf('id:') === 0 && has(c.vertices, id.slice(3))) || has(c.vertices, id);
 }
 // candidate containment for the next pick of a step
 function checkCandidates(s, st, tag) {
@@ -57,13 +57,18 @@ function checkCandidates(s, st, tag) {
   } else if (tool === 'cell2') {
     var ids2 = a[0];
     inC('cell2', [], ids2[0]); inC('cell2', [ids2[0]], ids2[1]); inC('cell2', [ids2[0], ids2[1]], ids2[2]);
+  } else if (tool === 'fill4') {
+    var sl = a[0];
+    for (var q = 0; q < 4; q++) inC('fill4', sl.slice(0, q), sl[q]);
+  } else if (tool === 'select') {
+    a[0].forEach(function (x) { inC('select', [], x); });
   } else if (tool === 'addEdge') {
     inC('addEdge', [], a[0]); inC('addEdge', [a[0]], a[1]);
   }
 }
 
 // ---------- 0. level table sanity ----------
-check(HC.Levels.length === 68, '68 levels');
+check(HC.Levels.length === 77, '77 levels');
 // "nerve or not?": the stored answer must be the true one
 HC.Levels.forEach(function (L0) {
   if (!L0.goal || L0.goal.flag !== 'verdict') return;
@@ -74,7 +79,7 @@ HC.Levels.forEach(function (L0) {
 HC.Levels.forEach(function (L, i) {
   check(L.id === i + 1, 'ids are consecutive at ' + L.name);
   check(['intro', 'puzzle', 'boss', 'sandbox'].indexOf(L.kind) >= 0, L.name + ' has kind');
-  check(L.world >= 1 && L.world <= 12, L.name + ' world');
+  check(L.world >= 1 && L.world <= 14, L.name + ' world');
   check(L.parHidden === !!L.claimable, L.name + ' parHidden follows claimable');
   if (i) check(L.world >= HC.Levels[i - 1].world, L.name + ' worlds non-decreasing');
   check(!has(L.tools, 'identity') && !has(L.tools, 'fill3'), L.name + ' lists neither identity nor fill3');
@@ -107,7 +112,7 @@ HC.Levels.forEach(function (L) {
   check(g0.parts.length > 0, tag + ' has parts');
   L.solution.forEach(function (step, i) {
     var st = step[0] === '!' ? step.slice(1) : step;
-    check(has(L.tools, st[0]) || st[0] === 'claim' || st[0] === 'pick', tag + ' step ' + i + ' uses a listed tool (' + st[0] + ')');
+    check(has(L.tools, st[0]) || st[0] === 'claim' || st[0] === 'pick' || st[0] === 'select', tag + ' step ' + i + ' uses a listed tool (' + st[0] + ')');
     checkCandidates(s, st, tag + ' step ' + i);
     var o = runStep(s, step);
     if (o.bang) check(!o.r.ok && typeof o.r.reason === 'string', tag + ' step ' + i + ' expected to fail');
@@ -782,7 +787,7 @@ HC.Levels.forEach(function (L) {
 // ---------- 16f. difficulty pass ----------
 (function () {
   HC.Levels.forEach(function (L) {
-    if (L.kind !== 'boss') return;
+    if (L.kind !== 'boss' || (L.goal && L.goal.select)) return;
     var kinds = {};
     L.solution.forEach(function (st) { kinds[st[0] === '!' ? st[1] : st[0]] = 1; });
     check(L.par >= 4 && Object.keys(kinds).length >= 2, L.name + ' (boss): par >= 4 and at least two kinds of move: ' + L.par + ' ' + Object.keys(kinds));
@@ -794,7 +799,7 @@ HC.Levels.forEach(function (L) {
   ['unique', 'symmetric', 'transitive', 'whisker'].forEach(function (nm) { check(lv(nm).par <= 3, nm + ' (unlocks a tool) stays a single well-chosen tetrahedron'); });
   // bosses keep a decoy: an arrow that no solution step uses
   HC.Levels.forEach(function (L) {
-    if (L.kind !== 'boss' || !L.goal || L.goal.impossible) return;
+    if (L.kind !== 'boss' || !L.goal || L.goal.impossible || L.goal.select) return;
     var used = {};
     L.solution.forEach(function (st) { JSON.stringify(st).replace(/"([^"]+)"/g, function (m, x) { used[x] = 1; return m; }); });
     var goalIds = {}; JSON.stringify(L.goal).replace(/"([^"]+)"/g, function (m, x) { goalIds[x] = 1; return m; });
@@ -899,7 +904,183 @@ HC.Levels.forEach(function (L) {
   check(badEq === 0, 'plain text uses ≃ only for homotopies (x, 1 ; y)');
   HC.Models.forEach(function (M) { M.arrows.forEach(function (a) { check(String(a.label).indexOf('·') < 0, 'model ' + M.id + ' arrow ' + a.id + ' has no dot in its name'); }); });
   // worlds: simplicial sets is world 1 and the rest moved up by one
-  check(lv('faces').world === 1 && lv('freebies').world === 1 && lv('whichface').world === 1 && lv('compose').world === 2 && lv('tetra').world === 3 && lv('sandbox').world === 12, 'world numbering: Simplicial sets = 1, Composition = 2, …, Playground = 12');
+  check(lv('faces').world === 1 && lv('freebies').world === 1 && lv('whichface').world === 1 && lv('compose').world === 2 && lv('tetra').world === 3 && lv('symmetric').world === 4 && lv('solidfact').world === 5 && lv('undo').world === 6 && lv('fullsub').world === 7 && lv('nerve').world === 8 && lv('disc').world === 9 && lv('spine').world === 10 && lv('liftpath').world === 11 && lv('oneway').world === 12 && lv('natsq').world === 13 && lv('sandbox').world === 14, 'world numbering: Simplicial sets 1, Composition 2, Tetrahedra 3, Homotopy 4, Solids 5, Undo 6, Subcategories 7, Nerves 8, Skeleta 9, Anodyne 10, Lifting 11, Isomorphisms 12, Squares 13, Playground 14');
+})();
+
+// ---------- 16h. v6: solids (3-simplices as facts), 4-horns, subcategories ----------
+(function () {
+  // names τ₁, τ₂, … : given first, then creation order; undo gives the same name back
+  var s = mk('solidfact');
+  check(s.tetras.length === 0, 'solidfact starts without a tetrahedron');
+  check(!En.checkGoal(s).done && En.checkGoal(s).parts.length === 1 && En.checkGoal(s).parts[0].kind === 'solid' && En.checkGoal(s).parts[0].verb === 'prove', 'solidfact: one solid part, to prove');
+  var r = En.claimRoute(s, ['f', 'g', 'h'], {});
+  check(r.ok && s.tetras[0].name === 'τ₁' && En.checkGoal(s).done, 'the tetrahedron is named τ₁ and the goal is met');
+  var gp = En.checkGoal(s).parts[0];
+  check(gp.name === 'τ₁' && gp.faceNames.join() === 'σ₂,σ₃,σ₄,σ₁', 'goal part names its faces: ' + gp.faceNames);
+  En.undo(s);
+  check(s.tetras.length === 0 && En.claimRoute(s, ['f', 'g', 'h'], {}).ok && s.tetras[0].name === 'τ₁', 'after undo the numbering continues from the same place');
+  var ds = En.describeSolid(s, 'τ₁');
+  check(ds.faces.join() === 'G2,G3,t1,G1' && ds.vertices.join() === 'a,b,c,d' && ds.consistent && ds.edges['03'] === 'z' && ds.text.indexOf('τ₁') === 0 && !ds.free, 'describeSolid: ' + ds.text);
+
+  // degenerate solids: faces from the repeated-corner picture, checked against an independent computation
+  function St(st, id) { return id.indexOf('id:') === 0 ? { src: id.slice(3), dst: id.slice(3) } : st.edges.filter(function (e) { return e.id === id; })[0]; }
+  function edgeBetween(tr, i, j) { return i === 0 && j === 1 ? tr.e01 : (i === 1 && j === 2 ? tr.e12 : tr.e02); }
+  function faceByCorners(st, tr, seq) {   // the face of s_iσ whose corners (in σ-corner numbers) are seq, nondecreasing
+    var v = [St(st, tr.e01).src, St(st, tr.e01).dst, St(st, tr.e12).dst];
+    if (seq[0] < seq[1] && seq[1] < seq[2]) return tr.ref;
+    if (seq[0] === seq[1] && seq[1] === seq[2]) return 's0:id:' + v[seq[0]];
+    function deg(kind, e) { return e.indexOf('id:') === 0 ? 's0:' + e : kind + ':' + e; }
+    if (seq[0] === seq[1]) return deg('s0', edgeBetween(tr, seq[0], seq[2]));
+    return deg('s1', edgeBetween(tr, seq[0], seq[1]));
+  }
+  var base = mk('twohomotopies');
+  ['G1', 'G2', 'G3', 's1:g'].forEach(function (ref) {
+    var d = En.describe(base, ref);
+    var tr = { ref: ref, e01: d.boundary[0], e12: d.boundary[1], e02: d.boundary[2] };
+    var degs = En.degenerateSolids(base, ref);
+    check(degs.length === 3 && degs.map(function (x) { return x.ref; }).join() === 'S0:' + ref + ',S1:' + ref + ',S2:' + ref, 'three degenerate solids of ' + ref);
+    [[0, [0, 0, 1, 2]], [1, [0, 1, 1, 2]], [2, [0, 1, 2, 2]]].forEach(function (p) {
+      var seq = p[1], faces = [];
+      for (var j = 0; j < 4; j++) faces.push(faceByCorners(base, tr, seq.filter(function (_, q) { return q !== j; })));
+      check(degs[p[0]].faces.join() === faces.join(), 's' + p[0] + ' of ' + ref + ' has faces ' + faces + ' (got ' + degs[p[0]].faces + ')');
+      check(degs[p[0]].consistent && degs[p[0]].free && degs[p[0]].vertices.length === 4, 's' + p[0] + ' of ' + ref + ' is a consistent free solid');
+    });
+  });
+  // every face of a degenerate solid has exactly the edges the corners force
+  (function () {
+    var ok = true;
+    ['G1', 's1:g'].forEach(function (ref) {
+      En.degenerateSolids(base, ref).forEach(function (sol) {
+        var g = sol.edges, T = sol.faces.map(function (f) { var q = En.describe(base, f); return { e01: q.boundary[0], e12: q.boundary[1], e02: q.boundary[2] }; });
+        var want = [[g['12'], g['23'], g['13']], [g['02'], g['23'], g['03']], [g['01'], g['13'], g['03']], [g['01'], g['12'], g['02']]];
+        for (var j = 0; j < 4; j++) if (T[j].e01 !== want[j][0] || T[j].e12 !== want[j][1] || T[j].e02 !== want[j][2]) ok = false;
+      });
+    });
+    check(ok, 'faces of degenerate solids carry the edges the corners force');
+  })();
+  var dd = En.describeSolid(base, 'S2:G2');
+  check(dd.name === 's₂σ₂' && dd.faceNames.join() === 's₁g,s₁y,σ₂,σ₂' && dd.vertexLabels.join() === 'a,b,c,c' && dd.exists === false, 'describeSolid of s₂σ₂: ' + dd.text);
+
+  // twohomotopies: the 4-horn on the corners (a, b, c, c, c)
+  var th = mk('twohomotopies');
+  check(th.tetras.map(function (x) { return x.name; }).join() === 'τ₁,τ₂', 'two given solids τ₁, τ₂');
+  var rs = En.routeSlots(mk('twohomotopies'), ['f', 'g', 'id:c'], { A: 'G1', D: 'G2' });
+  check(rs.slots.C.cands.length === 2 && !rs.slots.C.chosen, 'two different homotopies with one boundary are two distinct candidates');
+  var opts = En.fill4Options(th, ['T1', 'T2', 'S2:G2', 'S2:s1:g']);
+  check(opts.length === 2 && opts.every(function (o) { return o.missing === 1 && o.inner; }), 'fill4Options: two readings, both the inner horn Λ⁴₁');
+  var o1 = opts[1];
+  check(o1.faces.join() === 's0:id:c,s1:y,G4,G3' && o1.placement.join() === 'S2:s1:g,,S2:G2,T2,T1', 'option 1: D4 = τ₁, D3 = τ₂, D2 = s₂σ₂, D0 = s₂(s₁g): ' + o1.faces + ' / ' + o1.placement);
+  check(opts[0].faces.join() === 's0:id:c,s1:y,G3,G4', 'option 0 is the filler with η and η′ exchanged');
+  var rf = En.fill4(th, ['T1', 'T2', 'S2:G2', 'S2:s1:g'], 1);
+  check(rf.ok && th.tetras.length === 5 && th.tetras[4].name === 'τ₃' && th.tetras[4].kind === 'fill4' && En.checkGoal(th).done, 'fill4 solves twohomotopies');
+  check(th.tetras.filter(function (x) { return x.thin; }).map(function (x) { return x.name; }).sort().join() === 's₂s₁g,s₂σ₂', 'the degenerate solids used become real (flagged) tetrahedra');
+  var again = En.fill4(th, ['T1', 'T2', 'S2:G2', 'S2:s1:g'], 1);
+  check(!again.ok, 'the same filler twice is refused: ' + again.reason);
+  var wrong = En.fill4(mk('twohomotopies'), ['T1', 'T2', 'S2:G2', 'S2:G1']);
+  check(!wrong.ok && /don't fit/.test(wrong.reason), 'wrong degenerate solids do not fit: ' + wrong.reason);
+  check(!En.fill4(mk('twohomotopies'), ['T1', 'T1', 'S2:G2', 'S2:s1:g']).ok && !En.fill4(mk('twohomotopies'), ['T1', 'T2', 'S2:G2']).ok, 'four different solids are required');
+  var cf = En.candidates(mk('twohomotopies'), 'fill4', []);
+  check(['T1', 'T2', 'S2:G2', 'S2:s1:g'].every(function (r) { return has(cf.solids, r); }), 'fill4 candidates contain the four needed solids');
+  var c1 = En.candidates(mk('twohomotopies'), 'fill4', ['T1']);
+  check(has(c1.solids, 'T2') && !has(c1.solids, 'T1') && c1.solids.length < cf.solids.length, 'candidates narrow after one pick: ' + c1.solids.length + ' of ' + cf.solids.length);
+  check(En.candidates(mk('twohomotopies'), 'fill4', ['T1', 'T2', 'S2:G2', 'S2:s1:g']).solids.length === 0, 'no more picks after four');
+
+  // every fill4 in the levels: the shared triangles of the 4-simplex agree, and the new solid is inner and consistent
+  ['pentagon', 'twohomotopies', 'pentagonproof'].forEach(function (nm) {
+    var L = lv(nm), st = En.createState(L);
+    L.solution.forEach(function (step) {
+      if (step[0] !== 'fill4') { runStep(st, step); return; }
+      var before = st.tetras.length;
+      var res = En.fill4(st, step[1], step[2] || 0);
+      check(res.ok && st.tetras.length > before, nm + ': fill4 works');
+      var T = st.tetras[st.tetras.length - 1], pl = T.fill4.placement, k = T.fill4.missing;
+      var OM = [[1, 2, 3, 4], [0, 2, 3, 4], [0, 1, 3, 4], [0, 1, 2, 4], [0, 1, 2, 3]], faceAt = {}, okAll = true;
+      for (var i = 0; i < 5; i++) {
+        var fs2 = i === k ? T.faces : En.describeSolid(st, pl[i]).faces;
+        for (var j = 0; j < 4; j++) {
+          var key = OM[i].filter(function (_, p) { return p !== j; }).join('');
+          if (faceAt[key] !== undefined && faceAt[key] !== fs2[j]) okAll = false;
+          faceAt[key] = fs2[j];
+        }
+      }
+      check(okAll && Object.keys(faceAt).length === 10, nm + ': all ten triangles of the 4-simplex are shared consistently');
+      check(k >= 1 && k <= 3 && En.describeSolid(st, T.id).consistent, nm + ': an inner horn, and the new solid is consistent');
+    });
+    check(En.checkGoal(st).done, nm + ' solved');
+  });
+
+  // pentagon: the decoy solid does not fit; outer horns need kan
+  var pg = mk('pentagon');
+  check(pg.tetras.length === 5 && pg.triangles.length === 11, 'pentagon: 10 triangles + a duplicate, 5 solids (one decoy)');
+  var fo = En.fill4Options(pg, ['T1', 'T2', 'T3', 'T4']);
+  check(fo.length === 1 && fo[0].missing === 2 && fo[0].faces.join() === 'G9,G6,G3,G2', 'pentagon: D2 has the forced faces');
+  var dec = En.fill4(pg, ['T1', 'T5', 'T3', 'T4']);
+  check(!dec.ok && /don't fit/.test(dec.reason), 'the decoy does not fit: ' + dec.reason);
+  var PT = lv('pentagon').tetras;
+  var o2 = custom('pentagon', { tetras: [PT[1], { id: 'T9', faces: ['G9', 'G6', 'G3', 'G2'], missing: null }, PT[2], PT[3]] });
+  var os = En.createState(o2);
+  var ofail = En.fill4(os, ['T2', 'T9', 'T3', 'T4']);
+  check(!ofail.ok && /outer/.test(ofail.reason) && os.tetras.length === 4, 'the missing D0 is an outer horn: ' + ofail.reason);
+  var ok2 = En.createState(custom('pentagon', { kan: true, tetras: o2.tetras }));
+  var okr = En.fill4(ok2, ['T2', 'T9', 'T3', 'T4']);
+  check(okr.ok && ok2.tetras[4].faces.join() === 'G10,G9,G8,G7' && ok2.tetras[4].fill4.missing === 0, 'with kan the outer horn fills, with the forced faces');
+
+  // thicken: pick among the three degenerate solids
+  var tk = mk('thicken');
+  check(!En.pick(tk, 'S0:G1').ok && !En.pick(tk, 'S1:G1').ok && tk.flags.penalty === 2, 'thicken: wrong picks cost a move');
+  check(En.pick(tk, 'S2:G1').ok && En.checkGoal(tk).done, 'thicken: s₂σ₁ is the one with d₂ = d₃ = σ₁');
+  var dg = En.degenerateSolids(mk('thicken'), 'G1');
+  check(dg.filter(function (x) { return x.faces[2] === 'G1' && x.faces[3] === 'G1'; }).length === 1 && dg[2].faces[2] === 'G1', 'exactly one degenerate solid has d₂ = d₃ = σ₁');
+  check(has(En.candidates(mk('thicken'), 'pick', []).solids, 'S2:G1'), 'pick candidates include solids');
+
+  // goal.solids with variables; no goal is a free solid
+  var pp = mk('pentagonproof');
+  check(En.checkGoal(pp).parts.length === 5 && En.checkGoal(pp).parts.every(function (p) { return p.kind === 'solid' && !p.done; }), 'pentagonproof: five solid parts');
+  HC.Levels.forEach(function (L) {
+    (L.goal && L.goal.solids || []).forEach(function (p) {
+      var st = En.createState(L), tris = st.triangles.map(function (x) { return x.id; });
+      var free = ['S0', 'S1', 'S2'].some(function (pre) {
+        return tris.some(function (r) { var d = En.describeSolid(st, pre + ':' + r); return d && d.faces.join() === p.join(); });
+      });
+      check(!free, L.name + ': a goal solid is never a degenerate one');
+    });
+  });
+
+  // ----- subcategories -----
+  ['subcat', 'subcat2'].forEach(function (nm) {
+    var L = lv(nm), st = En.createState(L);
+    var cl = En.closure(st, L.goal.select.seeds).filter(function (x) { return x.indexOf('id:') !== 0; }).sort();
+    check(cl.join() === L.goal.select.edges.slice().sort().join(), nm + ': the answer is the closure of the seeds: ' + cl);
+    check(L.goal.select.seeds.every(function (x) { return has(L.goal.select.edges, x); }), nm + ': seeds are in the answer');
+  });
+  (function () {
+    var L = lv('fullsub'), st = En.createState(L), dots = L.goal.select.dots;
+    var ans = st.edges.filter(function (e) { return e.kind !== 'identity' && has(dots, e.src) && has(dots, e.dst); }).map(function (e) { return e.id; }).sort();
+    check(ans.join() === L.goal.select.edges.slice().sort().join(), 'fullsub: every arrow with both ends in {a, c}');
+    var L2 = lv('core'), st2 = En.createState(L2);
+    var eq = En.provableEquivalences(st2).filter(function (x) { return x.indexOf('id:') !== 0; }).sort();
+    check(eq.join() === L2.goal.select.edges.slice().sort().join(), 'core: the answer is provableEquivalences: ' + eq);
+  })();
+  var sc = mk('subcat');
+  check(En.closure(sc, ['f', 'g']).indexOf('h') < 0 && En.closure(sc, ['f', 'g']).indexOf('k') < 0 && En.closure(sc, ['f', 'g']).indexOf('id:d') >= 0, 'closure keeps identities and drops the unrelated arrows');
+  check(En.closure(sc, ['f', 'g']).indexOf('w') >= 0 && En.closure(sc, ['f']).indexOf('x') < 0, 'closure uses homotopy and composition');
+  var s2 = mk('subcat2');
+  check(En.closure(s2, ['f', 'g', 'p']).indexOf('t') < 0 && En.closure(s2, ['f', 'g', 'p']).indexOf('q') < 0, 'subcat2: the composite with an unkept arrow is not kept');
+  check(En.closure(s2, ['f', 'g', 'p']).indexOf('r') >= 0 && En.closure(s2, ['f', 'g']).indexOf('r') < 0, 'subcat2: r appears only through the homotopy x ≃ x′');
+  var cr = mk('core');
+  var pe = En.provableEquivalences(cr);
+  check(has(pe, 'k') && !has(pe, 'r') && !has(pe, 's') && has(pe, 'i2') && has(pe, 'x') && has(pe, 'id:a'), 'core: a one-sided inverse of an equivalence is forced, a bare one-sided pair is not');
+  // checkSelect
+  var cs = mk('subcat');
+  var bad = En.checkSelect(cs, ['f', 'g', 'x', 'h']);
+  check(!bad.ok && bad.extra === 1 && bad.missing === 2 && cs.flags.penalty === 1 && !cs.flags.selected && !En.checkGoal(cs).done, 'checkSelect: counts only, and a failed check costs a move: ' + JSON.stringify(bad));
+  check(typeof bad.reason === 'string' && bad.reason.indexOf('h') < 0, 'the failure message does not name arrows');
+  var good = En.checkSelect(cs, ['x', 'x2', 'w']);
+  check(good.ok && cs.flags.selected === true && En.checkGoal(cs).done && En.checkGoal(cs).parts[0].kind === 'select', 'checkSelect: seeds are added automatically; the exact set wins');
+  check(!En.checkSelect(mk('compose'), []).ok, 'checkSelect needs a select goal');
+  check(En.checkSelect(mk('subcat'), ['f', 'g', 'x', 'x2', 'w', 'id:c']).ok, 'identities in the selection are ignored');
+  check(has(En.candidates(cs, 'select', []).edges, 'w') && !has(En.candidates(cs, 'select', []).edges, 'id:c'), 'select candidates: the non-identity arrows');
+  check(lv('fullsub').kind === 'intro' && lv('core').kind === 'boss', 'subcategory kinds');
 })();
 
 // ---------- 17. brute force ----------

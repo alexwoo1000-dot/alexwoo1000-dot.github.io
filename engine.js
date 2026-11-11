@@ -116,6 +116,11 @@
     else if (!t.name) t.name = 'σ' + sub(++s.counters.sigma);
   }
 
+  // every solid (3-simplex) gets τ₁, τ₂, … (given first, then in creation order); materialised degenerate solids are named s₀σ₁ …
+  function nameSolids(s) {
+    s.tetras.forEach(function (T) { if (!T.name) T.name = 'τ' + sub(++s.counters.tau); });
+  }
+
   function snap(s) {
     return JSON.stringify({ vertices: s.vertices, edges: s.edges, triangles: s.triangles, tetras: s.tetras, counters: s.counters, proj: s.proj });
   }
@@ -128,7 +133,7 @@
     return function (s) {
       var before = snap(s);
       var r = fn.apply(null, arguments);
-      if (r && r.ok) s.history.push(before); else restore(s, before);
+      if (r && r.ok) { nameSolids(s); s.history.push(before); } else restore(s, before);
       s._ver = (s._ver || 0) + 1;
       return r;
     };
@@ -198,7 +203,7 @@
     var lv = clone(level);
     var st = {
       vertices: lv.vertices || [], edges: lv.edges || [], triangles: lv.triangles || [], tetras: lv.tetras || [],
-      level: lv, counters: { e: 0, t: 0, T: 0, v: 0, sigma: 0 }, history: [], flags: {},
+      level: lv, counters: { e: 0, t: 0, T: 0, v: 0, sigma: 0, tau: 0 }, history: [], flags: {},
       base: lv.base || null, proj: lv.proj || {}
     };
     function scan(list, re, key) {
@@ -210,6 +215,7 @@
     st.edges.forEach(function (e) { if (!e.mathLabel) e.mathLabel = e.label; });
     if (st.base) st.triangles.forEach(function (t) { if (t.over === undefined) t.over = overOf(st, t.e01, t.e12, t.e02); });
     st.triangles.forEach(function (t) { nameTri(st, t); });
+    nameSolids(st);
     return st;
   };
 
@@ -296,7 +302,7 @@
     x = Math.max(0, Math.min(100, +x || 0)); y = Math.max(0, Math.min(60, +y || 0));
     s.vertices.push({ id: id, label: label, x: x, y: y });
     var added = newAdded(); added.vertices.push(id);
-    return { ok: true, added: added, message: 'New dot ' + label + '.' };
+    return { ok: true, added: added, message: 'New vertex ' + label + '.' };
   });
 
   function parallelCount(s, a, b) {
@@ -306,8 +312,8 @@
   }
   Engine.addEdge = mut(function (s, srcId, dstId) {
     var a = getVert(s, srcId), b = getVert(s, dstId);
-    if (!a || !b) return fail("I can't find one of those dots.");
-    if (a.id === b.id) return fail('An arrow needs two different dots.');
+    if (!a || !b) return fail("I can't find one of those vertices.");
+    if (a.id === b.id) return fail('An arrow needs two different vertices.');
     if (parallelCount(s, a.id, b.id) >= 2) return fail('Already two arrows there.');
     var used = {}, label = null;
     s.edges.forEach(function (e) { used[e.label] = 1; });
@@ -345,7 +351,7 @@
     var added = newAdded();
     es.forEach(function (e) { realEdge(s, added, e.id); });
     pushTri(s, added, { e01: c.b.e01.id, e12: c.b.e12.id, e02: c.b.e02.id, kind: 'cell' });
-    return { ok: true, added: added, message: 'Glued a triangle onto the loop.' };
+    return { ok: true, added: added, message: 'Attached a 2-cell along the boundary.' };
   });
 
   // coskeleton: fill every hollow triangle, then every hollow tetrahedron, in the only possible way
@@ -374,8 +380,8 @@
         s.tetras.push(tt); added.tetras.push(tt.id); n++;
       });
     }); });
-    if (!n) return fail('Nothing hollow is left to fill.');
-    return { ok: true, added: added, message: 'Filled every hollow shape.' };
+    if (!n) return fail('Every boundary already has its tetrahedron.');
+    return { ok: true, added: added, message: 'Coskeleton: filled every boundary of a tetrahedron.' };
   });
 
   // "nerve or not?": a nerve has EXACTLY ONE composite for every two arrows end to end
@@ -428,12 +434,12 @@
     if (!Array.isArray(ids) || ids.length !== 4) return fail('Pick four triangles.');
     if (new Set(ids).size !== 4) return fail('Pick four different triangles.');
     var a = cell3Assign(s, ids);
-    if (!a) return fail("Those four triangles don't close up into a hollow tetrahedron.");
-    if (tetExists(s, a.faces)) return fail('That solid is already there.');
+    if (!a) return fail("Those four triangles don't form the boundary of a tetrahedron.");
+    if (tetExists(s, a.faces)) return fail('That tetrahedron is already there.');
     var added = newAdded();
     var tt = { id: 'T' + (++s.counters.T), faces: a.faces, missing: null, vertices: a.vertices, edges: a.edges, kind: 'cell' };
     s.tetras.push(tt); added.tetras.push(tt.id);
-    return { ok: true, added: added, message: 'Glued a solid inside the four triangles.' };
+    return { ok: true, added: added, message: 'Attached a 3-cell along the boundary.' };
   });
 
   Engine.peel = mut(function (s) {
@@ -444,8 +450,8 @@
       s.triangles.forEach(function (t) { removed.triangles.push(t.id); }); s.triangles = [];
     } else if (s.edges.length) {
       s.edges.forEach(function (t) { removed.edges.push(t.id); }); s.edges = [];
-    } else return fail('Only dots are left.');
-    return { ok: true, added: newAdded(), removed: removed, message: 'Peeled off the top layer.' };
+    } else return fail('Only vertices are left.');
+    return { ok: true, added: newAdded(), removed: removed, message: 'Passed to the skeleton one dimension down.' };
   });
 
   // reasonId is one of level.reasons (the first is right). A wrong reason, or a claim on a possible level,
@@ -468,22 +474,22 @@
       diagram: { dots: [{ id: '0', label: '0', x: 25, y: 30 }, { id: '1', label: '1', x: 75, y: 30 }], arrows: [{ from: '0', to: '1', label: 'i' }, { from: '1', to: '0', label: 'r' }, { from: '1', to: '1', label: 'ε' }] } },
     { id: 'triangle', name: 'Hollow triangle', objects: ['0', '1', '2'],
       arrows: [A('f', '0', '1'), A('g', '1', '2'), A('h', '0', '2'), A('k', '0', '2', 'k')], comp: { 'f,g': 'k' },
-      note: 'f then g is its own arrow k, different from h.',
+      note: 'The composite of f then g is the arrow k, which differs from h.',
       diagram: { dots: [{ id: '0', label: '0', x: 20, y: 46 }, { id: '1', label: '1', x: 50, y: 12 }, { id: '2', label: '2', x: 80, y: 46 }],
         arrows: [{ from: '0', to: '1', label: 'f' }, { from: '1', to: '2', label: 'g' }, { from: '0', to: '2', label: 'h' }, { from: '0', to: '2', label: 'k' }] } },
-    { id: 'fork', name: 'Fork', objects: ['0', '1', '2'],
+    { id: 'fork', name: 'Two arrows with one composite', objects: ['0', '1', '2'],
       arrows: [A('p', '0', '1'), A('q', '0', '1'), A('g', '1', '2'), A('x', '0', '2')], comp: { 'p,g': 'x', 'q,g': 'x' },
-      note: 'p then g and q then g are the same arrow x, but p and q differ.',
+      note: 'p then g and q then g have the same composite x, but p and q differ.',
       diagram: { dots: [{ id: '0', label: '0', x: 15, y: 30 }, { id: '1', label: '1', x: 50, y: 30 }, { id: '2', label: '2', x: 85, y: 30 }],
         arrows: [{ from: '0', to: '1', label: 'p' }, { from: '0', to: '1', label: 'q' }, { from: '1', to: '2', label: 'g' }] } },
     { id: 'square', name: 'Square that does not commute', objects: ['0', '1', '2', '3'],
       arrows: [A('f', '0', '1'), A('g', '1', '3'), A('u', '0', '2'), A('v', '2', '3'), A('x', '0', '3', 'x'), A('y', '0', '3', 'y')],
-      comp: { 'f,g': 'x', 'u,v': 'y' }, note: 'The two ways round, x and y, are different arrows.',
+      comp: { 'f,g': 'x', 'u,v': 'y' }, note: 'The two composites round the square, x and y, are different arrows.',
       diagram: { dots: [{ id: '0', label: '0', x: 25, y: 12 }, { id: '1', label: '1', x: 75, y: 12 }, { id: '2', label: '2', x: 25, y: 48 }, { id: '3', label: '3', x: 75, y: 48 }],
         arrows: [{ from: '0', to: '1', label: 'f' }, { from: '1', to: '3', label: 'g' }, { from: '0', to: '2', label: 'u' }, { from: '2', to: '3', label: 'v' }] } },
-    { id: 'vee', name: 'Open square', objects: ['0', '1', '2', '3'],
+    { id: 'vee', name: 'Square with a missing side', objects: ['0', '1', '2', '3'],
       arrows: [A('f', '0', '1'), A('v', '1', '3'), A('u', '0', '2'), A('x', '0', '3', 'x')], comp: { 'f,v': 'x' },
-      note: 'Nothing goes from 2 to 3.',
+      note: 'No arrow goes from 2 to 3.',
       diagram: { dots: [{ id: '0', label: '0', x: 25, y: 12 }, { id: '1', label: '1', x: 75, y: 12 }, { id: '2', label: '2', x: 25, y: 48 }, { id: '3', label: '3', x: 75, y: 48 }],
         arrows: [{ from: '0', to: '1', label: 'f' }, { from: '1', to: '3', label: 'v' }, { from: '0', to: '2', label: 'u' }] } }
   ];
@@ -515,12 +521,12 @@
   // Sound because every move is a horn filling that the nerve of the test category can also do.
   Engine.checkModel = function (level, modelId, paint) {
     var M = modelById(modelId), lv = level || {};
-    if (!M) return { ok: false, reason: 'Pick a test world first.' };
+    if (!M) return { ok: false, reason: 'Pick a counterexample first.' };
     if (lv.base || lv.strict) return { ok: false, reason: 'Counterexamples are not used on this level.' };
     paint = paint || {}; var pv = paint.vertices || {}, pe = paint.edges || {};
     var img = {}, i, missing = false;
     (lv.vertices || []).forEach(function (v) { if (M.objects.indexOf(pv[v.id]) < 0) missing = true; });
-    if (missing) return { ok: false, reason: 'Place every dot first.' };
+    if (missing) return { ok: false, reason: 'Place every vertex first.' };
     var bad = null;
     (lv.edges || []).forEach(function (ed) {
       if (ed.src === ed.dst && ed.kind === 'identity') { img[ed.id] = 'id:' + pv[ed.src]; return; }
@@ -530,22 +536,22 @@
       img[ed.id] = a;
     });
     if (missing) return { ok: false, reason: 'Place every arrow first.' };
-    if (bad) return { ok: false, reason: bad.label + ' does not fit between those dots.' };
+    if (bad) return { ok: false, reason: bad.label + ' does not fit between those vertices.' };
     function im(id) { if (id.indexOf('id:') === 0) return 'id:' + pv[id.slice(3)]; return img[id]; }
     var tris = lv.triangles || [];
     for (i = 0; i < tris.length; i++) {
       var t = tris[i], c = mComp(M, im(t.e01), im(t.e12));
       if (c !== im(t.e02)) {
         var tx = shapeTextsRaw(lv, t.e01, t.e12, t.e02);
-        return { ok: false, broken: t.id, reason: 'A given fact fails there: ' + tx + '.' };
+        return { ok: false, broken: t.id, reason: 'A given triangle fails in that category: ' + tx + '.' };
       }
     }
     var needIso = (lv.edges || []).filter(function (ed) { return ed.iso; });
     for (i = 0; i < needIso.length; i++) if (!mInvertible(M, img[needIso[i].id])) return { ok: false, reason: needIso[i].label + ' is reversible, so its image must be too.' };
-    if (lv.kan && !mAll(M).every(function (a) { return mInvertible(M, a); })) return { ok: false, reason: 'Here every arrow can be undone. This world has one that cannot.' };
+    if (lv.kan && !mAll(M).every(function (a) { return mInvertible(M, a); })) return { ok: false, reason: 'Every arrow here is an isomorphism (the Kan condition). This category has one that is not.' };
     // is the goal satisfiable in the model?
     var pats = (lv.goal && lv.goal.triangles) || [], all = mAll(M);
-    if (!pats.length || !(lv.goal && lv.goal.triangles)) return { ok: false, reason: 'This goal cannot be tested in a world.' };
+    if (!pats.length || !(lv.goal && lv.goal.triangles)) return { ok: false, reason: 'This goal cannot be tested with a counterexample.' };
     function val(x, b) { return x.charAt(0) === '?' ? b[x] : im(x); }
     function rec(k, b) {
       if (k === pats.length) return true;
@@ -558,8 +564,8 @@
       }
       return assign(0);
     }
-    if (rec(0, {})) return { ok: false, goalHolds: true, reason: 'In that world the goal is true, so it proves nothing.' };
-    return { ok: true, message: 'A world where the goal fails: it cannot be done.' };
+    if (rec(0, {})) return { ok: false, goalHolds: true, reason: 'In that category the goal holds, so it is not a counterexample.' };
+    return { ok: true, message: 'A counterexample: the goal fails in this category, so it cannot be done.' };
   };
   function shapeTextsRaw(lv, a, b, c) {
     function lab(id) { if (id.indexOf('id:') === 0) return '1'; var r = id; (lv.edges || []).forEach(function (ed) { if (ed.id === id) r = ed.label; }); return r; }
@@ -575,7 +581,7 @@
       return { ok: true, added: newAdded(), model: reasonId.model, message: cm.message };
     }
     if (goal && goal.impossible && lv.claimable && !(lv.reasons && lv.reasons.length) && !lv.base)
-      return { ok: false, reason: 'Show a world where the goal fails.', needsModel: true };
+      return { ok: false, reason: 'Give a counterexample: a category where the goal fails.', needsModel: true };
     if (goal && goal.impossible) {
       var rs = lv.reasons;
       if (rs && rs.length) {
@@ -624,7 +630,7 @@
     }
     if (s.base) {
       var pa = projOf(s, a), pb = projOf(s, b), pc = projOf(s, c);
-      if (!pa || !pb || !pc || !baseTriOf(s, pa, pb, pc)) return fail('No triangle below to lift.');
+      if (!pa || !pb || !pc || !baseTriOf(s, pa, pb, pc)) return fail('No triangle of the base to lift.');
     }
     realEdge(s, added, f.id); realEdge(s, added, g.id);
     if (name) pushTri(s, added, { id: name, e01: a, e12: b, e02: c, kind: 'thin', thin: true });
@@ -646,7 +652,7 @@
     var opt = null;
     if (s.base) {
       var sol = liftSolutions(s, 'compose', o[0], o[1]);
-      if (!sol.length) return fail('No triangle below to lift.');
+      if (!sol.length) return fail('No triangle of the base to lift.');
       var oi = optionIndex || 0;
       if (oi < 0 || oi >= sol.length) return fail("That option doesn't exist.");
       opt = sol[oi];
@@ -673,12 +679,12 @@
     var v = getVert(s, id);
     var added = newAdded();
     if (v) {
-      if (getEdge(s, 'id:' + id)) return fail('That dot already has its identity arrow.');
+      if (getEdge(s, 'id:' + id)) return fail('That vertex already has its identity.');
       ensureIdEdge(s, added, id);
       return { ok: true, added: added, message: 'Added ' + idLabel(v.label) + ' at ' + v.label + '.' };
     }
     var e = getEdge(s, id);
-    if (!e) return fail("I can't find that dot or arrow.");
+    if (!e) return fail("I can't find that vertex or arrow.");
     if (!identityNeeds(s, e)) return fail('Nothing new to learn there.');
     if (isIdEdge(e)) {
       ensureThin(s, added, 's0:' + e.id, e.id, e.id, e.id);
@@ -688,25 +694,25 @@
       ensureThin(s, added, 's0:' + e.id, 'id:' + e.src, e.id, e.id);
       ensureThin(s, added, 's1:' + e.id, e.id, 'id:' + e.dst, e.id);
     }
-    return { ok: true, added: added, message: 'Doing nothing around ' + e.label + ' changes nothing.' };
+    return { ok: true, added: added, message: 'Added the degenerate triangles on ' + e.label + '.' };
   });
 
   // ---------- horns ----------
   function horn0Err(s, a, h) {
-    if (a.src !== h.src) return 'These must start at the same dot.';
+    if (a.src !== h.src) return 'These must start at the same vertex.';
     if (s.level && s.level.joyal && !a.iso) return 'Only a reversible arrow (≅) works there.';
     if (s.base && s.level && s.level.licence && s.level.licence !== 'left') return 'This map only lifts inner horns.';
-    if (s.base && !liftSolutions(s, 'horn0', a, h).length) return 'No triangle below to lift.';
+    if (s.base && !liftSolutions(s, 'horn0', a, h).length) return 'No triangle of the base to lift.';
     var n = 0;
     s.triangles.forEach(function (t) { if (t.e01 === a.id && t.e02 === h.id) n++; });
     if (n >= 2) return 'Already two answers here.';
     return null;
   }
   function horn2Err(s, g, h) {
-    if (g.dst !== h.dst) return 'These must end at the same dot.';
+    if (g.dst !== h.dst) return 'These must end at the same vertex.';
     if (s.level && s.level.joyal && !g.iso) return 'Only a reversible arrow (≅) works there.';
     if (s.base && s.level && s.level.licence) return "This map doesn't lift that horn.";
-    if (s.base && !liftSolutions(s, 'horn2', g, h).length) return 'No triangle below to lift.';
+    if (s.base && !liftSolutions(s, 'horn2', g, h).length) return 'No triangle of the base to lift.';
     var n = 0;
     s.triangles.forEach(function (t) { if (t.e12 === g.id && t.e02 === h.id) n++; });
     if (n >= 2) return 'Already two answers here.';
@@ -762,11 +768,11 @@
   }
   Engine.liftEdge = mut(function (s, vId, optionIndex) {
     var v = getVertex(s, vId);
-    if (!v) return fail("I can't find that dot.");
-    if (!s.base) return fail('There is nothing below to lift.');
+    if (!v) return fail("I can't find that vertex.");
+    if (!s.base) return fail('This map has no base.');
     if (!s.level || s.level.licence !== 'left') return fail('This map only lifts inner horns.');
     var opts = edgeLifts(s, vId);
-    if (!opts.length) return fail('No arrow below starts under that dot.');
+    if (!opts.length) return fail('No arrow of the base starts under that vertex.');
     var oi = optionIndex || 0;
     if (oi < 0 || oi >= opts.length) return fail("That option doesn't exist.");
     var be = opts[oi], n = 0;
@@ -787,7 +793,7 @@
     var elab = uniqueLabel(s, String(be.label).replace(/\u0304/g, ''));
     var ne = pushEdge(s, added, { src: vId, dst: nid, label: elab, mathLabel: elab, kind: 'solved', origin: { op: 'lift', from: [vId] } });
     s.proj[ne.id] = be.id;
-    return { ok: true, added: added, message: elab + ' lifts ' + be.label + ' and ends at a new dot ' + vlab + '.' };
+    return { ok: true, added: added, message: elab + ' lifts ' + be.label + ' and ends at a new vertex ' + vlab + '.' };
   });
 
   // the ways a lifting problem can be solved (S triangles to lie over): [{tri, over, text}]
@@ -867,7 +873,7 @@
       return false;
     }
     var allowed = cands.filter(outerOk);
-    if (!allowed.length) return { err: "That's an outer horn: it needs reversible arrows." };
+    if (!allowed.length) return { err: "That's an outer horn: it needs isomorphisms (reversible arrows)." };
     var fresh = allowed.filter(function (c) { return !c.existing; });
     if (!fresh.length && strict) {
       fresh = allowed.filter(function (c) {
@@ -980,7 +986,7 @@
   function canClaim(s, slot, steps) {
     var lv = s.level || {};
     if (slot === 'C' || slot === 'D') return { allowed: true };
-    var bad = { allowed: false, reason: 'Only reversible steps allow that.' };
+    var bad = { allowed: false, reason: 'Only along an isomorphism (a reversible arrow) can this outer horn be filled.' };
     if (lv.kan) return { allowed: true };
     if (s.base && lv.licence === 'left' && slot === 'B') return { allowed: true };   // a left fibration lifts horns missing face 0
     if (s.base && lv.licence) return { allowed: false, reason: lv.licence === 'left' ? "A left fibration doesn't lift that face." : 'This map only lifts inner horns.' };
@@ -993,14 +999,14 @@
 
   // Non-mutating description of a trip; see SPEC3 section 2.
   Engine.routeSlots = function (s, stepIds, choice) {
-    if (!Array.isArray(stepIds) || stepIds.length !== 3) return fail('Pick three steps.');
+    if (!Array.isArray(stepIds) || stepIds.length !== 3) return fail('Pick three composable arrows.');
     var steps = [];
     for (var i = 0; i < 3; i++) {
       var e = lookupEdge(s, stepIds[i]);
-      if (!e) return fail("I can't find one of those steps.");
+      if (!e) return fail("I can't find one of those arrows.");
       steps.push(e);
     }
-    if (steps[0].dst !== steps[1].src || steps[1].dst !== steps[2].src) return fail("Those steps don't connect end to end.");
+    if (steps[0].dst !== steps[1].src || steps[1].dst !== steps[2].src) return fail("Those arrows don't connect end to end.");
     var V = [steps[0].src, steps[0].dst, steps[1].dst, steps[2].dst];
     var U;
     if (s._uc && s._uc.ver === (s._ver || 0)) U = s._uc.U; else { U = universe(s); s._uc = { ver: s._ver || 0, U: U }; }
@@ -1016,8 +1022,9 @@
         else if (sl === 'B') ok = u.e01 === steps[1].id && u.e12 === steps[2].id;
         else if (sl === 'C') ok = u.e12 === steps[2].id && srcOf(u.e01) === V[0];
         else ok = u.e01 === steps[0].id && dstOf(u.e12) === V[3];
-        if (!ok || seen[u.shape]) return false;
-        seen[u.shape] = 1; return true;
+        if (!ok) return false;
+        if (u.free) { if (seen[u.shape]) return false; seen[u.shape] = 1; }
+        return true;
       });
     });
     var chosen = {}, fixed = {}, invalid = [];
@@ -1070,7 +1077,7 @@
       if (!cl.allowed) claim.reason = cl.reason;
       if (s.base) {
         claim.over = overOf(s, f[0], f[1], f[2]);
-        if (!claim.over) { claim.allowed = false; claim.reason = 'No triangle below to lift.'; }
+        if (!claim.over) { claim.allowed = false; claim.reason = 'No triangle of the base to lift.'; }
       }
       if (exists) {
         // only a strict level still records the tetrahedron for a fact that is already known
@@ -1090,14 +1097,14 @@
   // and alternatives (other ways the three facts can sit in a tetrahedron).
   var SLOT_EDGES = { A: ['01', '12', '02'], B: ['12', '23', '13'], C: ['02', '23', '03'], D: ['01', '13', '03'] };
   Engine.tetraFromFacts = function (s, refs) {
-    if (!Array.isArray(refs) || refs.length !== 3) return fail('Pick three facts.');
-    if (refs[0] === refs[1] || refs[1] === refs[2] || refs[0] === refs[2]) return fail('Pick three different facts.');
+    if (!Array.isArray(refs) || refs.length !== 3) return fail('Pick three triangles.');
+    if (refs[0] === refs[1] || refs[1] === refs[2] || refs[0] === refs[2]) return fail('Pick three different triangles.');
     refs = refs.map(function (r) { return resolveRef(s, r); });
     var U = universe(s), facts = [];
     for (var i = 0; i < 3; i++) {
       var u = null;
       U.forEach(function (x) { if (x.ref === refs[i]) u = x; });
-      if (!u) return fail("I can't find one of those facts.");
+      if (!u) return fail("I can't find one of those triangles.");
       facts.push(u);
     }
     var found = [], seen = {};
@@ -1136,7 +1143,7 @@
   Engine.claimRoute = mut(function (s, stepIds, choice) {
     var r = Engine.routeSlots(s, stepIds, choice);
     if (!r.ok) return fail(r.reason);
-    if (!r.claim) return fail(r.known ? 'You already know this.' : 'Choose three facts first.');
+    if (!r.claim) return fail(r.known ? 'You already know this.' : 'Choose three triangles first.');
     if (!r.claim.allowed) return fail(r.claim.reason);
     var added = newAdded(), faces = [null, null, null, null];
     stepIds.forEach(function (id) { realEdge(s, added, id); });
@@ -1155,7 +1162,7 @@
     var T = { id: 'T' + (++s.counters.T), faces: faces, missing: SLOT_FACE[X], vertices: r.vertices,
       edges: { '01': r.edges.e01, '12': r.edges.e12, '23': r.edges.e23, '02': r.edges.e02, '13': r.edges.e13, '03': r.edges.e03 } };
     s.tetras.push(T); added.tetras.push(T.id);
-    return { ok: true, added: added, message: 'New fact: ' + nt.name + ' ' + shapeTexts(s, cf.e01, cf.e12, cf.e02, nt.name).plain + '.' };
+    return { ok: true, added: added, message: 'New triangle: ' + nt.name + ' ' + shapeTexts(s, cf.e01, cf.e12, cf.e02, nt.name).plain + '.' };
   });
 
   // ---------- theorem tools ----------
@@ -1164,12 +1171,12 @@
     return t;
   }
   function addTheorem(s, added, a, b, c, msg) {
-    if (s.base && !overOf(s, a, b, c)) return fail('No triangle below to lift.');
+    if (s.base && !overOf(s, a, b, c)) return fail('No triangle of the base to lift.');
     var nt = pushTri(s, added, { e01: a, e12: b, e02: c, kind: 'theorem' });
     return { ok: true, added: added, message: msg + ' ' + nt.name + ' ' + shapeTexts(s, a, b, c, nt.name).plain + '.' };
   }
   function sameResult(s, t1, t2) {
-    if (t1.e01 !== t2.e01 || t1.e12 !== t2.e12) return { err: 'They must be two answers for the same trip.' };
+    if (t1.e01 !== t2.e01 || t1.e12 !== t2.e12) return { err: 'They must be two composites of the same pair.' };
     if (t1.e02 === t2.e02) return { err: 'Those are the same answer.' };
     var dst = lookupEdge(s, t1.e02).dst, idE = 'id:' + dst;
     if (shapeKnown(s, t1.e02, idE, t2.e02)) return { err: 'You already know this.' };
@@ -1178,27 +1185,27 @@
   Engine.same = mut(function (s, r1, r2) {
     var added = newAdded();
     var t1 = factFor(s, added, r1), t2 = factFor(s, added, r2);
-    if (!t1 || !t2) return fail("I can't find one of those facts.");
+    if (!t1 || !t2) return fail("I can't find one of those triangles.");
     var x = sameResult(s, t1, t2);
     if (x.err) return fail(x.err);
     realEdge(s, added, x.r[1]);
     return addTheorem(s, added, x.r[0], x.r[1], x.r[2], 'Proved:');
   });
   function flipResult(s, t) {
-    if (!isIdId(t.e12)) return { err: 'That fact has no wiggle to flip.' };
+    if (!isIdId(t.e12)) return { err: 'That triangle is not a homotopy: its middle edge is not an identity.' };
     if (shapeKnown(s, t.e02, t.e12, t.e01)) return { err: 'You already know this.' };
     return { r: [t.e02, t.e12, t.e01] };
   }
   Engine.flip = mut(function (s, ref) {
     var added = newAdded();
     var t = factFor(s, added, ref);
-    if (!t) return fail("I can't find that fact.");
+    if (!t) return fail("I can't find that triangle.");
     var x = flipResult(s, t);
     if (x.err) return fail(x.err);
     return addTheorem(s, added, x.r[0], x.r[1], x.r[2], 'Proved:');
   });
   function linkResult(s, t1, t2) {
-    if (!isIdId(t1.e12) || !isIdId(t2.e12)) return { err: 'Both facts must say "same up to wiggle".' };
+    if (!isIdId(t1.e12) || !isIdId(t2.e12)) return { err: 'Both triangles must be homotopies.' };
     if (t1.e02 !== t2.e01) return { err: 'They must chain: second starts where first ends.' };
     if (shapeKnown(s, t1.e01, t1.e12, t2.e02)) return { err: 'You already know this.' };
     return { r: [t1.e01, t1.e12, t2.e02] };
@@ -1206,7 +1213,7 @@
   Engine.link = mut(function (s, r1, r2) {
     var added = newAdded();
     var t1 = factFor(s, added, r1), t2 = factFor(s, added, r2);
-    if (!t1 || !t2) return fail("I can't find one of those facts.");
+    if (!t1 || !t2) return fail("I can't find one of those triangles.");
     var x = linkResult(s, t1, t2);
     if (x.err) return fail(x.err);
     return addTheorem(s, added, x.r[0], x.r[1], x.r[2], 'Proved:');
@@ -1227,11 +1234,11 @@
   Engine.swapin = mut(function (s, rh, rt, pos) {
     var added = newAdded();
     var h = factFor(s, added, rh), t = factFor(s, added, rt);
-    if (!h || !t) return fail("I can't find one of those facts.");
-    if (!isIdId(h.e12) || h.e01 === h.e02) return fail('The first fact must say two different steps are the same.');
+    if (!h || !t) return fail("I can't find one of those triangles.");
+    if (!isIdId(h.e12) || h.e01 === h.e02) return fail('The first triangle must be a homotopy between two different arrows.');
     var rs = swapResults(s, h, t);
     if (pos !== undefined && pos !== null) rs = rs.filter(function (x) { return x.pos === pos; });
-    if (!rs.length) return fail([t.e01, t.e12, t.e02].indexOf(h.e01) < 0 ? "That step doesn't appear there." : 'You already know this.');
+    if (!rs.length) return fail([t.e01, t.e12, t.e02].indexOf(h.e01) < 0 ? "That arrow doesn't appear in that triangle." : 'You already know this.');
     var v = rs[0].r;
     return addTheorem(s, added, v[0], v[1], v[2], 'Proved:');
   });
@@ -1249,24 +1256,341 @@
   Engine.divide = mut(function (s, rI, rT, which) {
     var added = newAdded();
     var I = factFor(s, added, rI), t = factFor(s, added, rT);
-    if (!I || !t) return fail("I can't find one of those facts.");
-    if (!isIdId(I.e02) || isIdId(I.e01) || isIdId(I.e12)) return fail('The first fact must say two arrows compose to an identity.');
+    if (!I || !t) return fail("I can't find one of those triangles.");
+    if (!isIdId(I.e02) || isIdId(I.e01) || isIdId(I.e12)) return fail('The first triangle must say that a composite is an identity.');
     var rs = divideResults(s, I, t);
     if (which !== undefined && which !== null) rs = rs.filter(function (x, i) { return x.side === which || i === which; });
-    if (!rs.length) return fail((t.e01 !== I.e12 && t.e12 !== I.e01) ? "That fact doesn't use the arrow being undone." : 'You already know this.');
+    if (!rs.length) return fail((t.e01 !== I.e12 && t.e12 !== I.e01) ? "That triangle doesn't use the arrow being cancelled." : 'You already know this.');
     var v = rs[0].r;
     return addTheorem(s, added, v[0], v[1], v[2], 'Proved:');
   });
+
+  // ---------- solids (SPEC6) ----------
+  function uni(s) {
+    if (s._uc && s._uc.ver === (s._ver || 0)) return s._uc.U;
+    var U = universe(s); s._uc = { ver: s._ver || 0, U: U }; return U;
+  }
+  function triOfRef(s, ref) {
+    ref = resolveRef(s, ref);
+    var t = getTri(s, ref);
+    if (t) return { ref: ref, e01: t.e01, e12: t.e12, e02: t.e02, name: t.name };
+    var u = null;
+    uni(s).forEach(function (x) { if (x.ref === ref) u = x; });
+    return u ? { ref: ref, e01: u.e01, e12: u.e12, e02: u.e02, name: u.name } : null;
+  }
+  // the degenerate triangle on an edge: s₀e = (1, e ; e), s₁e = (e, 1 ; e); on an identity both are (1, 1 ; 1)
+  function freeRefOf(kind, edgeId) { return isIdId(edgeId) ? 's0:' + edgeId : kind + ':' + edgeId; }
+  // Faces [d0, d1, d2, d3] of s₀σ, s₁σ, s₂σ for σ = (e01, e12 ; e02); computed from the repeated-corner picture:
+  //   s₀σ on corners (0,0,1,2): d0 = σ, d1 = σ, d2 = s₀(e02) [corners 0,0,2], d3 = s₀(e01) [corners 0,0,1]
+  //   s₁σ on corners (0,1,1,2): d0 = s₀(e12) [1,1,2], d1 = σ, d2 = σ, d3 = s₁(e01) [0,1,1]
+  //   s₂σ on corners (0,1,2,2): d0 = s₁(e12) [1,2,2], d1 = s₁(e02) [0,2,2], d2 = σ, d3 = σ
+  function degFaces(i, tr) {
+    if (i === 0) return [tr.ref, tr.ref, freeRefOf('s0', tr.e02), freeRefOf('s0', tr.e01)];
+    if (i === 1) return [freeRefOf('s0', tr.e12), tr.ref, tr.ref, freeRefOf('s1', tr.e01)];
+    return [freeRefOf('s1', tr.e12), freeRefOf('s1', tr.e02), tr.ref, tr.ref];
+  }
+  function solidOfRef(s, ref) {
+    if (typeof ref !== 'string') return null;
+    var m = /^S([012]):(.+)$/.exec(ref);
+    if (m) {
+      var tr = triOfRef(s, m[2]);
+      if (!tr) return null;
+      var i = +m[1], T0 = null;
+      s.tetras.forEach(function (x) { if (x.id === 'S' + i + ':' + tr.ref) T0 = x; });
+      return { ref: 'S' + i + ':' + tr.ref, faces: degFaces(i, tr), free: true, name: 's' + sub(i) + (tr.name || tr.ref), index: i, base: tr.ref, tetra: T0 };
+    }
+    var T = null;
+    s.tetras.forEach(function (x) { if (x.id === ref || x.name === ref) T = x; });
+    if (!T || !T.faces) return null;
+    return { ref: T.id, faces: T.faces.slice(), free: !!T.thin, name: T.name, tetra: T };
+  }
+  // edges and dots of a solid from its faces: d3 = (01,12;02), d2 = (01,13;03), d1 = (02,23;03), d0 = (12,23;13)
+  function solidGeom(s, faces) {
+    var t = faces.map(function (r) { return triOfRef(s, r); });
+    if (t.some(function (x) { return !x; })) return null;
+    var d0 = t[0], d1 = t[1], d2 = t[2], d3 = t[3];
+    var ed = { '01': d3.e01, '12': d3.e12, '02': d3.e02, '13': d2.e12, '03': d2.e02, '23': d1.e12 };
+    var ok = d2.e01 === ed['01'] && d0.e01 === ed['12'] && d1.e01 === ed['02'] && d0.e02 === ed['13'] && d1.e02 === ed['03'] && d0.e12 === ed['23'];
+    var e01 = lookupEdge(s, ed['01']), e12 = lookupEdge(s, ed['12']), e23 = lookupEdge(s, ed['23']);
+    if (!e01 || !e12 || !e23) return null;
+    return { ok: ok, edges: ed, vertices: [e01.src, e01.dst, e12.dst, e23.dst] };
+  }
+  // describeSolid(state, ref): ref = tetrahedron id, name (τ₂) or degenerate ref (S0:<triangle ref>)
+  Engine.describeSolid = function (s, ref) {
+    var so = solidOfRef(s, ref);
+    if (!so) return null;
+    var g = solidGeom(s, so.faces);
+    var names = so.faces.map(function (r) { var t = triOfRef(s, r); return t ? (t.name || r) : r; });
+    var lab = function (d) { var v = getVert(s, d); return v ? v.label : d; };
+    var edgeLabels = {};
+    if (g) for (var k in g.edges) edgeLabels[k] = edgeLabel(s, g.edges[k]);
+    return { ref: so.ref, name: so.name, free: so.free, exists: !so.free || !!so.tetra, faces: so.faces.slice(), faceNames: names,
+      vertices: g ? g.vertices : [], vertexLabels: g ? g.vertices.map(lab) : [], edges: g ? g.edges : {}, edgeLabels: edgeLabels,
+      consistent: !!(g && g.ok), text: (so.name || so.ref) + ' : (' + names.join(', ') + ')' };
+  };
+  // the three degenerate solids s₀σ, s₁σ, s₂σ of a triangle (ref, id or name)
+  Engine.degenerateSolids = function (s, triRef) {
+    var tr = triOfRef(s, triRef);
+    if (!tr) return [];
+    return [0, 1, 2].map(function (i) { var d = Engine.describeSolid(s, 'S' + i + ':' + tr.ref); d.index = i; d.base = tr.ref; return d; });
+  };
+  // a degenerate solid becomes a real (flagged) tetrahedron once it is used
+  function materialiseSolid(s, added, ref) {
+    var so = solidOfRef(s, ref);
+    if (!so) return null;
+    if (!so.free) return so.tetra;
+    if (so.tetra) return so.tetra;
+    so.faces.forEach(function (r) { getFact(s, added, r); });
+    var g = solidGeom(s, so.faces);
+    var T = { id: so.ref, name: so.name, faces: so.faces.slice(), missing: null, vertices: g.vertices, edges: g.edges, kind: 'thin', thin: true };
+    s.tetras.push(T); added.tetras.push(T.id);
+    return T;
+  }
+
+  // ----- 4-simplices: corners 0..4, D_i omits corner i -----
+  var OMIT = [[1, 2, 3, 4], [0, 2, 3, 4], [0, 1, 3, 4], [0, 1, 2, 4], [0, 1, 2, 3]];
+  function perms(n) {
+    var out = [];
+    (function rec(a, rest) { if (!rest.length) { out.push(a); return; } rest.forEach(function (x, i) { rec(a.concat([x]), rest.slice(0, i).concat(rest.slice(i + 1))); }); })([], Array.apply(null, Array(n)).map(function (_, i) { return i; }));
+    return out;
+  }
+  var PERMS4 = perms(4);
+  // can these solids sit in distinct slots of a 4-simplex with every shared triangle identical?
+  function partialPlacement(sols) {
+    var n = sols.length;
+    function rec(k, used, map) {
+      if (k === n) return true;
+      for (var i = 0; i < 5; i++) {
+        if (used[i]) continue;
+        var nm = {}, ok = true, key, j;
+        for (key in map) nm[key] = map[key];
+        for (j = 0; j < 4 && ok; j++) {
+          key = OMIT[i].filter(function (_, p) { return p !== j; }).join('');
+          if (nm[key] !== undefined && nm[key] !== sols[k].faces[j]) ok = false; else nm[key] = sols[k].faces[j];
+        }
+        if (!ok) continue;
+        used[i] = true;
+        if (rec(k + 1, used, nm)) { used[i] = false; return true; }
+        used[i] = false;
+      }
+      return false;
+    }
+    return rec(0, [], {});
+  }
+  function tetExact(s, faces) {
+    for (var i = 0; i < s.tetras.length; i++) if ((s.tetras[i].faces || []).join('|') === faces.join('|')) return s.tetras[i];
+    return null;
+  }
+  // Every way to complete four solids to a 4-simplex: {options (allowed), locked (outer horns), err}
+  function fill4Plan(s, refs) {
+    if (!Array.isArray(refs) || refs.length !== 4) return { options: [], locked: [], err: 'Pick four tetrahedra.' };
+    var sols = [];
+    for (var i = 0; i < 4; i++) {
+      var so = solidOfRef(s, refs[i]);
+      if (!so) return { options: [], locked: [], err: "I can't find one of those tetrahedra." };
+      sols.push(so);
+    }
+    var keys = sols.map(function (x) { return x.ref; });
+    if (new Set(keys).size !== 4) return { options: [], locked: [], err: 'Pick four different tetrahedra.' };
+    var kan = !!(s.level && s.level.kan);
+    var opts = [], locked = [], seen = {}, sawExisting = false;
+    [1, 2, 3, 0, 4].forEach(function (k) {
+      var slots = [0, 1, 2, 3, 4].filter(function (x) { return x !== k; });
+      PERMS4.forEach(function (pm) {
+        var map = {}, ok = true, n, j, key;
+        for (n = 0; n < 4 && ok; n++) {
+          var sol = sols[pm[n]], cs = OMIT[slots[n]];
+          for (j = 0; j < 4; j++) {
+            key = cs.filter(function (_, p) { return p !== j; }).join('');
+            if (map[key] !== undefined && map[key] !== sol.faces[j]) { ok = false; break; }
+            map[key] = sol.faces[j];
+          }
+        }
+        if (!ok) return;
+        var faces = OMIT[k].map(function (c, j) { return map[OMIT[k].filter(function (_, p) { return p !== j; }).join('')]; });
+        if (faces.some(function (f) { return f === undefined; })) return;
+        var g = solidGeom(s, faces);
+        if (!g || !g.ok) return;
+        var fk = faces.join('|');
+        if (seen[fk + '#' + k]) return;
+        seen[fk + '#' + k] = 1;
+        var placement = [null, null, null, null, null];
+        for (n = 0; n < 4; n++) placement[slots[n]] = sols[pm[n]].ref;
+        var opt = { missing: k, inner: k >= 1 && k <= 3, placement: placement, faces: faces, vertices: g.vertices, edges: g.edges,
+          faceNames: faces.map(function (r) { var t = triOfRef(s, r); return t ? (t.name || r) : r; }) };
+        if (tetExact(s, faces)) { sawExisting = true; return; }
+        (opt.inner || kan ? opts : locked).push(opt);
+      });
+    });
+    var err = null;
+    if (!opts.length) err = locked.length ? "That would fill an outer horn: it needs reversible arrows." : (sawExisting ? 'That tetrahedron is already there.' : "Those four tetrahedra don't fit together in a 4-simplex.");
+    var seenF = {}, uniq = [];
+    opts.forEach(function (o) { var k = o.faces.join('|'); if (!seenF[k]) { seenF[k] = 1; uniq.push(o); } });
+    var name = 'τ' + sub((s.counters.tau || 0) + 1);
+    uniq.forEach(function (o) { o.name = name; o.text = name + ' : (' + o.faceNames.join(', ') + ')'; });
+    return { options: uniq, locked: locked, err: err };
+  }
+  Engine.fill4Options = function (s, refs) { return fill4Plan(s, refs).options; };
+  Engine.fill4Plan = function (s, refs) { var p = fill4Plan(s, refs); return { options: p.options, locked: p.locked, reason: p.err }; };
+  Engine.fill4 = mut(function (s, refs, optionIndex) {
+    var p = fill4Plan(s, refs);
+    if (!p.options.length) return fail(p.err);
+    var i = optionIndex || 0;
+    if (i < 0 || i >= p.options.length) return fail("That option doesn't exist.");
+    var o = p.options[i], added = newAdded();
+    refs.forEach(function (r) { materialiseSolid(s, added, r); });
+    o.faces.forEach(function (r) { getFact(s, added, r); });
+    var T = { id: 'T' + (++s.counters.T), faces: o.faces.slice(), missing: null, vertices: o.vertices, edges: o.edges, kind: 'fill4',
+      fill4: { missing: o.missing, placement: o.placement.map(function (r) { var so = solidOfRef(s, r); return so ? so.ref : r; }) } };
+    s.tetras.push(T); added.tetras.push(T.id);
+    return { ok: true, added: added, message: 'New tetrahedron ' + o.name + ' fills the horn Λ⁴' + sub(o.missing) + '.' };
+  });
+
+  function solidPool(s) {
+    var pool = [], seen = {};
+    s.tetras.forEach(function (T) { if (!seen[T.id]) { seen[T.id] = 1; pool.push(T.id); } });
+    var tris = s.triangles.map(function (t) { return t.id; });
+    Engine.freeTriangles(s).forEach(function (f) { if (tris.indexOf(f.ref) < 0) tris.push(f.ref); });
+    tris.forEach(function (r) { [0, 1, 2].forEach(function (i) { var id = 'S' + i + ':' + r; if (!seen[id]) { seen[id] = 1; pool.push(id); } }); });
+    return pool;
+  }
+  // which solids may be picked next, given the picks so far (each must be completable to a fillable horn)
+  function fill4Candidates(s, picks) {
+    var pool = solidPool(s), sols = {};
+    pool.forEach(function (r) { sols[r] = solidOfRef(s, r); });
+    var base = picks.map(function (r) { var so = solidOfRef(s, r); return so ? so.ref : r; });
+    function completable(cur, from) {
+      if (cur.length === 4) return Engine.fill4Options(s, cur).length > 0;
+      for (var i = from; i < pool.length; i++) {
+        if (cur.indexOf(pool[i]) >= 0) continue;
+        var next = cur.concat([pool[i]]);
+        if (!partialPlacement(next.map(function (r) { return sols[r] || solidOfRef(s, r); }))) continue;
+        if (completable(next, i + 1)) return true;
+      }
+      return false;
+    }
+    if (base.length >= 4) return [];
+    if (base.some(function (r) { return !solidOfRef(s, r); })) return [];
+    var out = [];
+    pool.forEach(function (x) {
+      if (base.indexOf(x) >= 0) return;
+      var next = base.concat([x]);
+      if (!partialPlacement(next.map(function (r) { return sols[r] || solidOfRef(s, r); }))) return;
+      if (completable(next, 0)) out.push(x);
+    });
+    return out;
+  }
+
+  // goal.solids: patterns [d0, d1, d2, d3] of triangle refs or ?variables
+  function matchSolidsFull(s, pats) {
+    var literal = {};
+    pats.forEach(function (p) { p.forEach(function (x) { if (x.charAt(0) !== '?') literal[resolveRef(s, x)] = true; }); });
+    function rec(i, b, tets) {
+      if (i === pats.length) return { b: b, tets: tets };
+      var p = pats[i];
+      for (var ti = 0; ti < s.tetras.length; ti++) {
+        var T = s.tetras[ti];
+        if (!T.faces || T.faces.length !== 4 || tets.indexOf(T) >= 0) continue;
+        var nb = {}, ok = true, key, j;
+        for (key in b) nb[key] = b[key];
+        for (j = 0; j < 4 && ok; j++) {
+          var pv = p[j], tv = T.faces[j];
+          if (pv.charAt(0) === '?') {
+            if (nb[pv] !== undefined) { if (nb[pv] !== tv) ok = false; }
+            else {
+              if (literal[tv]) ok = false;
+              for (var o in nb) if (nb[o] === tv) ok = false;
+              if (ok) nb[pv] = tv;
+            }
+          } else if (resolveRef(s, pv) !== tv) ok = false;
+        }
+        if (ok) { var r = rec(i + 1, nb, tets.concat([T])); if (r) return r; }
+      }
+      return null;
+    }
+    return rec(0, {}, []);
+  }
+
+  // ---------- subcategories (SPEC6 B): select puzzles ----------
+  function allEdgeIds(s) { return s.edges.map(function (e) { return e.id; }); }
+  // the smallest set containing the seeds and every identity, closed under composition and homotopy
+  Engine.closure = function (s, seeds) {
+    var K = {};
+    (seeds || []).forEach(function (x) { K[x] = 1; });
+    s.vertices.forEach(function (v) { K['id:' + v.id] = 1; });
+    s.edges.forEach(function (e) { if (isIdEdge(e)) K[e.id] = 1; });
+    var changed = true;
+    while (changed) {
+      changed = false;
+      s.triangles.forEach(function (t) {
+        if (K[t.e01] && K[t.e12] && !K[t.e02]) { K[t.e02] = 1; changed = true; }
+        if (isIdId(t.e12)) {
+          if (K[t.e01] && !K[t.e02]) { K[t.e02] = 1; changed = true; }
+          if (K[t.e02] && !K[t.e01]) { K[t.e01] = 1; changed = true; }
+        }
+      });
+    }
+    return Object.keys(K).sort();
+  };
+  // arrows the facts on the board force to be equivalences (two-sided inverse up to homotopy)
+  Engine.provableEquivalences = function (s) {
+    var Q = {};
+    s.vertices.forEach(function (v) { Q['id:' + v.id] = 1; });
+    s.edges.forEach(function (e) { if (isIdEdge(e)) Q[e.id] = 1; });
+    var T = s.triangles;
+    // pairs with both inverse triangles: (f, g ; 1_a) and (g, f ; 1_b)
+    T.forEach(function (t1) {
+      if (!isIdId(t1.e02) || isIdId(t1.e01) || isIdId(t1.e12)) return;
+      T.forEach(function (t2) {
+        if (isIdId(t2.e02) && t2.e01 === t1.e12 && t2.e12 === t1.e01) { Q[t1.e01] = 1; Q[t1.e12] = 1; }
+      });
+    });
+    var changed = true;
+    while (changed) {
+      changed = false;
+      T.forEach(function (t) {
+        // composite of two equivalences
+        if (Q[t.e01] && Q[t.e12] && !Q[t.e02]) { Q[t.e02] = 1; changed = true; }
+        // homotopy
+        if (isIdId(t.e12)) {
+          if (Q[t.e01] && !Q[t.e02]) { Q[t.e02] = 1; changed = true; }
+          if (Q[t.e02] && !Q[t.e01]) { Q[t.e01] = 1; changed = true; }
+        }
+        // a one-sided inverse of an equivalence is an equivalence: (e, k ; 1) or (k, e ; 1)
+        if (isIdId(t.e02) && !isIdId(t.e01) && !isIdId(t.e12)) {
+          if (Q[t.e01] && !Q[t.e12]) { Q[t.e12] = 1; changed = true; }
+          if (Q[t.e12] && !Q[t.e01]) { Q[t.e01] = 1; changed = true; }
+        }
+      });
+    }
+    return Object.keys(Q).sort();
+  };
+  // goal.select = { edges: [ids], seeds: [ids], prompt }. Counts only on failure; a failed check costs a move.
+  Engine.checkSelect = function (s, ids) {
+    var goal = s.level && s.level.goal, sel = goal && goal.select;
+    if (!sel) return fail('There is nothing to select here.');
+    var target = {}, mine = {};
+    (sel.edges || []).forEach(function (x) { target[x] = 1; });
+    (ids || []).concat(sel.seeds || []).forEach(function (x) { var e = lookupEdge(s, x); if (e && !isIdEdge(e)) mine[x] = 1; });
+    var extra = Object.keys(mine).filter(function (x) { return !target[x]; }).length;
+    var missing = Object.keys(target).filter(function (x) { return !mine[x]; }).length;
+    s.flags.selection = Object.keys(mine);
+    if (!extra && !missing) {
+      s.flags.selected = true;
+      s._ver = (s._ver || 0) + 1;
+      return { ok: true, added: newAdded(), extra: 0, missing: 0, message: 'Exactly right.' };
+    }
+    s.flags.penalty = (s.flags.penalty || 0) + 1;
+    return { ok: false, extra: extra, missing: missing, reason: 'Not yet: ' + extra + ' too many, ' + missing + ' missing.' };
+  };
 
   // ---------- picking a fact (SPEC5 world "Simplicial sets") ----------
   // goal.pick is a fact ref (or a list of refs, picked in order). A wrong pick costs a move (flags.penalty).
   function shapeOfRef(s, ref) {
     ref = resolveRef(s, ref);
-    var t = getTri(s, ref);
-    if (t) return t.e01 + '|' + t.e12 + '|' + t.e02;
-    var u = null;
-    universe(s).forEach(function (x) { if (x.ref === ref) u = x; });
-    return u ? u.shape : null;
+    var so = solidOfRef(s, ref);
+    if (so) return 'solid|' + so.faces.join(',');
+    return triOfRef(s, ref) ? 'tri|' + ref : null;
   }
   Engine.pick = function (s, ref) {
     var goal = s.level && s.level.goal;
@@ -1391,6 +1715,23 @@
       });
       bindings = matchTriangles(s, goal.triangles);
     }
+    if (goal.solids && goal.solids.length) {
+      var accS = [];
+      goal.solids.forEach(function (p) {
+        var trial = accS.concat([p]);
+        var fullS = matchSolidsFull(s, trial);
+        var dS = !!fullS;
+        if (dS) accS = trial;
+        var fnames = p.map(function (x) { if (x.charAt(0) === '?') return x; var t = triOfRef(s, x); return t ? (t.name || x) : x; });
+        var txt = 'tetrahedron (' + fnames.join(', ') + ')';
+        add({ kind: 'solid', verb: 'prove', faces: p.slice(), faceNames: fnames, text: txt, plain: txt, tuple: txt,
+          name: dS && fullS.tets[accS.length - 1] ? fullS.tets[accS.length - 1].name : null, done: dS });
+      });
+    }
+    if (goal.select) {
+      add({ kind: 'select', prompt: goal.select.prompt || null, seeds: (goal.select.seeds || []).slice(),
+        text: 'Select the arrows', plain: 'Select the arrows', done: !!s.flags.selected });
+    }
     if (goal.edges) {
       goal.edges.forEach(function (pr) {
         add({ kind: 'edge', pair: pr, text: vlabel(s, pr[0]) + ' → ' + vlabel(s, pr[1]), done: false });
@@ -1414,7 +1755,7 @@
     });
     if (goal.pick !== undefined && goal.pick !== null) {
       var seq = Array.isArray(goal.pick) ? goal.pick : [goal.pick], got = (s.flags.picks || []).length;
-      seq.forEach(function (ref, i) { add({ kind: 'pick', index: i, text: 'Pick a fact', plain: 'Pick a fact', done: i < got }); });
+      seq.forEach(function (ref, i) { add({ kind: 'pick', index: i, text: 'Pick a triangle', plain: 'Pick a triangle', done: i < got }); });
     }
     if (goal.flag) add({ kind: 'flag', flag: goal.flag, text: goal.flag, done: !!s.flags[goal.flag] });
     if (goal.impossible) {
@@ -1446,11 +1787,16 @@
 
   Engine.candidates = function (s, tool, picks) {
     picks = picks || [];
-    var out = { vertices: [], edges: [], triangles: [] };
+    var out = { vertices: [], edges: [], triangles: [], solids: [] };
     var E = allEdges(s), i, j, k;
-    if (tool === 'pick') {
+    if (tool === 'fill4') {
+      out.solids = fill4Candidates(s, picks);
+    } else if (tool === 'select') {
+      s.edges.forEach(function (e) { if (!isIdEdge(e)) out.edges.push(e.id); });
+    } else if (tool === 'pick') {
       s.triangles.forEach(function (t) { out.triangles.push(t.id); });
       Engine.freeTriangles(s).forEach(function (f) { if (!f.exists) out.triangles.push(f.ref); });
+      out.solids = solidPool(s);
     } else if (tool === 'identity') {
       if (picks.length) return out;
       s.vertices.forEach(function (v) { if (!getEdge(s, 'id:' + v.id)) out.vertices.push(v.id); });

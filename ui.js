@@ -17,7 +17,7 @@
     5: 'Kan complexes', 6: 'Nerves of categories', 7: 'Skeleta and cells', 8: 'Anodyne maps',
     9: 'Left fibrations', 10: 'Joyal\'s theorem', 11: 'Natural transformations', 12: 'Sandbox'
   };
-  var KIND_NAMES = { given: 'given', compose: 'made', thin: 'degenerate', solved: 'solved', filled: 'deduced', cell: 'glued', trip: 'trip', theorem: 'theorem' };
+  var KIND_NAMES = { given: 'given', compose: 'made', thin: 'degenerate', solved: 'solved', filled: 'deduced', cell: 'attached', trip: 'filled', theorem: 'theorem', fill4: 'filled' };
 
   /* ---------- helpers ---------- */
   function $(id) { return document.getElementById(id); }
@@ -283,7 +283,7 @@
   function isSandbox(lv) {
     if (!lv || !lv.goal) return true;
     var g = lv.goal;
-    return !(arr(g.triangles).length || arr(g.edges).length || g.counts || g.min || g.flag || g.impossible || g.pick != null);
+    return !(arr(g.triangles).length || arr(g.edges).length || g.counts || g.min || g.flag || g.impossible || g.pick != null || arr(g.solids).length || g.select);
   }
   // Worlds branch: a world opens once the worlds it needs are finished (their boss levels are optional);
   // inside a world, each level opens when the one before it is solved.
@@ -449,19 +449,19 @@
     identity: { label: 'Identity', key: 'I', desc: 'Identity arrows and their degenerate triangles.',
       picks: [pickStep('Tap a vertex or an arrow.', ['vertex', 'edge'], 'vertex or arrow')],
       run: function (p) { return ['identity', p[0].id]; } },
-    horn0: { labelTeX: 'f\\cdot ? \\simeq h', label: 'Solve', key: 'L', desc: 'Find the missing second arrow (horn \u039B\u00B2\u2080).',
+    horn0: { labelTeX: '\\Lambda^2_0', subTeX: '(f,\\ ?\\,;\\ h)', label: 'Fill', key: 'L', desc: 'Find the missing second arrow (horn \u039B\u00B2\u2080).',
       picks: [pickStep('Pick the first arrow <i>f</i>. A vertex means its identity.', ['edge'], 'f'), pickStep('Pick the whole way <i>h</i>.', ['edge'], 'h')],
       run: function (p) { return ['horn0', p[0].id, p[1].id]; } },
-    horn2: { labelTeX: '? \\cdot g \\simeq h', label: 'Solve', key: 'R', desc: 'Find the missing first arrow (horn \u039B\u00B2\u2082).',
+    horn2: { labelTeX: '\\Lambda^2_2', subTeX: '(?,\\ g\\,;\\ h)', label: 'Fill', key: 'R', desc: 'Find the missing first arrow (horn \u039B\u00B2\u2082).',
       picks: [pickStep('Pick the last arrow <i>g</i>.', ['edge'], 'g'), pickStep('Pick the whole way <i>h</i>.', ['edge'], 'h')],
       run: function (p) { return ['horn2', p[0].id, p[1].id]; } },
     fill3: { label: 'Fill tetrahedron', desc: 'Three faces force a fourth.',
-      picks: [pickStep('Pick 3 facts that fit together.', ['tri'], '1'), pickStep('Pick a 2nd fact.', ['tri'], '2'), pickStep('Pick a 3rd fact.', ['tri'], '3')],
+      picks: [pickStep('Pick 3 triangles that fit together.', ['tri'], '1'), pickStep('Pick a 2nd triangle.', ['tri'], '2'), pickStep('Pick a 3rd triangle.', ['tri'], '3')],
       run: function (p) { return ['fill3', [p[0].id, p[1].id, p[2].id]]; } },
-    tetra: { label: 'Tetrahedron', key: 'T', desc: 'Three faces (facts) or three arrows end to end. A vertex means its identity.',
-      picks: [pickStep('Pick 3 facts (faces) \u2014 or 3 arrows end to end.', ['tri', 'edge'], '1'), pickStep('Pick a 2nd one.', ['tri', 'edge'], '2'), pickStep('Pick a 3rd one.', ['tri', 'edge'], '3')],
+    tetra: { label: 'Tetrahedron', key: 'T', desc: 'Three faces (triangles), or a spine of three composable arrows. A vertex means its identity.',
+      picks: [pickStep('Pick 3 triangles (faces), or a spine of 3 composable arrows.', ['tri', 'edge'], '1'), pickStep('Pick a 2nd one.', ['tri', 'edge'], '2'), pickStep('Pick a 3rd one.', ['tri', 'edge'], '3')],
       run: null },
-    cell2: { label: 'Glue triangle', key: 'G', desc: 'Fill in three arrows that close up.',
+    cell2: { label: 'Attach a 2-cell', key: 'G', desc: 'Attach a triangle along three arrows that close up (glue along the boundary).',
       picks: [pickStep('Pick 3 arrows that close up.', ['edge'], '1'), pickStep('Pick a 2nd arrow.', ['edge'], '2'), pickStep('Pick a 3rd arrow.', ['edge'], '3')],
       run: function (p) { return ['cell2', [p[0].id, p[1].id, p[2].id]]; } },
     addEdge: { label: 'Draw arrow', key: 'D', desc: 'From one vertex to another.',
@@ -470,43 +470,47 @@
     addVertex: { label: 'Add vertex', key: 'A', desc: 'Tap an empty spot.',
       picks: [pickStep('Tap an empty spot.', ['point'], 'spot')],
       run: function (p) { return ['addVertex', p[0].x, p[0].y]; } },
-    cell3: { label: 'Glue solid', key: 'B', desc: 'Fill in four triangles that close up into a hollow tetrahedron.',
+    cell3: { label: 'Attach a 3-cell', key: 'B', desc: 'Attach a tetrahedron along four triangles that close up (glue along the boundary).',
       picks: [pickStep('Pick 4 triangles that close up.', ['tri'], '1'), pickStep('Pick a 2nd triangle.', ['tri'], '2'), pickStep('Pick a 3rd triangle.', ['tri'], '3'), pickStep('Pick a 4th triangle.', ['tri'], '4')],
       run: function (p) { return ['cell3', [p[0].id, p[1].id, p[2].id, p[3].id]]; } },
-    peel: { label: 'Peel', key: 'P', desc: 'Remove the top layer.', instant: true, picks: [],
+    peel: { label: 'Skeleton', key: 'P', desc: 'Remove the top layer.', instant: true, picks: [],
       run: function () { return ['peel']; } },
-    same: { label: 'Same', key: '1', desc: 'Two composites of the same pair are homotopic.', theorem: true,
-      picks: [pickStep('Pick a composite fact.', ['tri'], '1'), pickStep('Pick another composite of the same pair.', ['tri'], '2')],
+    same: { label: 'Uniqueness', key: '1', desc: 'Two composites of the same pair are homotopic.', theorem: true,
+      picks: [pickStep('Pick a triangle witnessing a composite.', ['tri'], '1'), pickStep('Pick another composite of the same pair.', ['tri'], '2')],
       run: function (p) { return ['same', p[0].id, p[1].id]; } },
-    flip: { label: 'Flip', key: '2', desc: 'x \u2243 y gives y \u2243 x.', theorem: true,
+    flip: { label: 'Symmetry', key: '2', desc: 'x \u2243 y gives y \u2243 x.', theorem: true,
       picks: [pickStep('Pick a homotopy x \u2243 y.', ['tri'], '1')],
       run: function (p) { return ['flip', p[0].id]; } },
-    link: { label: 'Link', key: '3', desc: 'x \u2243 y and y \u2243 z give x \u2243 z.', theorem: true,
+    link: { label: 'Transitivity', key: '3', desc: 'x \u2243 y and y \u2243 z give x \u2243 z.', theorem: true,
       picks: [pickStep('Pick x \u2243 y.', ['tri'], '1'), pickStep('Pick y \u2243 z.', ['tri'], '2')],
       run: function (p) { return ['link', p[0].id, p[1].id]; } },
-    swapin: { label: 'Swap in', key: '4', desc: 'Use p \u2243 q to replace p by q in a fact.', theorem: true,
-      picks: [pickStep('Pick a homotopy p \u2243 q.', ['tri'], '1'), pickStep('Pick a fact that uses p.', ['tri'], '2')],
+    swapin: { label: 'Substitution', key: '4', desc: 'Transport along a homotopy p \u2243 q: replace p by q in a triangle.', theorem: true,
+      picks: [pickStep('Pick a homotopy p \u2243 q.', ['tri'], '1'), pickStep('Pick a triangle that uses p.', ['tri'], '2')],
       run: function (p) { return ['swapin', p[0].id, p[1].id]; } },
-    witness: { label: 'Not a nerve: show a bad pair', key: 'W', desc: 'Two arrows end to end with no composite, or with two different ones. A vertex means its identity.',
+    witness: { label: 'Not a nerve: show a horn \u039B\u00B2\u2081 with no filler, or two', key: 'W', desc: 'Two arrows end to end with no composite, or with two different ones. A vertex means its identity.',
       picks: [pickStep('Pick the first arrow of the pair.', ['edge'], '1st'), pickStep('Pick the arrow that follows it.', ['edge'], '2nd')],
       run: function (p) { return ['witness', p[0].id, p[1].id]; } },
     isNerve: { label: 'It is a nerve', key: 'N', desc: 'Every two arrows end to end have exactly one composite.', instant: true, picks: [],
       run: function () { return ['isNerve']; } },
-    cosk: { label: 'Fill in', key: 'K', desc: 'Coskeleton: fill every hollow shape, in the only possible way.', instant: true, picks: [],
+    cosk: { label: 'Coskeleton', key: 'K', desc: 'Coskeleton: fill every hollow shape, in the only possible way.', instant: true, picks: [],
       run: function () { return ['cosk']; } },
-    liftEdge: { label: 'Lift arrow', key: 'F', desc: 'Lift an arrow of the shadow, starting at a vertex above its start. It ends at a new vertex.',
+    liftEdge: { label: 'Lift arrow', key: 'F', desc: 'Lift an arrow of the base S, starting at a vertex of X over its source. It ends at a new vertex.',
       picks: [pickStep('Pick the vertex to start from.', ['vertex'], 'start')],
       run: function (p) { return ['liftEdge', p[0].id]; } },
-    divide: { label: 'Divide', key: '5', desc: 'If u then v is an identity, move u or v to the other side of a fact.', theorem: true,
-      picks: [pickStep('Pick a fact saying two arrows compose to an identity.', ['tri'], '1'), pickStep('Pick a fact that uses one of those arrows.', ['tri'], '2')],
+    divide: { label: 'Cancel an isomorphism', key: '5', desc: 'If u then v is an identity, move u or v to the other side of a triangle.', theorem: true,
+      picks: [pickStep('Pick a triangle saying two arrows compose to an identity.', ['tri'], '1'), pickStep('Pick a triangle that uses one of those arrows.', ['tri'], '2')],
       run: function (p) { return ['divide', p[0].id, p[1].id]; } }
   };
+  TOOLS.fill4 = { label: '4-simplex', key: 'S', desc: 'Fill a horn \u039B\u2074\u2096: four tetrahedra that fit together as faces of a 4-simplex force the fifth.',
+    picks: [pickStep('Pick 4 tetrahedra that fit together.', ['solid'], '1'), pickStep('Pick a 2nd tetrahedron.', ['solid'], '2'), pickStep('Pick a 3rd tetrahedron.', ['solid'], '3'), pickStep('Pick a 4th tetrahedron.', ['solid'], '4')],
+    run: function (p) { return ['fill4', p.map(function (x) { return x.id; })]; } };
   TOOLS.trip = TOOLS.tetra;
   var MATH_TOOL = {
     compose: '\\Lambda^2_1', identity: 's_0,\\, s_1', horn0: '\\Lambda^2_0', horn2: '\\Lambda^2_2', fill3: '\\Lambda^3_i', tetra: '\\Lambda^3_i',
     cell2: '\\partial\\Delta^2 \\hookrightarrow \\Delta^2', addEdge: '\\Delta^1', addVertex: '\\Delta^0', peel: '\\mathrm{sk}',
     same: '\\sigma,\\sigma\'\\Rightarrow\\simeq', flip: '\\simeq^{-1}', link: '\\simeq\\cdot\\simeq', swapin: 'p\\simeq q', divide: 'u^{-1}', liftEdge: '\\Lambda^1_0', cosk: '\\mathrm{cosk}', witness: '\\Lambda^2_1\\ \\text{fails}', isNerve: 'N(\\mathcal C)'
   };
+  ICONS.fill4 = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 L21 9.5 L17.5 20 H6.5 L3 9.5 Z" fill="none"/><path d="M12 3 L6.5 20 M12 3 L17.5 20 M3 9.5 L21 9.5 M3 9.5 L17.5 20 M21 9.5 L6.5 20" fill="none" stroke-width="1"/></svg>';
   ICONS.tetra = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 L3 17 L11 21 L21 16 Z M12 3 L11 21" fill="none"/><path d="M3 17 L21 16" fill="none" stroke-dasharray="2 2.5"/></svg>';
   ICONS.same = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9 H19 M5 15 H19" fill="none"/></svg>';
   ICONS.flip = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8 H18 L15 5 M20 16 H6 L9 19" fill="none"/></svg>';
@@ -518,9 +522,9 @@
   ICONS.cosk = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19 L12 5 L20 19 Z" fill="currentColor" fill-opacity=".25"/></svg>';
   ICONS.cell3 = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 L3 17 L11 21 L21 16 Z" fill="currentColor" fill-opacity=".25"/><path d="M12 3 L3 17 L11 21 L21 16 Z M12 3 L11 21" fill="none"/></svg>';
   ICONS.divide = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12 H19" fill="none"/><circle cx="12" cy="6.5" r="1.6"/><circle cx="12" cy="17.5" r="1.6"/></svg>';
-  var TOOL_ORDER = ['witness', 'isNerve', 'liftEdge', 'compose', 'identity', 'horn0', 'horn2', 'fill3', 'tetra', 'addVertex', 'addEdge', 'cell2', 'cell3', 'peel', 'cosk', 'same', 'flip', 'link', 'swapin', 'divide'];
+  var TOOL_ORDER = ['witness', 'isNerve', 'liftEdge', 'compose', 'identity', 'horn0', 'horn2', 'fill3', 'tetra', 'fill4', 'addVertex', 'addEdge', 'cell2', 'cell3', 'peel', 'cosk', 'same', 'flip', 'link', 'swapin', 'divide'];
   ['compose', 'horn0', 'horn2', 'tetra', 'witness'].forEach(function (t) { TOOLS[t].stay = true; });
-  var THEOREM_NAMES = { same: 'Same', flip: 'Flip', link: 'Link', swapin: 'Swap in', divide: 'Divide' };
+  var THEOREM_NAMES = { same: 'Uniqueness', flip: 'Symmetry', link: 'Transitivity', swapin: 'Substitution', divide: 'Cancel an isomorphism' };
   function toolName(t) { return t === 'trip' ? 'tetra' : t; }
 
   function engineHas(name) { return !!(HC.Engine && typeof HC.Engine[name] === 'function'); }
@@ -563,7 +567,7 @@
     P.pulse = Object.keys(P.newTools).length > 0 || i === 0;
     var modal = tools.filter(function (t) { return !TOOLS[t].instant; });
     P.tool = modal.length === 1 ? modal[0] : null;
-    P.picks = []; P.choice = null; P.trip = null; P.hintsShown = 0; P.won = false; P.hoverTri = null; P.pinnedTri = null; P.previewEdges = null;
+    P.picks = []; P.choice = null; P.trip = null; P.quad = null; P.kept = {}; P.selMsg = null; P.hintsShown = 0; P.won = false; P.hoverTri = null; P.pinnedTri = null; P.previewEdges = null;
     P.fresh = emptyFresh(); P.goalPrev = []; P.blanksPrev = {}; P.skel = 3; P.selEdge = null; P.goalGhost = null; P.ghostPos = {}; P.vbFrozen = null;
     P.layers = { v: true, e: true, t: true, s: true }; P.unfold = !!lv.startUnfolded; P.unfoldAvail = false; P.unfoldTripKey = ''; stopRename(); closeWhy(); hideChooser(); close3D();
     hideTetra(); hideWin();
@@ -656,7 +660,7 @@
     var m = P.m;
     var tris = arr(a.triangles).map(function (id) { return m.t[id]; }).filter(Boolean);
     var real = tris.filter(function (t) { return !isThin(t); });
-    if (real.length) return 'New fact ' + math(triTeX(m, real[real.length - 1]));
+    if (real.length) return 'New triangle ' + math(triTeX(m, real[real.length - 1]));
     if (arr(a.tetras).length) return 'Filled, and it agrees with what you had.';
     if (tris.length) return 'Degenerate triangles for ' + math(eTeX(m, tris[0].e02));
     var es = arr(a.edges).filter(function (id) { return m.e[id]; });
@@ -673,7 +677,7 @@
     if (!r || !r.ok) { toast('Nothing to undo.', 'info'); return; }
     if (r.state) P.state = r.state;
     P.moves = Math.max(0, P.moves - 1);
-    P.picks = []; P.choice = null; P.trip = null; renderTrip(); P.fresh = emptyFresh();
+    P.picks = []; P.choice = null; P.trip = null; P.quad = null; renderTrip(); P.fresh = emptyFresh();
     if (P.pinnedTri && !maps(P.state).t[P.pinnedTri]) P.pinnedTri = null;
     P.hoverTri = null;
     hideTetra();
@@ -684,7 +688,7 @@
   function resetLevel() {
     if (!P.level) return;
     try { P.state = freshState(P.level); } catch (e) { return; }
-    P.moves = 0; P.picks = []; P.choice = null; P.trip = null; renderTrip(); P.fresh = emptyFresh();
+    P.moves = 0; P.picks = []; P.choice = null; P.trip = null; P.quad = null; P.kept = {}; P.selMsg = null; renderTrip(); P.fresh = emptyFresh();
     P.pinnedTri = null; P.hoverTri = null; P.won = false;
     hideTetra(); hideWin();
     renderAll();
@@ -768,6 +772,20 @@
         parts.push({ kind: key, done: ok, html: esc(txt) + ' <span class="now">(now ' + have + ')</span>' });
       });
     });
+    // SPEC6: solids to prove, written by their faces (d₀, d₁, d₂, d₃)
+    var egSol = arr(eg.parts).filter(function (p) { return p && p.kind === 'solid'; });
+    arr(g.solids).forEach(function (pat, i) {
+      var ep = egSol[i] || {};
+      var faces = arr(pat).map(function (r) { return isVar(r) ? (b && b[r]) || null : r; });
+      var pics = faces.map(function (r) { var f = r && factInfo(r); return f ? factPic(m, f.e01, f.e12, f.e02, f.free ? 'tcf' : 'tc0') : ''; }).join('');
+      var tex = '(' + faces.map(function (r, j) { return r ? faceTeX(r) : (isVar(pat[j]) ? '?' : '?'); }).join(',\\ ') + ')';
+      parts.push({ kind: 'solid', done: !!ep.done, html: '<span class="goal-pic solid-pics">' + pics + '</span><span class="goal-txt"><b class="verb">Prove</b> a tetrahedron with faces ' + math(tex) +
+        (ep.done && ep.name ? ' <span class="note">' + math(solidNameTeX({ name: ep.name, ref: '' })) + '</span>' : '') + '</span>' });
+    });
+    if (g.select) {
+      var Tq = textFor(lv), pr = Tq.prompt || (Tq.prompts && Tq.prompts[g.select.prompt]) || (HC.Prompts && HC.Prompts[g.select.prompt]);
+      parts.push({ kind: 'select', done: !!(st.flags && st.flags.selected), html: '<span class="goal-txt"><b class="verb">Select</b> ' + (pr ? prose(pr) : 'exactly the arrows described on the left') + ' <span class="note">(' + plural(Object.keys(P.kept || {}).length, 'arrow', 'arrows') + ' kept)</span></span>' });
+    }
     if (g.pick != null) {
       var seq = Array.isArray(g.pick) ? g.pick : [g.pick], got = arr(st.flags && st.flags.picks);
       seq.forEach(function (ref, i) {
@@ -779,7 +797,8 @@
     if (g.flag) parts.push({ kind: 'flag', done: !!(st.flags && st.flags[g.flag]), html: g.flag === 'uniqueRefused' ? 'ask for a second answer' : g.flag === 'verdict' ? 'decide: is this the nerve of a category?' : esc(g.flag) });
     // engine parts, if they line up (impossible/claim parts are never shown: that is the player's call)
     var ep = arr(eg.parts).filter(function (p) { return p && !/impossible|claim/i.test(p.kind || ''); });
-    if (ep.length === parts.length) parts.forEach(function (p, i) { p.done = !!ep[i].done; });
+    // engine parts tick ours by position, but only where the kinds agree (counts/min both mean a count)
+    if (ep.length === parts.length) parts.forEach(function (p, i) { var k = ep[i].kind; if (!k || k === p.kind || (/count|min/.test(k) && /count|min/.test(p.kind))) p.done = !!ep[i].done; });
     var claimed = !!(g.impossible && st.flags && st.flags.claimed);
     if (claimed) {
       // the wished-for fact was never made: strike it, and tick the decision instead
@@ -797,7 +816,7 @@
     if (!a) return 'the triangle described on the left';
     function lbl(x) { var e = m.e[x]; return math(e ? eTeX(m, x) : labTeX(x)); }
     function fname(f) { return math('d_' + String(f).replace(/^d/, '')); }
-    if (a.card) return 'the triangle in the <b>Facts</b> list on the right';
+    if (a.card) return 'the triangle in the <b>Triangles</b> list on the right';
     if (a.face && a.edge) return 'the triangle whose ' + fname(a.face) + ' is ' + lbl(a.edge);
     if (a.face && a.degenerate != null) return 'face ' + fname(a.face) + ' of the tetrahedron' + (a.degenerate ? ' <span class="note">(it is one of the degenerate triangles)</span>' : '');
     var ks = ['d2', 'd0', 'd1'].filter(function (k) { return a[k] != null; });
@@ -859,9 +878,13 @@
       if (!intro) out.quiet = true;
       return out;
     }
+    // a 4-simplex in a puzzle: finding which four solids fit is the puzzle
+    if (P.tool === 'fill4' && !isIntro(P.level)) return null;
     var c = ask(P.tool, ids);
     if (!c) return null;
-    return { vertex: setOf(c.vertices), edge: setOf(c.edges), tri: setOf(c.triangles) };
+    var o = { vertex: setOf(c.vertices), edge: setOf(c.edges), tri: setOf(c.triangles) };
+    if (c.solids || c.tetras) o.solid = setOf(c.solids || c.tetras);
+    return o;
   }
   function isLive(live, item) {
     if (!live) return true;
@@ -880,13 +903,16 @@
   function handlePick(item) {
     if (!P.level) return;
     hideChooser();
+    // select levels: clicking an arrow keeps it (or lets it go)
+    if (isSelectLevel(P.level) && !P.tool) { if (item.kind === 'edge') { if (!P.won) toggleKept(item.id); } else if (item.kind === 'tri') toggleIsolate(item.id); return; }
     // world 0: tapping a triangle is the move
-    if (item.kind === 'tri' && P.level.goal && P.level.goal.pick != null && !P.won) {
+    if ((item.kind === 'tri' || item.kind === 'solid') && P.level.goal && P.level.goal.pick != null && !P.won) {
       var pr = doMove(['pick', item.id], [item]);
       if (pr && pr.ok) toggleIsolate(item.id);
       return;
     }
     if (P.choice) { if (item.kind === 'tri') toggleIsolate(item.id); return; }
+    if (item.kind === 'solid' && !(P.tool && TOOLS[P.tool].picks.some(function (s) { return s.accept.indexOf('solid') >= 0; }))) { open3DRef(item.id); return; }
     if (!P.tool) {
       if (item.kind === 'tri') { toggleIsolate(item.id); return; }
       if (item.kind === 'edge') { selectEdge(item.id); return; }
@@ -898,6 +924,7 @@
     // a dot in an arrow-picking tool means "its identity arrow"
     if (item.kind === 'vertex' && T.stay && !(P.tool === 'tetra' && P.picks.length && P.picks[0].kind === 'tri')) item = { kind: 'edge', id: 'id:' + item.id, stay: true, v: item.id };
     if (P.tool === 'tetra' && P.trip) { closeTrip(); }
+    if (P.tool === 'fill4' && P.quad) { closeQuad(); }
     if (P.tool !== 'tetra' || item.kind === 'tri') {
       for (var i = 0; i < P.picks.length; i++) {
         var q = P.picks[i];
@@ -922,6 +949,7 @@
     if (P.picks.length === T.picks.length) {
       var picks = P.picks.slice();
       if (P.tool === 'tetra') { P.picks = []; openTetra(picks); return; }
+      if (P.tool === 'fill4') { P.picks = []; openQuad(picks); return; }
       // lifting: several triangles below to lie over -> the player chooses
       if (baseOf() && engineHas('liftOptions') && (P.tool === 'compose' || P.tool === 'horn0' || P.tool === 'horn2' || P.tool === 'liftEdge')) {
         var lo = null, entry = T.run(picks);
@@ -952,7 +980,7 @@
     if (TOOLS[name].instant) { doMove(TOOLS[name].run([])); return; }
     P.tool = P.tool === name && P.picks.length === 0 && !P.choice && !P.trip ? null : name;
     if (P.tools.filter(function (t) { return !TOOLS[t].instant; }).length === 1) P.tool = name;
-    P.picks = []; P.choice = null; P.previewEdges = null; P.trip = null; renderTrip();
+    P.picks = []; P.choice = null; P.previewEdges = null; P.trip = null; P.quad = null; renderTrip();
     renderToolbar(); renderPicks();
     $('board').classList.toggle('placing', P.tool === 'addVertex');
     // theorem tools pick fact cards: on a phone the Facts list sits below the board, so bring it into view
@@ -960,7 +988,7 @@
       try { var fp = $('facts').parentNode; fp.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }); } catch (e) {}
     }
   }
-  function clearPicks() { if (P.trip) closeTrip(); P.picks = []; P.choice = null; P.previewEdges = null; P.pinnedTri = null; P.hoverTri = null; renderPicks(); }
+  function clearPicks() { if (P.trip) closeTrip(); if (P.quad) closeQuad(); P.picks = []; P.choice = null; P.previewEdges = null; P.pinnedTri = null; P.hoverTri = null; renderPicks(); }
   function togglePin(id) { P.pinnedTri = (P.pinnedTri === id) ? null : id; applyHighlights(); }
 
   function pickTeX(p) {
@@ -996,7 +1024,7 @@
     var bl = arr(T.bullets).length ? T.bullets : bulletsOf(T.story);
     if (mathMode() && T.math && T.math.say) bl = bulletsOf(T.math.say);
     $('bullets').classList.toggle('formal', mathMode() && !!(T.math && T.math.say));
-    if (!bl.length && isSandbox(lv)) bl = ['No goal. Make vertices, arrows and facts.'];
+    if (!bl.length && isSandbox(lv)) bl = ['No goal. Make vertices, arrows and triangles.'];
     $('bullets').innerHTML = bl.map(function (b, i) { var t = prose(b); return (i === bl.length - 1 && bl.length > 1 && !mathMode()) ? '<b class="task">' + t + '</b>' : t; }).join(' ');
     // Explain: closed by default, open the first time on intro levels
     var ex = $('explain'), exText = T.explain || (T.math && !mathMode() ? null : null);
@@ -1128,7 +1156,7 @@
         bar.appendChild(hEl('span', { class: 'tool-group' }, mathMode() ? 'lemmas' : 'your theorems'));
       } else if (T.instant && i > 0) bar.appendChild(hEl('span', { class: 'tool-sep', 'aria-hidden': 'true' }));
       var cls = 'tool' + (P.tool === name ? ' active' : '') + (P.newTools[name] ? ' newtool' : '') + (T.instant ? ' instant' : '');
-      var lab = mathMode() && MATH_TOOL[name] ? math(MATH_TOOL[name]) : esc(T.label) + (T.labelTeX ? ' ' + math(T.labelTeX) : '');
+      var lab = mathMode() && MATH_TOOL[name] ? math(MATH_TOOL[name]) : esc(T.label) + (T.labelTeX ? ' ' + math(T.labelTeX) : '') + (T.subTeX ? ' <small class="tsub">' + math(T.subTeX) + '</small>' : '');
       var b = hEl('button', { type: 'button', class: cls, 'data-tool': name, 'aria-pressed': T.instant ? null : String(P.tool === name), title: stripTags(T.desc) + (T.key ? ' (key ' + T.key + ')' : ''), 'aria-keyshortcuts': T.key || null },
         (ICONS[name] || '') + '<span>' + lab + '</span>' + (T.key ? '<span class="kbd tkey" aria-hidden="true">' + T.key + '</span>' : ''));
       if (!T.key) b.removeAttribute('aria-keyshortcuts');
@@ -1141,6 +1169,12 @@
 
   function renderToolHint() {
     var el = $('toolhint');
+    if (isSelectLevel(P.level) && !P.tool) { el.innerHTML = P.won ? '<span class="say">Checked: exactly right.</span>' : selectHintHTML(); return; }
+    if (P.quad) {
+      var qo = P.quad.choice != null ? P.quad.opts[P.quad.choice] : null;
+      el.innerHTML = '<span class="say">' + (!qo ? 'They fit in more than one way: choose below.' : qo.allowed ? 'Four faces known: fill the fifth (Enter).' : 'The missing face is an outer horn: locked here.') + '</span>';
+      return;
+    }
     if (P.trip) {
       var r = P.trip.res, msg;
       if (P.trip.claimed) msg = 'Filled. Pick another tetrahedron any time.';
@@ -1485,7 +1519,7 @@
     var sk = P.skel;
 
     var defs = sEl('defs');
-    ['given', 'composite', 'identity', 'solved', 'sel', 'hi'].forEach(function (k) {
+    ['given', 'composite', 'identity', 'solved', 'sel', 'hi', 'kept'].forEach(function (k) {
       var mk = sEl('marker', { id: 'ah-' + k, viewBox: '0 0 12 10', refX: '6', refY: '5', markerWidth: '20', markerHeight: '17', markerUnits: 'userSpaceOnUse', orient: 'auto' });
       mk.appendChild(sEl('path', { d: 'M0,0 L12,5 L0,10 L3,5 Z', class: 'ah ah-' + k }));
       defs.appendChild(mk);
@@ -1505,7 +1539,7 @@
       var gSh = sEl('g', { class: 'shadow-layer', transform: 'translate(0,' + r1(sDy) + ')' });
       gSh.appendChild(sEl('line', { x1: geo.vb[0], x2: geo.vb[0] + geo.vb[2], y1: r1(geoS.vb[1] - 25), y2: r1(geoS.vb[1] - 25), class: 'shadow-rule' }));
       var lab = sEl('text', { x: r1(geo.vb[0] + 16), y: r1(geoS.vb[1] - 6), class: 'shadow-name' }); var lic = P.level && P.level.licence;
-      lab.textContent = 'S, the shadow' + (lic === 'left' ? ', under a left fibration' : lic === 'inner' ? ', under an inner fibration' : '');
+      lab.textContent = 'the base S' + (lic === 'left' ? ', under a left fibration' : lic === 'inner' ? ', under an inner fibration' : '');
       gSh.appendChild(lab);
       var sIdx = {}; arr(base.edges).forEach(function (e, i) { sIdx[e.id] = i % 4; });
       var sF = sEl('g'), sE = sEl('g'), sV = sEl('g');
@@ -1646,11 +1680,11 @@
     Object.keys(P.els.edge).forEach(function (id) {
       var g = P.els.edge[id], k = g.getAttribute('data-kind');
       var sel = !!selE[id], hi = !!hiE[id], s = sel ? '' : state('edge', id);
-      g.classList.toggle('sel', sel); g.classList.toggle('hi', hi && !sel);
+      g.classList.toggle('sel', sel); g.classList.toggle('hi', hi && !sel); g.classList.toggle('kept', !!(P.kept && P.kept[id]));
       g.classList.toggle('live', s === 'live'); g.classList.toggle('dim', s === 'dim');
       g.classList.toggle('pulse', (pulse && s === 'live') || (!!guide && guide === id));
       var line = g.querySelector('.line');
-      if (line) line.setAttribute('marker-end', 'url(#ah-' + (sel ? 'sel' : hi ? 'hi' : k) + ')');
+      if (line) line.setAttribute('marker-end', 'url(#ah-' + (sel ? 'sel' : hi ? 'hi' : P.kept && P.kept[id] ? 'kept' : k) + ')');
     });
     Object.keys(P.els.tri).forEach(function (id) {
       P.els.tri[id].classList.toggle('hi', !!hiT[id]);
@@ -1672,7 +1706,14 @@
       var badge = c.querySelector('.pnum');
       if (badge) badge.textContent = selT[id] ? String(selT[id]) : '';
     });
-    $('facts').classList.toggle('picking', acc.indexOf('tri') >= 0);
+    var selS = {}; (P.quad ? P.quad.picks : picks).forEach(function (p, i) { if (p.kind === 'solid') selS[p.id] = i + 1; });
+    Object.keys(P.els.scard || {}).forEach(function (id) {
+      var c = P.els.scard[id], s = selS[id] ? '' : state('solid', id);
+      c.classList.toggle('picked', !!selS[id]); c.classList.toggle('live', s === 'live'); c.classList.toggle('dim', s === 'dim');
+      c.setAttribute('aria-pressed', String(!!selS[id]));
+      var bd = c.querySelector('.pnum'); if (bd) bd.textContent = selS[id] ? String(selS[id]) : '';
+    });
+    $('facts').classList.toggle('picking', acc.indexOf('tri') >= 0 || acc.indexOf('solid') >= 0);
     // isolate: a clicked fact card dims everything that is not part of it
     var iso = P.pinnedTri && m.t[P.pinnedTri], isoE = {}, isoV = {};
     if (iso) { [iso.e01, iso.e12, iso.e02].forEach(function (id) { isoE[id] = 1; var e = m.e[id]; if (e) { isoV[e.src] = isoV[e.dst] = 1; } else if (/^id:/.test(id)) isoV[id.slice(3)] = 1; }); }
@@ -2070,6 +2111,7 @@
     var tkey = P.trip && P.trip.res && P.trip.res.ok !== false ? JSON.stringify([P.trip.res.vertices, P.trip.res.edges, P.trip.res.claim && P.trip.res.claim.slot]) : '';
     if (P.unfold && tkey !== P.unfoldTripKey && P.geo) { P.unfoldTripKey = tkey; P.ghostPos = {}; renderBoard(); applyHighlights(); }
     P.unfoldTripKey = tkey;
+    if (P.quad) { unmountTetra3D(); renderQuad(el); return; }
     if (!P.trip && P.level && P.level.goal && P.level.goal.pick != null && arr(P.state && P.state.tetras).length) { renderGivenTetra(el, P.state.tetras[0]); return; }
     if (!P.trip) { el.hidden = true; el.innerHTML = ''; unmountTetra3D(); return; }
     var m = P.m, r = P.trip.res || {};
@@ -2130,7 +2172,7 @@
       return '<div class="tslot s' + k + cls + '" data-face="' + k + '"><span class="tlab">' + lab + '</span><span class="tval">' + val + '</span></div>';
     }).join('');
     rows = cornerLine + edgeLine + rows;
-    var sentence = 'A solid tetrahedron’s four faces must agree. Three are known — the fourth is forced.';
+    var sentence = 'A 3-simplex’s four faces must agree. Three are known — the fourth is forced.';
     var horn = '';
     if (cl) {
       var kf = SLOT_FACE[cl.slot], inner = kf === 1 || kf === 2;
@@ -2603,7 +2645,7 @@
   }
 
   /* --- show bar: layers, unfold, 3D, tidy --- */
-  var LAYERS = [['v', 'vertices'], ['e', 'arrows'], ['t', 'triangles'], ['s', 'solids']];
+  var LAYERS = [['v', 'vertices'], ['e', 'arrows'], ['t', 'triangles'], ['s', 'tetrahedra']];
   // a level that works with identities can always be opened up; err on the side of offering the control
   function levelUsesIdentities(lv) {
     if (!lv) return false;
@@ -2661,7 +2703,7 @@
     var faces = {}; [0, 1, 2, 3].forEach(function (f) { faces[f] = f === T.missing ? 'new' : 'known'; });
     var model = { corners: vs.map(function (v) { return v == null ? '?' : vLabel(m, v); }), edges: edges, faces: faces };
     var box = $('t3d');
-    box.querySelector('.t3d-title').innerHTML = 'Solid ' + (view3d.i + 1) + ' of ' + tets.length + (T.missing != null ? ' <span class="note">— filled face ' + T.missing + ' (' + math('\\Lambda^3_' + T.missing) + ')</span>' : '');
+    box.querySelector('.t3d-title').innerHTML = 'Tetrahedron ' + (view3d.i + 1) + ' of ' + tets.length + (T.missing != null ? ' <span class="note">— filled face ' + T.missing + ' (' + math('\\Lambda^3_' + T.missing) + ')</span>' : '');
     box.querySelector('[data-act="t3d-prev"]').hidden = box.querySelector('[data-act="t3d-next"]').hidden = tets.length < 2;
     box.hidden = false;
     var host = box.querySelector('.t3d-view');
@@ -2682,7 +2724,7 @@
   /* --- keyboard help overlay --- */
   function openHelp() {
     var rows = [
-      ['C', 'Compose'], ['T', 'Tetrahedron'], ['L / R', 'Solve for the second / first arrow'], ['1–4', 'Your theorems (when no tool is picking)'],
+      ['C', 'Compose'], ['T', 'Tetrahedron'], ['L / R', 'Fill \u039B\u00B2\u2080 / \u039B\u00B2\u2082 (solve for the second / first arrow)'], ['1–4', 'Your theorems (when no tool is picking)'],
       ['G', 'Glue triangle'], ['D', 'Draw arrow'], ['P', 'Peel'], ['A', 'Add vertex'],
       ['1–9', 'With a tool active: the first press shows numbers on the targets, the next picks one'], ['Enter', 'Fill / claim / next note or level'], ['Esc', 'Clear picks / close'],
       ['Z or Ctrl+Z', 'Undo'], ['Backspace', 'Remove the last pick'], ['H', 'Hint'], ['U', 'Unfold identities'],
@@ -2733,12 +2775,12 @@
     var box = $('why'), lv = P.level, M = ceModel(), vl = {};
     arr(lv.vertices).forEach(function (v) { vl[v.id] = v.label || v.id; });
     var html = '<p class="why-h"><b>Prove it can’t be done.</b> <button type="button" class="linklike" data-act="why-close">cancel</button></p>' +
-      '<p class="ce-note">Pick a small test world and place the <i>starting</i> picture in it so every given fact is true there. If the goal is false in that world, no sequence of moves can ever reach it: every move you can make also works in the test world.</p>' +
+      '<p class="ce-note">Give a <b>counterexample</b>: choose a category and send the <i>starting</i> picture into its nerve so that every given triangle holds there. If the goal fails in that category, no sequence of moves can reach it, because every move is also valid in the nerve of a category.</p>' +
       '<div class="ce-models">' + arr(HC.Models).map(function (m) {
         return '<button type="button" class="ce-model' + (CE.model === m.id ? ' on' : '') + '" data-model="' + esc(m.id) + '"><span class="ce-pic" data-pic="' + esc(m.id) + '"></span><span class="ce-name">' + esc(m.name) + '</span></button>';
       }).join('') + '</div>';
     if (M) {
-      if (M.note) html += '<p class="ce-note">In this world: ' + esc(M.note) + '</p>';
+      if (M.note) html += '<p class="ce-note">In this category: ' + esc(M.note) + '</p>';
       html += '<div class="ce-place"><div><p class="ce-h">Vertices</p>' + arr(lv.vertices).map(function (v) {
         return '<label class="ce-row">' + math(labTeX(vl[v.id])) + ' <span class="note">goes to</span> <select data-cev="' + esc(v.id) + '"><option value="">?</option>' +
           M.objects.map(function (o) { return '<option value="' + esc(o) + '"' + (CE.v[v.id] === o ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select></label>';
@@ -2751,7 +2793,7 @@
           return '<option value="' + esc(o.id) + '"' + (CE.e[ed.id] === o.id ? ' selected' : '') + '>' + esc(o.label.replace(/^1_/, 'identity at ')) + '</option>'; }).join('') + '</select>';
         return '<div class="ce-row">' + math(labTeX(ed.label) + ' : ' + labTeX(vl[ed.src]) + ' \\to ' + labTeX(vl[ed.dst])) + ' <span class="note">goes to</span> ' + body + '</div>';
       }).join('') + '</div></div>' +
-      '<p><button type="button" class="btn primary" data-act="ce-check">Check this world</button> ' + (CE.msg ? '<span class="ce-msg">' + esc(CE.msg) + '</span>' : '') + '</p>';
+      '<p><button type="button" class="btn primary" data-act="ce-check">Check this counterexample</button> ' + (CE.msg ? '<span class="ce-msg">' + esc(CE.msg) + '</span>' : '') + '</p>';
     }
     box.innerHTML = html; box.hidden = false;
     Array.prototype.forEach.call(box.querySelectorAll('[data-pic]'), function (n) {
@@ -2959,15 +3001,35 @@
     var tets = P.skel >= 3 && (mathMode() || hasSkeleton(P.level) || (P.level.goal && (P.level.goal.min || P.level.goal.counts))) ? arr(st.tetras) : [];
     $('facts-count').textContent = tris.length ? String(tris.length) : '';
     var sec = hEl('div', { class: 'facts-sec' });
-    sec.appendChild(hEl('h4', { class: 'facts-h' }, 'Triangles'));
     if (!tris.length) sec.appendChild(hEl('p', { class: 'empty' }, P.skel < 2 && arr(st.triangles).length ? 'Hidden by the view.' : 'None yet.'));
-    tris.forEach(function (t, i) { sec.appendChild(factCard(t.id, t, i, t.kind, false)); });
-    tets.forEach(function (T) {
-      var vs = uniq(tetraVerts(T, m)).map(function (v) { return vLabel(m, v); });
-      sec.appendChild(hEl('div', { class: 'fact solid' + (P.fresh.tetras[T.id] && !reduceMotion ? ' fresh' : '') },
-        '<span class="swatch" aria-hidden="true"></span><span class="ftext">solid ' + math(vs.map(labTeX).join('\\,')) + '</span><span class="fkind">tetrahedron</span>'));
+    var withDeg = solidsRelevant(P.level);
+    P.els.scard = {};
+    tris.forEach(function (t, i) {
+      sec.appendChild(factCard(t.id, t, i, t.kind, false));
+      // SPEC6: under each triangle, its three degenerate solids s₀σ, s₁σ, s₂σ
+      if (withDeg) {
+        var dd = hEl('details', { class: 'degsol' });
+        dd.innerHTML = '<summary>degenerate tetrahedra of ' + math(triNameTeX(m, t.id) || '\\sigma') + '</summary>';
+        degSolids(t.id).forEach(function (d, j) { var inf = solidInfo(d.ref); if (!inf.faces.length && d.faces) { inf.faces = d.faces; inf.vertices = d.vertices || []; inf.edges = d.edges || {}; } if (d.name) inf.name = d.name; dd.appendChild(solidCard(inf, j)); });
+        sec.appendChild(dd);
+      }
     });
     box.appendChild(sec);
+    // SPEC6: solids are facts too, named τᵢ and written by their four faces
+    var showSolids = arr(st.tetras).length > 0 || withDeg;
+    if (showSolids && P.skel >= 3) {
+      var ss = hEl('div', { class: 'facts-sec solids-sec' });
+      ss.appendChild(hEl('h4', { class: 'facts-h' }, 'Tetrahedra <span class="note">3-simplices, by their faces (d\u2080, d\u2081, d\u2082, d\u2083)</span>'));
+      if (!arr(st.tetras).length) ss.appendChild(hEl('p', { class: 'empty' }, 'None yet.'));
+      arr(st.tetras).forEach(function (T, i) { ss.appendChild(solidCard(solidInfo(T.id), i)); });
+      box.appendChild(ss);
+    } else if (tets.length) {
+      tets.forEach(function (T) {
+        var vs = uniq(tetraVerts(T, m)).map(function (v) { return vLabel(m, v); });
+        box.appendChild(hEl('div', { class: 'fact solid' + (P.fresh.tetras[T.id] && !reduceMotion ? ' fresh' : '') },
+          '<span class="swatch" aria-hidden="true"></span><span class="ftext">tetrahedron ' + math(vs.map(labTeX).join('\\,')) + '</span><span class="fkind">tetrahedron</span>'));
+      });
+    }
     // the degenerate triangles: there on every board, usable like any other fact
     if (P.skel >= 2) {
       var fr = freeTris();
@@ -2982,6 +3044,229 @@
       det.addEventListener('toggle', function () { progress.freeOpen[w] = det.open; saveProgress(); });
       box.appendChild(det);
     }
+  }
+
+  /* ================= SPEC6: solids as facts, the 4-simplex, select levels ================= */
+  var SUPD6 = '₀₁₂₃₄₅₆₇₈₉';
+  function solidsRelevant(lv) {
+    if (!lv) return false;
+    var g = lv.goal || {}, tl = arr(lv.tools);
+    var picks = g.pick == null ? [] : Array.isArray(g.pick) ? g.pick : [g.pick];
+    return tl.indexOf('fill4') >= 0 || arr(g.solids).length > 0 || picks.some(function (r) { return /^S[0-3]:/.test(String(r)); }) || !!lv.solidsOpen;
+  }
+  function triCornerIds(m, f) {
+    var A = edgeEnds(m, f.e01), B = edgeEnds(m, f.e12);
+    return [A[0], A[1], B[1]];
+  }
+  // the three degenerate solids of a triangle σ on corners (0,1,2): s₀σ on (0,0,1,2), s₁σ on (0,1,1,2), s₂σ on (0,1,2,2)
+  function degSolidsLocal(triRef) {
+    var m = P.m, f = factInfo(triRef); if (!f) return [];
+    var v = triCornerIds(m, f), a = f.e01, b = f.e12, c = f.e02;
+    function s0(e) { return 's0:' + e; } function s1(e) { return 's1:' + e; }
+    var id0 = 'id:' + v[0], id1 = 'id:' + v[1], id2 = 'id:' + v[2];
+    function norm(r) { return /^s[01]:id:/.test(r) ? 's0:' + r.slice(3) : r; }
+    return [
+      { ref: 'S0:' + triRef, k: 0, faces: [triRef, triRef, s0(c), s0(a)].map(norm), vertices: [v[0], v[0], v[1], v[2]], edges: { '01': id0, '12': a, '23': b, '02': a, '13': c, '03': c } },
+      { ref: 'S1:' + triRef, k: 1, faces: [s0(b), triRef, triRef, s1(a)].map(norm), vertices: [v[0], v[1], v[1], v[2]], edges: { '01': a, '12': id1, '23': b, '02': a, '13': b, '03': c } },
+      { ref: 'S2:' + triRef, k: 2, faces: [s1(b), s1(c), triRef, triRef].map(norm), vertices: [v[0], v[1], v[2], v[2]], edges: { '01': a, '12': b, '23': id2, '02': c, '13': b, '03': c } }
+    ];
+  }
+  function degSolids(triRef) {
+    if (engineHas('degenerateSolids')) {
+      try { var r = arr(HC.Engine.degenerateSolids(P.state, triRef)); if (r.length) return r.map(function (x, i) { return Object.assign({ k: i }, x); }); } catch (e) {}
+    }
+    return degSolidsLocal(triRef);
+  }
+  function solidIndex(ref) { var n = 0, hit = 0; arr(P.state && P.state.tetras).forEach(function (T) { n++; if (T.id === ref) hit = n; }); return hit; }
+  // everything the UI needs to show a solid: name, its four faces d₀…d₃ (triangle refs), corners
+  function solidInfo(ref) {
+    var m = P.m, out = null;
+    if (engineHas('describeSolid')) { try { out = HC.Engine.describeSolid(P.state, ref); } catch (e) { out = null; } }
+    var T = arr(P.state && P.state.tetras).filter(function (x) { return x.id === ref; })[0];
+    var deg = /^S([0-3]):(.+)$/.exec(String(ref));
+    var local = null;
+    if (deg) local = degSolidsLocal(deg[2]).filter(function (x) { return x.k === +deg[1]; })[0] || null;
+    var info = { ref: ref, name: (out && out.name) || (T && T.name) || null, faces: arr(out && out.faces).length ? out.faces : T ? arr(T.faces) : local ? local.faces : [],
+      vertices: arr(out && out.vertices).length ? out.vertices : T && arr(T.vertices).length ? T.vertices : local ? local.vertices : [],
+      edges: (out && out.edges) || (T && T.edges) || (local && local.edges) || {}, degenerate: !!deg, kind: T && T.kind };
+    if (!info.vertices.length && T) info.vertices = uniq(tetraVerts(T, m)).slice(0, 4);
+    return info;
+  }
+  function solidNameTeX(info) {
+    var nm = info.name;
+    if (nm) {
+      var a = /^τ_?\{?([0-9₀-₉]+)\}?$/.exec(nm); if (a) return '\\tau_{' + deSub(a[1]) + '}';
+      var b = /^s_?([0-3₀-₃])(.*)$/.exec(nm); if (b && info.degenerate) return 's_{' + deSub(b[1]) + '}' + (triNameTeX(P.m, info.ref.replace(/^S[0-3]:/, '')) || labTeX(b[2]));
+      return labTeX(nm);
+    }
+    var d = /^S([0-3]):(.+)$/.exec(String(info.ref));
+    if (d) return 's_{' + d[1] + '}' + (triNameTeX(P.m, d[2]) || '\\sigma');
+    var k = solidIndex(info.ref);
+    return k ? '\\tau_{' + k + '}' : '\\tau';
+  }
+  function solidNamePlain(info) {
+    if (info.name) return String(info.name);
+    var d = /^S([0-3]):(.+)$/.exec(String(info.ref));
+    if (d) return 's' + SUPD6[+d[1]] + (triNamePlain(P.m, d[2]) || 'σ');
+    var k = solidIndex(info.ref);
+    return 'τ' + String(k || '').split('').map(function (x) { return SUPD6[+x]; }).join('');
+  }
+  function faceTeX(ref) { var t = triNameTeX(P.m, ref); if (t) return t; var f = factInfo(ref); return f ? triTeXIds(P.m, f.e01, f.e12, f.e02) : '?'; }
+  function solidTeX(info) { return solidNameTeX(info) + ' : (' + arr(info.faces).map(function (r) { return r ? faceTeX(r) : '?'; }).join(',\\ ') + ')'; }
+  // a small flat tetrahedron: corners 0–3 with their vertices, faces shaded
+  function solidPic(info, cls) {
+    var V = [{ x: 6, y: 34 }, { x: 26, y: 4 }, { x: 52, y: 26 }, { x: 30, y: 44 }];
+    var m = P.m, vl = arr(info.vertices).map(function (v) { return v == null ? '' : vLabel(m, v); });
+    var E = [[0, 1], [1, 2], [2, 3], [0, 2], [1, 3], [0, 3]];
+    return '<svg class="mini-solid" viewBox="-8 -6 70 58" aria-hidden="true">' +
+      '<path class="ms-fill ' + (cls || '') + '" d="M' + [V[0], V[1], V[2], V[3]].map(pt).join(' L') + ' Z"/>' +
+      E.map(function (e) { var a = towards(V[e[0]], V[e[1]], 3), b = towards(V[e[1]], V[e[0]], 7); return '<path class="ms-e' + (e[0] === 0 && e[1] === 2 ? ' back' : '') + '" d="M' + pt(a) + ' L' + pt(b) + '" marker-end="url(#mt-ah)"/>'; }).join('') +
+      V.map(function (p, i) { return '<circle class="mt-v" cx="' + p.x + '" cy="' + p.y + '" r="2.4"/>' + (vl[i] ? '<text class="mt-c" x="' + (p.x + (i === 2 ? 5 : i === 0 ? -5 : 0)) + '" y="' + (p.y + (i === 1 ? -3 : i === 3 ? 9 : 3)) + '" text-anchor="' + (i === 0 ? 'end' : i === 2 ? 'start' : 'middle') + '">' + esc(vl[i]) + '</text>' : ''); }).join('') + '</svg>';
+  }
+  function solidCard(info, i, opts) {
+    opts = opts || {};
+    var c = hEl('button', { type: 'button', class: 'fact solidfact' + (info.degenerate ? ' freefact' : '') + (P.fresh.tetras[info.ref] && !reduceMotion ? ' fresh' : ''), 'data-solid': info.ref, 'aria-pressed': 'false',
+      title: solidNamePlain(info) + ': a tetrahedron whose faces d₀…d₃ are ' + arr(info.faces).map(function (r) { return r ? stripTags(triNamePlain(P.m, r) || r) : '?'; }).join(', ') + (info.degenerate ? ' (degenerate: always available)' : '') + '. Click to turn it in 3D.' },
+      '<span class="swatch" aria-hidden="true"></span>' + solidPic(info, info.degenerate ? 'tcf' : 'tc' + (i % 4)) +
+      '<span class="ftext">' + math(solidTeX(info)) + '</span><span class="fkind">' + esc(info.degenerate ? 'degenerate' : KIND_NAMES[info.kind] || info.kind || 'tetrahedron') + '</span><span class="pnum" aria-hidden="true"></span>');
+    P.els.scard = P.els.scard || {};
+    P.els.scard[info.ref] = c;
+    return c;
+  }
+  // a 3D look at any solid (real or degenerate), by ref
+  function open3DRef(ref) {
+    var info = solidInfo(ref), m = P.m;
+    var vs = arr(info.vertices).concat([null, null, null, null]).slice(0, 4);
+    var edges = {}, kinds = {}, te = info.edges || {};
+    ['01', '12', '23', '02', '13', '03'].forEach(function (k) { var id = te[k] || te['e' + k]; edges[k] = id ? stripTags(dispLabel(m, id)) : '?'; kinds[k] = id && isIdentityEdge(m, id) ? 'identity' : 'given'; });
+    var faces = {}, labels = {};
+    [0, 1, 2, 3].forEach(function (f) { faces[f] = 'known'; var r = arr(info.faces)[f]; if (r) labels[f] = 'd' + SUPD6[f] + ' = ' + stripTags(triNamePlain(m, r) || r); });
+    var model = { corners: vs.map(function (v) { return v == null ? '?' : vLabel(m, v); }), edges: edges, faces: faces, kinds: kinds, labels: labels };
+    var box = $('t3d');
+    box.querySelector('.t3d-title').innerHTML = math(solidTeX(info));
+    box.querySelector('[data-act="t3d-prev"]').hidden = box.querySelector('[data-act="t3d-next"]').hidden = true;
+    box.hidden = false;
+    var host = box.querySelector('.t3d-view');
+    if (!mountSolid(host, model)) host.innerHTML = sketchSVG(model);
+  }
+
+  /* --- the 4-simplex: four solids as four faces D_i of Δ⁴ force the fifth --- */
+  function normQuadOpt(o) {
+    o = o || {};
+    var k = o.missing != null ? +o.missing : o.k != null ? +o.k : null;
+    var place = o.placement || o.place || o.slots || o.D || null;
+    var arr5 = [null, null, null, null, null];
+    if (Array.isArray(place)) place.forEach(function (r, i) { arr5[i] = r && (typeof r === 'object' ? (r.ref || r.id) : r); });
+    else if (place && typeof place === 'object') Object.keys(place).forEach(function (key) { var i = +String(key).replace(/^D/, ''); if (i >= 0 && i < 5) { var r = place[key]; arr5[i] = r && (typeof r === 'object' ? (r.ref || r.id) : r); } });
+    var faces = arr(o.faces || o.newFaces || (o.solid && o.solid.faces));
+    return { k: k, place: arr5, faces: faces, allowed: o.allowed !== false && !o.locked, reason: o.reason, exists: !!o.exists,
+      vertices: arr(o.vertices), name: o.name || null, raw: o };
+  }
+  function openQuad(picks) {
+    var refs = picks.map(function (p) { return p.id; });
+    var opts = null;
+    try {
+      if (engineHas('fill4Plan')) {
+        // allowed options keep the engine's index (that is what fill4 takes); outer horns are shown locked
+        var plan = HC.Engine.fill4Plan(P.state, refs);
+        opts = arr(plan.options).map(function (o, i) { var n = normQuadOpt(o); n.idx = i; return n; })
+          .concat(arr(plan.locked).map(function (o) { var n = normQuadOpt(o); n.allowed = false; n.reason = n.reason || 'That is an outer horn: it fills only when every arrow is invertible.'; return n; }));
+      } else if (engineHas('fill4Options')) opts = arr(HC.Engine.fill4Options(P.state, refs)).map(function (o, i) { var n = normQuadOpt(o); n.idx = i; return n; });
+    } catch (e) { try { console.error(e); } catch (e2) {} opts = null; }
+    if (!opts || !opts.length) { doMove(['fill4', refs], picks); return; }   // the engine says why it doesn't fit
+    P.quad = { picks: picks, refs: refs, opts: opts, choice: opts.length === 1 ? 0 : null };
+    renderTrip(); applyHighlights(); renderToolHint();
+    try { var el = $('trip'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' }); } catch (e) {}
+  }
+  function closeQuad() { P.quad = null; renderTrip(); applyHighlights(); renderToolHint(); }
+  function quadFill() {
+    var q = P.quad; if (!q || q.choice == null) return false;
+    var o = q.opts[q.choice];
+    if (!o.allowed) { restartAnim(document.querySelector('#trip [data-act="qfill"]') || $('trip'), 'shake'); toast(prose(o.reason || 'That is an outer horn; it only fills in a Kan complex.'), 'info'); return false; }
+    var res = doMove(['fill4', q.refs, o.idx != null ? o.idx : q.choice], q.picks);
+    if (res && res.ok) { P.quad = null; renderTrip(); }
+    return !!(res && res.ok);
+  }
+  function pentagonSVG(o, vl) {
+    var R = 40, C = { x: 52, y: 50 }, V = [];
+    for (var i = 0; i < 5; i++) { var a = -Math.PI / 2 + i * 2 * Math.PI / 5; V.push({ x: C.x + R * Math.cos(a), y: C.y + R * Math.sin(a) }); }
+    var lines = '';
+    for (var i2 = 0; i2 < 5; i2++) for (var j = i2 + 1; j < 5; j++) {
+      var miss = o && o.k != null && (i2 !== o.k && j !== o.k);   // edges of the missing face D_k (it omits corner k)
+      var a2 = towards(V[i2], V[j], 5), b2 = towards(V[j], V[i2], 9);
+      lines += '<path class="pg-e' + (miss ? ' miss' : '') + '" d="M' + pt(a2) + ' L' + pt(b2) + '" marker-end="url(#mt-ah)"/>';
+    }
+    var dots = V.map(function (p, i) {
+      var ox = (p.x - C.x) / R * 11, oy = (p.y - C.y) / R * 11;
+      return '<circle class="pg-v' + (o && o.k === i ? ' omit' : '') + '" cx="' + r1(p.x) + '" cy="' + r1(p.y) + '" r="3.4"/>' +
+        '<text class="pg-l" x="' + r1(p.x + ox) + '" y="' + r1(p.y + oy + 3) + '" text-anchor="middle">' + esc(vl[i] != null ? vl[i] : '') + '<tspan class="pg-i" dy="3">' + i + '</tspan></text>';
+    }).join('');
+    return '<svg class="pentagon" viewBox="-6 -4 116 112" role="img" aria-label="the 4-simplex: five corners, every pair joined">' + lines + dots + '</svg>';
+  }
+  function renderQuad(el) {
+    var q = P.quad, m = P.m;
+    var head = '<div class="trip-head"><b>4-simplex</b> <span class="note">four tetrahedra as faces of ' + math('\\Delta^4') + '</span>' +
+      ' <button type="button" class="linklike" data-act="qclose">close <span class="kbd">Esc</span></button></div>';
+    var choose = '';
+    if (q.opts.length > 1) {
+      choose = '<p class="trip-horn">These four tetrahedra fit together in ' + q.opts.length + ' ways. Choose one:</p><p class="q-opts">' + q.opts.map(function (o, i) {
+        return '<button type="button" class="mini' + (q.choice === i ? ' on' : '') + '" data-qopt="' + i + '">missing ' + math('D_' + o.k) + (o.allowed ? '' : ' ' + LOCK_SVG) + '</button>';
+      }).join(' ') + '</p>';
+    }
+    var o = q.choice != null ? q.opts[q.choice] : null;
+    var vs = [null, null, null, null, null];
+    if (o) {
+      var OM = [[1, 2, 3, 4], [0, 2, 3, 4], [0, 1, 3, 4], [0, 1, 2, 4], [0, 1, 2, 3]];
+      o.place.forEach(function (r, i) { if (!r) return; var inf = solidInfo(r); arr(inf.vertices).forEach(function (v, j) { if (vs[OM[i][j]] == null) vs[OM[i][j]] = v; }); });
+      if (o.k != null) arr(o.vertices).forEach(function (v, j) { if (vs[OM[o.k][j]] == null) vs[OM[o.k][j]] = v; });
+    }
+    var vl = vs.map(function (v) { return v == null ? '' : vLabel(m, v); });
+    var rows = '';
+    if (o) {
+      rows = [0, 1, 2, 3, 4].map(function (i) {
+        var lab = math('D_' + i) + ' <span class="tcorn">omits ' + i + '</span>';
+        if (i === o.k) {
+          var nf = o.faces.length ? '(' + o.faces.map(function (r) { return r ? faceTeX(r) : '?'; }).join(',\\ ') + ')' : '?';
+          return '<div class="tslot ' + (o.allowed ? 'want' : 'locked') + '"><span class="tlab">' + lab + '</span><span class="tval"><span class="tmust">' + math('\\text{new tetrahedron} : ' + nf) + '</span> ' +
+            '<button type="button" class="btn claim' + (o.allowed ? '' : ' locked') + '" data-act="qfill"' + (o.allowed ? '' : ' title="' + esc(stripTags(o.reason || 'outer horn')) + '"') + '>' +
+            (o.allowed ? 'Fill <span class="kbd">Enter</span>' : LOCK_SVG + ' Locked') + '</button></span></div>';
+        }
+        var r = o.place[i], info = r ? solidInfo(r) : null;
+        return '<div class="tslot set"><span class="tlab">' + lab + '</span><span class="tval">' + (info ? solidPic(info, info.degenerate ? 'tcf' : 'tc0') + math(solidTeX(info)) : '?') + '</span></div>';
+      }).join('');
+      var inner = o.k > 0 && o.k < 4;
+      rows += '<p class="trip-horn">missing face ' + o.k + ' of 4 → horn ' + math('\\Lambda^4_' + o.k) + ', ' + (inner ? 'inner' : 'outer') + (o.allowed ? '' : ' — ' + prose(o.reason || 'locked here')) + '</p>';
+    }
+    el.innerHTML = head + choose + '<div class="trip-body"><div class="trip-view">' + pentagonSVG(o, vl) + '</div><div class="trip-slots">' + rows + '</div></div>' +
+      '<p class="trip-rule">A 4-simplex has five tetrahedral faces; each ' + math('D_i') + ' leaves out corner ' + math('i') + '. When four of them agree along their shared triangles, the fifth is forced.</p>';
+    el.hidden = false;
+  }
+
+  /* --- select levels: mark arrows as kept, then Check --- */
+  function isSelectLevel(lv) { return !!(lv && lv.goal && lv.goal.select); }
+  function toggleKept(id) {
+    if (!P.kept) P.kept = {};
+    if (isIdentityEdge(P.m, id)) { toast('Identities are always kept: every subcategory contains them.', 'info'); return; }
+    if (P.kept[id]) delete P.kept[id]; else P.kept[id] = 1;
+    P.selMsg = null;
+    applyHighlights(); renderToolHint();
+  }
+  function checkSelection() {
+    var ids = Object.keys(P.kept || {});
+    var res = doMove(['checkSelect', ids], ids.map(function (id) { return { kind: 'edge', id: id }; }));
+    if (res && !res.ok && (res.extra != null || res.missing != null)) {
+      var parts = [];
+      if (res.extra) parts.push(plural(res.extra, 'arrow is', 'arrows are') + ' kept that should not be');
+      if (res.missing) parts.push(plural(res.missing, 'arrow is', 'arrows are') + ' missing');
+      P.selMsg = parts.length ? 'Not yet: ' + parts.join(', and ') + '.' : 'Not yet.';
+      renderToolHint();
+    }
+    return res;
+  }
+  function selectHintHTML() {
+    var n = Object.keys(P.kept || {}).length;
+    return '<span class="say">Click arrows to keep them' + (n ? ' (' + plural(n, 'arrow', 'arrows') + ' kept)' : '') + '. Identities are always kept.</span> ' +
+      '<button type="button" class="btn primary" data-act="sel-check">Check</button>' + (P.selMsg ? ' <span class="sel-msg">' + esc(P.selMsg) + '</span>' : '');
   }
 
   /* ---------- goal checklist ---------- */
@@ -3432,6 +3717,7 @@
       if (!playing()) return;
       if (!$('why').hidden) { closeWhy(); return; }
       if (P.trip) { closeTrip(); return; }
+      if (P.quad) { closeQuad(); return; }
       if (P.picks.length || P.choice || P.pinnedTri || P.selEdge || P.goalGhost != null) { P.selEdge = null; P.goalGhost = null; clearPicks(); renderToolHint(); return; }
       if (P.tool && P.tools.filter(function (t) { return !TOOLS[t].instant; }).length > 1) selectTool(P.tool);
       return;
@@ -3447,6 +3733,8 @@
       if (tg === 'BUTTON' || tg === 'A' || tg === 'SUMMARY') return;
       if (e.target && e.target.closest && e.target.closest('#board [tabindex]')) return;
       if (P.trip && P.trip.res && P.trip.res.claim) { e.preventDefault(); tripClaim(); return; }
+      if (P.quad && P.quad.choice != null) { e.preventDefault(); quadFill(); return; }
+      if (isSelectLevel(P.level) && !P.won) { e.preventDefault(); checkSelection(); return; }
       if (winShown()) { e.preventDefault(); nextLevel(); return; }
       return;
     }
@@ -3502,6 +3790,10 @@
     $('trip').addEventListener('click', function (e) {
       var t = e.target.closest ? e.target : null; if (!t) return;
       if (t.closest('[data-act="tripclose"]')) { closeTrip(); return; }
+      if (t.closest('[data-act="qclose"]')) { closeQuad(); return; }
+      if (t.closest('[data-act="qfill"]')) { quadFill(); return; }
+      var qo = t.closest('[data-qopt]'); if (qo && P.quad) { P.quad.choice = +qo.getAttribute('data-qopt'); renderTrip(); return; }
+      var sc = t.closest('[data-solid]'); if (sc) { handlePick({ kind: 'solid', id: sc.getAttribute('data-solid') }); return; }
       if (t.closest('[data-act="claim"]')) { tripClaim(); return; }
       var c = t.closest('[data-clear]'); if (c) { tripChoose(c.getAttribute('data-clear'), null); return; }
       var ch = t.closest('[data-slot]'); if (ch) { tripChoose(ch.getAttribute('data-slot'), ch.getAttribute('data-ref')); return; }
@@ -3516,6 +3808,7 @@
     $('trip').addEventListener('pointerout', function () { if (P.previewEdges || P.hoverTri) { P.previewEdges = null; P.hoverTri = null; applyHighlights(); } });
     $('toolhint').addEventListener('click', function (e) {
       if (e.target.closest('[data-act="clear"]')) { clearPicks(); return; }
+      if (e.target.closest('[data-act="sel-check"]')) { checkSelection(); return; }
       if (e.target.closest('[data-act="rename"]')) { startRename(e.target.closest('[data-act="rename"]').getAttribute('data-eid')); return; }
       var o = e.target.closest('[data-opt]'); if (o) chooseOption(+o.getAttribute('data-opt'));
     });
@@ -3545,7 +3838,11 @@
       showChooser(lastHit.list, i, lastHit.x, lastHit.y);
     });
     var facts = $('facts');
-    facts.addEventListener('click', function (e) { var c = e.target.closest('[data-tid]'); if (c) handlePick({ kind: 'tri', id: c.getAttribute('data-tid') }); });
+    facts.addEventListener('click', function (e) {
+      var s = e.target.closest('[data-solid]'); if (s) { handlePick({ kind: 'solid', id: s.getAttribute('data-solid') }); return; }
+      if (e.target.closest('summary')) return;
+      var c = e.target.closest('[data-tid]'); if (c) handlePick({ kind: 'tri', id: c.getAttribute('data-tid') });
+    });
     function hov(e, on) {
       var c = e.target.closest && e.target.closest('[data-tid]');
       if (!c || e.pointerType === 'touch') return;
@@ -3721,15 +4018,13 @@
     applyTheme();
     applyMode();
     bind();
-    // a refresh resumes where the player was: same level with the same board, same note, or the map
+    // The very first visit opens on the intro page. Every later visit, and every refresh, opens on the
+    // contents page (the level list); progress is kept, but the page does not jump back into a level or note.
     var sess = loadSession();
     try { if (location.hash) history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
-    if (sess && sess.t === 'note' && noteById(sess.note)) { showNote(sess.note); return; }
-    if (sess && sess.t === 'level' && levels()[sess.level] && isUnlocked(sess.level) && sess.state) { startLevel(sess.level, sess); return; }
-    if (sess) { showScreen('map'); return; }
-    // first visit: explain the site, then let them start
     var played = Object.keys(progress.solved || {}).length > 0;
-    if (!progress.introSeen && !played) { enterIntro(); return; }
+    if (!progress.introSeen && !played && !sess) { introDone(); enterIntro(); return; }
+    if (!progress.introSeen) { progress.introSeen = true; saveProgress(); }
     showScreen('map');
     if (!HC.Engine) toast('engine.js did not load.', 'warn');
   }
@@ -3801,8 +4096,8 @@
     var tl = arr(lv.tools), has = function (x) { return tl.indexOf(x) >= 0; };
     if (isSandbox(lv)) return 'Free play in a <b>Kan complex</b>, where every horn can be filled, with every tool available.';
     if (lv.base) return lv.licence === 'left'
-      ? 'You are working over a <b>left fibration</b>. Upstairs you may lift any arrow of the shadow from a start you choose, and fill a horn that is missing its first face, provided a matching shape lies below it.'
-      : 'You are working over an <b>inner fibration</b>, so upstairs only inner horns can be filled, and only over a matching shape below.';
+      ? 'You are working with a <b>left fibration</b> X \u2192 S. In X you may lift any arrow of the base S from a vertex of your choice, and fill a horn that is missing its first face, provided a matching shape lies below it.'
+      : 'You are working with an <b>inner fibration</b> X \u2192 S: in X only inner horns can be filled, and only when X lies over a matching simplex of the base S.';
     if (lv.goal && lv.goal.pick != null) return 'A <b>simplicial set</b>: vertices, arrows, triangles. Nothing fills here — you are reading the picture.';
     if (has('witness') || has('isNerve')) return 'A bare <b>simplicial set</b>. Nothing fills here; you judge the picture as it stands.';
     if (has('cell2') || has('addEdge') || has('peel') || has('cosk')) return 'A bare <b>simplicial set</b>: nothing fills by itself, so you add and remove cells by hand.';
@@ -3847,6 +4142,12 @@
     badges: function () { return (P.badges || []).slice(); }, key: function (k, opts) { onKey(Object.assign({ key: k, target: document.body, preventDefault: function () {} }, opts || {})); },
     showNote: function (id) { showNote(id); }, view3d: open3D,
     tripChoose: tripChoose,
+    pickSolid: function (id) { handlePick({ kind: 'solid', id: id }); },
+    quad: function () { return P.quad ? { refs: P.quad.refs.slice(), opts: P.quad.opts, choice: P.quad.choice } : null; },
+    quadChoose: function (i) { if (P.quad) { P.quad.choice = i; renderTrip(); renderToolHint(); } },
+    quadFill: quadFill,
+    keep: function (id) { toggleKept(id); }, kept: function () { return Object.keys(P.kept || {}); }, check: checkSelection,
+    solidInfo: solidInfo, degSolids: degSolids,
     tripClaim: tripClaim,
     options: function () { return P.choice ? P.choice.opts.slice() : null; },
     peel: function () { if (P.tools.indexOf('peel') >= 0) selectTool('peel'); else doMove(['peel']); },
