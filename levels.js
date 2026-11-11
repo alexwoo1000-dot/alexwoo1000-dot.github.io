@@ -717,14 +717,13 @@
 
     // ---- Challenges: hard, thinking-required levels ----
     // No theorem tools: redo substitution and uniqueness with bare tetrahedra and degenerate faces.
-    { id: 0, name: 'barehands', kind: 'puzzle', challenge: true, world: 90, par: 3, vertices: [V('a', 14, 46), V('b', 50, 10), V('c', 86, 46)],
+    { id: 0, name: 'barehands', kind: 'puzzle', challenge: true, world: 90, par: 2, vertices: [V('a', 14, 46), V('b', 50, 10), V('c', 86, 46)],
       edges: [E('f', 'a', 'b'), E('f2', 'a', 'b', 'f′'), E('g', 'b', 'c'), E('g2', 'b', 'c', 'g′'), E('x', 'a', 'c'), E('x2', 'a', 'c', 'x′'), ID('b'), ID('c')],
       triangles: [T('G1', 'f', 'id:b', 'f2'), T('G2', 'g', 'id:c', 'g2'), T('G3', 'f', 'g', 'x'), T('G4', 'f2', 'g2', 'x2')],
       tools: ['trip'], kan: false,
       goal: { triangles: [['x', 'id:c', 'x2']] },
       solution: [['trip', ['f', 'id:b', 'g'], { A: 'G1', B: 's0:g', D: 'G3' }],
-        ['trip', ['f2', 'g', 'id:c'], { A: 't1', B: 'G2', C: 's1:x' }],
-        ['trip', ['f2', 'g2', 'id:c'], { A: 't2', B: 's1:g2', D: 'G4' }]] },
+        ['trip', ['f2', 'g', 'id:c'], { A: 't1', B: 'G2', D: 'G4' }]] },
 
     // Cancel an isomorphism on the left, without the Divide tool.
     { id: 0, name: 'leftcancel', kind: 'puzzle', challenge: true, world: 90, par: 3, vertices: [V('a', 14, 46), V('b', 50, 10), V('c', 86, 46)],
@@ -746,16 +745,17 @@
       solution: [['claim', { model: 'retractions', paint: { vertices: { a: '0', b: '1' }, edges: { f: 'i', g: 'r', h: 'r2' } } }]] },
 
     // Two out of three: if f and a composite x of (f, g) are isomorphisms, so is g.
-    { id: 0, name: 'twoofthree', kind: 'puzzle', challenge: true, world: 90, par: 7, claimable: true, vertices: [V('a', 14, 46), V('b', 50, 10), V('c', 86, 46)],
+    { id: 0, name: 'twoofthree', kind: 'puzzle', challenge: true, world: 90, par: 5, claimable: true, vertices: [V('a', 14, 46), V('b', 50, 10), V('c', 86, 46)],
       edges: [E('f', 'a', 'b', 'f', { iso: true }), E('fi', 'b', 'a', 'f̄'), E('g', 'b', 'c'), E('x', 'a', 'c', 'x', { iso: true }), E('xi', 'c', 'a', 'x̄'),
         ID('a'), ID('b'), ID('c')],
       triangles: [T('G1', 'f', 'fi', 'id:a'), T('G2', 'fi', 'f', 'id:b'), T('G3', 'x', 'xi', 'id:a'), T('G4', 'xi', 'x', 'id:c'), T('G5', 'f', 'g', 'x')],
       tools: ['compose', 'trip', 'same', 'flip', 'link', 'swapin', 'divide'], kan: false,
       goal: { triangles: [['g', '?k', 'id:b'], ['?k', 'g', 'id:c']] },
-      solution: [['compose', 'xi', 'f'], ['trip', ['xi', 'f', 'g'], { A: 't1', B: 'G5', D: 'G4' }],
-        ['compose', 'g', 'xi'], ['trip', ['f', 'g', 'xi'], { A: 'G5', B: 't3', C: 'G3' }],
-        ['divide', 'G2', 't4'], ['swapin', 't5', 'G2'],
-        ['trip', ['g', 'xi', 'f'], { A: 't3', B: 't1', C: 't6' }]] },
+      solution: [['compose', 'f', 'xi'],
+        ['trip', ['fi', 'f', 'g'], { A: 'G2', B: 'G5', C: 's0:g' }],
+        ['trip', ['fi', 'x', 'xi'], { A: 't2', B: 'G3', D: 's1:fi' }],
+        ['trip', ['g', 'xi', 'f'], { A: 't3', B: 't1', C: 'G2' }],
+        ['trip', ['xi', 'f', 'g'], { A: 't1', B: 'G5', D: 'G4' }]] },
 
     // ---- World 11: Sandbox ----
     { id: 51, name: 'sandbox', kind: 'sandbox', world: 13, par: 0, vertices: tet4(),
