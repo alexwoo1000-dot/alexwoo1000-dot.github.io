@@ -221,7 +221,7 @@
   var STORE_KEY = 'hornfiller.progress.v1';
   function loadProgress() {
     var p = { solved: {}, best: {}, seenTools: {}, unlockAll: false, theme: null, mode: 'plain',
-      briefed: {}, explained: {}, notesRead: {}, wordsSeen: {}, pos: {}, introSeen: false };
+      briefed: {}, explained: {}, notesRead: {}, wordsSeen: {}, pos: {}, introSeen: false, worldAll: {} };
     try {
       var raw = window.localStorage.getItem(STORE_KEY);
       if (raw) {
@@ -229,7 +229,7 @@
         if (o && typeof o === 'object') for (var k in p) if (o[k] !== undefined) p[k] = o[k];
       }
     } catch (e) {}
-    ['solved', 'best', 'seenTools', 'briefed', 'explained', 'notesRead', 'wordsSeen', 'pos'].forEach(function (k) {
+    ['solved', 'best', 'seenTools', 'briefed', 'explained', 'notesRead', 'wordsSeen', 'pos', 'worldAll'].forEach(function (k) {
       if (!p[k] || typeof p[k] !== 'object') p[k] = {};
     });
     return p;
@@ -293,9 +293,19 @@
     L.forEach(function (lv) { if ((lv.world || 1) !== w || isSandbox(lv) || lv.kind === 'boss') return; any = true; if (!progress.solved[lkey(lv)]) ok = false; });
     return any && ok;
   }
+  // the note that introduces a world: the one attached to its first level
+  function worldOpener(w) {
+    var first = null;
+    levels().forEach(function (lv) { if (!first && (lv.world || 1) === w) first = lv; });
+    return first ? noteBefore(first.name) : null;
+  }
+  // worlds open by reading their note, not by finishing the one before
   function worldOpen(w) {
     if (progress.unlockAll) return true;
-    return worldNeeds(w).every(worldDone);
+    if (progress.worldAll && progress.worldAll[w]) return true;
+    var n = worldOpener(w);
+    if (!n) return true;
+    return !!(progress.notesRead && progress.notesRead[n.id]);
   }
   function isUnlocked(i) {
     var L = levels();
@@ -303,10 +313,32 @@
     if (!L[i]) return false;
     if (progress.solved[lkey(L[i])]) return true;
     var w = L[i].world || 1;
+    if (progress.worldAll && progress.worldAll[w]) return true;
     if (!worldOpen(w)) return false;
     for (var j = i - 1; j >= 0; j--) if ((L[j].world || 1) === w) return !!progress.solved[lkey(L[j])];
     return true;
   }
+  // the world of whatever is on screen (a level, or the level a note introduces)
+  function worldHere() {
+    var scr = document.body.getAttribute('data-screen');
+    if (scr === 'play' && P.level) return P.level.world || 1;
+    if (scr === 'note' && P.noteId) {
+      var n = noteById(P.noteId);
+      var lv = null;
+      if (n) levels().forEach(function (x) { if (!lv && x.name === n.before) lv = x; });
+      if (lv) return lv.world || 1;
+    }
+    return null;
+  }
+  function updateWorldUnlock() {
+    var b = $('btn-unlockworld'); if (!b) return;
+    var w = worldHere();
+    b.disabled = w == null;
+    b.setAttribute('aria-disabled', w == null ? 'true' : 'false');
+    b.textContent = w == null ? 'Unlock all in this world' : 'Unlock all in world ' + w;
+    if (w == null) b.removeAttribute('data-world'); else b.setAttribute('data-world', String(w));
+  }
+
   function endingUnlocked() {
     if (!HC.Epilogue) return false;
     if (progress.unlockAll || progress.solved.joyal) return true;
@@ -3584,7 +3616,7 @@
       var done = idxs.filter(function (i) { return progress.solved[lkey(L[i])]; }).length;
       var sec = hEl('section', { class: 'world' },
         '<h3><span class="wnum">' + esc(w) + '.</span> ' + prose(info.title) + ' <span class="wcount">' + done + '/' + idxs.length + '</span></h3>' +
-        (worldNeeds(w).length ? '<p class="needs' + (worldOpen(w) ? '' : ' shut') + '">' + (worldOpen(w) ? 'after ' : 'opens after you finish ') + worldNeeds(w).map(function (n) { return prose(worldInfo(n).title); }).join(' and ') + '</p>' : '') +
+        (worldNeeds(w).length ? '<p class="needs">after ' + worldNeeds(w).map(function (n) { return prose(worldInfo(n).title); }).join(' and ') + '</p>' : '') +
         
         (briefingFor(w) ? '<details class="brief-map"><summary>briefing</summary>' + briefingHTML(w, false) + '</details>' : ''));
       var ol = hEl('ol', { class: 'path', start: String(idxs[0] + 1) });
@@ -3627,6 +3659,7 @@
     if (name !== 'play') { P.level = null; hideTetra(); hideWin(); }
     if (name === 'map') { renderMap(); try { if (location.hash) history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
     if (name === 'ending') { renderEnding(); try { history.replaceState(null, '', '#ending'); } catch (e) {} }
+    updateWorldUnlock();
     saveSession();
     try { window.scrollTo(0, 0); } catch (e) {}
   }
@@ -3933,7 +3966,7 @@
     $('worlds').addEventListener('click', function (e) {
       var b = e.target.closest('[data-level]'); if (!b) return;
       var i = +b.getAttribute('data-level');
-      if (!isUnlocked(i)) { nudge(b); toast(worldOpen(levels()[i].world || 1) ? 'Solve the one before it first.' : 'This world opens after the worlds listed under its title.', 'info'); return; }
+      if (!isUnlocked(i)) { nudge(b); toast(worldOpen(levels()[i].world || 1) ? 'Solve the one before it first.' : 'Read the note at the top of this world to open it.', 'info'); return; }
       startLevel(i);
     });
     var shBox = $('starthere');
@@ -3944,10 +3977,18 @@
       startLevel(i);
     });
     $('btn-unlock').addEventListener('click', function () { progress.unlockAll = !progress.unlockAll; saveProgress(); renderMap(); });
+    $('btn-unlockworld').addEventListener('click', function () {
+      var w = worldHere(); if (w == null) return;
+      progress.worldAll = progress.worldAll || {};
+      progress.worldAll[w] = true;
+      saveProgress();
+      if (document.body.getAttribute('data-screen') === 'map') renderMap();
+      toast('World ' + w + ' unlocked.', 'info');
+    });
     $('btn-resetprog').addEventListener('click', function () {
       if (!window.confirm('Erase all progress on this device?')) return;
       progress.solved = {}; progress.best = {}; progress.seenTools = {}; progress.unlockAll = false; progress.pos = {};
-      progress.briefed = {}; progress.notesRead = {}; progress.wordsSeen = {}; progress.explained = {};
+      progress.briefed = {}; progress.notesRead = {}; progress.wordsSeen = {}; progress.explained = {}; progress.worldAll = {};
       clearSession(); saveProgress(); renderMap();
     });
     $('btn-glossary').addEventListener('click', function () {

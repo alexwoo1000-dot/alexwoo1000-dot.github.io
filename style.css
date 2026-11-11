@@ -348,6 +348,7 @@ body.mode-math .tp-cap { font-size: 13px; }
 .foot { display: flex; flex-wrap: wrap; gap: 4px 18px; justify-content: space-between; padding-top: 10px; padding-bottom: 20px; font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); }
 .foot-links { display: flex; gap: 14px; flex-wrap: wrap; }
 .foot .linklike { font-size: 14px; }
+.foot .linklike[disabled] { opacity: .4; cursor: not-allowed; text-decoration: none; }
 
 /* glossary drawer */
 .drawer-shade { position: fixed; inset: 0; z-index: 20; display: grid; place-items: stretch end; background: rgba(0, 0, 0, .35); }
@@ -777,6 +778,7 @@ body:not(.kbd-mode) .kbadge, body:not(.kbd-mode) .kbadge-svg { display: none; }
 
 .needs { margin: 0 0 4px; font-size: 14px; color: var(--muted); }
 .needs.shut { color: var(--ink-soft); font-style: italic; }
+.wunlock { margin: 8px 0 0; padding-left: 30px; font-size: 14px; }
 
 /* ===== SPEC5: named triangles, pictures, free triangles, definition card, briefing, glossary ===== */
 .mini-tri { width: 72px; height: 42px; overflow: visible; flex: 0 0 auto; }

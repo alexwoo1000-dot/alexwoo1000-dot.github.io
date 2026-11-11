@@ -161,20 +161,20 @@
       goal: { triangles: assocGoal },
       solution: assocSol },
 
-    { id: 6, name: 'unique', kind: 'puzzle', world: 2, par: 3, unlocks: 'same', vertices: tri3,
+    { id: 6, name: 'unique', kind: 'puzzle', world: 3, par: 3, unlocks: 'same', vertices: tri3,
       edges: [E('f', 'a', 'b'), E('g', 'b', 'c')], triangles: [],
       tools: ['compose', 'trip'], kan: false,
       goal: { triangles: [['f', 'g', '?x'], ['f', 'g', '?y'], ['?x', 'id:c', '?y']] },
       solution: [['compose', 'f', 'g'], ['compose', 'f', 'g'], ['trip', ['f', 'g', 'id:c'], { A: 't1', D: 't2' }]] },
 
-    { id: 7, name: 'unit', kind: 'puzzle', world: 2, par: 4, vertices: two,
+    { id: 7, name: 'unit', kind: 'puzzle', world: 3, par: 4, vertices: two,
       edges: [E('f', 'a', 'b')], triangles: [],
       tools: ['compose', 'trip'], kan: false,
       goal: { triangles: [['id:a', 'f', '?k'], ['?k', 'id:b', 'f'], ['f', 'id:b', '?m'], ['?m', 'id:b', 'f']] },
       solution: [['compose', 'id:a', 'f'], ['trip', ['id:a', 'f', 'id:b'], { A: 't1', B: 's1:f', D: 's0:f' }],
         ['compose', 'f', 'id:b'], ['trip', ['f', 'id:b', 'id:b'], { A: 't3', B: 's0:id:b', D: 's1:f' }]] },
 
-    { id: 8, name: 'bracket', kind: 'boss', world: 2, par: 4, vertices: tet4(),
+    { id: 8, name: 'bracket', kind: 'boss', world: 3, par: 4, vertices: tet4(),
       edges: [E('f', 'a', 'b'), E('g', 'b', 'c'), E('h', 'c', 'd'), E('y', 'b', 'd'), E('y2', 'b', 'd', 'y′'), E('w', 'a', 'd')],
       triangles: [T('G1', 'g', 'h', 'y'), T('G2', 'g', 'h', 'y2'), T('G3', 'f', 'y', 'w')],
       tools: ['compose', 'trip', 'same'], kan: false,
