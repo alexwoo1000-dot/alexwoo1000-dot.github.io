@@ -933,3 +933,14 @@ details.gl-sec > summary.gl-world { cursor: pointer; list-style: revert; }
 .ce-act { margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .ce-msg { color: var(--warn); }
 @media (max-width: 899px) { .ce-main { grid-template-columns: minmax(0, 1fr); } }
+/* tetrahedra on the board: hatched union of their faces, named; degenerate ones dashed */
+.tet-g .tet { fill: url(#hatch); stroke: var(--ink); stroke-width: 1.2; stroke-opacity: .35; stroke-dasharray: 6 5; pointer-events: none; }
+.tet-g .tet.degen { stroke-opacity: .6; stroke-dasharray: 2 4; }
+.tet-g.hi .tet { stroke: var(--hi); stroke-width: 4; stroke-opacity: 1; stroke-dasharray: none; }
+.tetname { font-family: var(--font-math); font-style: italic; fill: var(--ink); opacity: .75; pointer-events: none; paint-order: stroke; stroke: var(--halo); stroke-width: 6px; }
+.tetname.degen { opacity: .6; }
+.tetname.hi { opacity: 1; fill: var(--accent); font-weight: bold; }
+.tet-g .tet.repeated { stroke-dasharray: 3 4; }
+/* busy boards: names of triangles and tetrahedra appear only for what is highlighted */
+.tname.dense:not(.hi), .tetname.dense:not(.hi) { display: none; }
+.tname.hi { fill: var(--accent); opacity: 1; font-weight: bold; }

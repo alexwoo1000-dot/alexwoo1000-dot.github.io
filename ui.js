@@ -1595,12 +1595,33 @@
     var pr2 = base ? projMap() : null;
     function overClass(id) { var s = pr2 && pr2[id]; return s != null && P.shadowIdx && P.shadowIdx[s] != null ? 'ov' + P.shadowIdx[s] : ''; }
 
+    // a tetrahedron is drawn from its four faces: the union of its non-degenerate faces, hatched, with its name.
+    // Repeated corners (a degenerate tetrahedron) are marked; a face that is a degenerate triangle has no area.
+    P.tetLabels = []; P.tnameBoxes = [];
     if (sk >= 3 && L.s !== false) arr(st.tetras).forEach(function (T) {
-      var vs = uniq(tetraVerts(T, m)).filter(function (v) { return geo.pos[v]; });
-      if (vs.length < 4) return;
-      var h = hull(vs.map(function (v) { return geo.pos[v]; }));
-      var p = sEl('path', { d: 'M' + h.map(pt).join(' L') + 'Z', class: 'tet' + (P.fresh.tetras[T.id] && !reduceMotion ? ' fresh' : ''), 'data-tet': T.id });
-      gS.appendChild(p); P.els.tet[T.id] = p;
+      var info = solidInfo(T.id), d = '';
+      arr(info.faces).forEach(function (r) {
+        var f = r && factInfo(r); if (!f) return;
+        var c = triCornerIds(m, f);
+        if (c[0] === c[1] || c[1] === c[2] || c[0] === c[2]) return;
+        var tp = triPath({ e01: f.e01, e12: f.e12, e02: f.e02 }, geo, m);
+        if (tp) d += tp;
+      });
+      var vlist = arr(info.vertices).length ? info.vertices : tetraVerts(T, m);
+      var vs = uniq(vlist).filter(function (v) { return geo.pos[v]; });
+      var degen = !!(info.degenerate || T.thin || T.kind === 'thin');
+      var repeated = arr(info.vertices).length === 4 && uniq(info.vertices).length < 4;
+      if (!d && vs.length >= 3) { var h = hull(vs.map(function (v) { return geo.pos[v]; })); d = 'M' + h.map(pt).join(' L') + 'Z'; }
+      var grp = sEl('g', { class: 'tet-g', 'data-tet': T.id });
+      if (d) {
+        var p = sEl('path', { d: d, class: 'tet' + (degen ? ' degen' : '') + (repeated ? ' repeated' : '') + (P.fresh.tetras[T.id] && !reduceMotion ? ' fresh' : ''), 'fill-rule': 'nonzero' });
+        grp.appendChild(p);
+      }
+      gS.appendChild(grp); P.els.tet[T.id] = grp;
+      if (vs.length) {
+        var cx = 0, cy = 0; vs.forEach(function (v) { cx += geo.pos[v].x; cy += geo.pos[v].y; }); cx /= vs.length; cy /= vs.length;
+        P.tetLabels.push({ id: T.id, x: cx, y: cy + Math.round(LABEL_FONT * 0.9), name: solidNamePlain(info), degen: degen });
+      }
     });
 
     // unfold identities: degenerate triangles get a ghost copy of their repeated dot
@@ -1623,12 +1644,34 @@
       gF.appendChild(p); P.els.tri[t.id] = p;
       var cs = triCornerPos(t, geo, m), nm = triNamePlain(m, t.id);
       if (cs && nm) {
-        var tn = sEl('text', { x: r1(cs.x), y: r1(cs.y), class: 'tname', 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': Math.round(LABEL_FONT * 0.72) });
+        // triangles on the same corners share a centre: stack their names instead of overprinting
+        var thw = labelWidth(nm) * LABEL_FONT * 0.3 + 4, thh = LABEL_FONT * 0.4, ty = cs.y, tt = 0;
+        var tb = arr(P.tnameBoxes);
+        function thit(yy) { return tb.some(function (b) { return Math.abs(b.x - cs.x) < b.hw + thw && Math.abs(b.y - yy) < b.hh + thh; }); }
+        while (thit(ty) && tt < 10) { tt++; ty = cs.y + (tt % 2 ? 1 : -1) * Math.ceil(tt / 2) * thh * 2.3; }
+        cs = { x: cs.x, y: ty };
+        var tn = sEl('text', { x: r1(cs.x), y: r1(cs.y), class: 'tname' + (arr(st.triangles).length > 8 ? ' dense' : ''), 'data-tid': t.id, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': Math.round(LABEL_FONT * 0.72) });
         fillLabel(tn, nm.replace(/([\u2080-\u2089]+)/, function (d) { return '_{' + deSub(d) + '}'; }));
         P.tnames = P.tnames || []; P.tnames.push(tn);
+        P.tnameBoxes = P.tnameBoxes || []; P.tnameBoxes.push({ x: cs.x, y: cs.y, hw: labelWidth(nm) * LABEL_FONT * 0.3 + 4, hh: LABEL_FONT * 0.4 });
       }
     });
     if (P.tnames) { P.tnames.forEach(function (tn) { gF.appendChild(tn); }); P.tnames = null; }
+    var boxes = [].concat(arr(P.tnameBoxes)); P.tnameBoxes = null;
+    Object.keys(geo.e).forEach(function (id) { var L0 = geo.e[id].label; if (L0) boxes.push({ x: L0.x, y: L0.y, hw: L0.hw, hh: L0.hh }); });
+    Object.keys(geo.pos).forEach(function (id) { boxes.push({ x: geo.pos[id].x, y: geo.pos[id].y, hw: VR + 4, hh: VR + 4 }); });
+    arr(P.tetLabels).forEach(function (q) {
+      var hw = labelWidth(q.name) * LABEL_FONT * 0.3 + 6, hh = LABEL_FONT * 0.42, y = q.y, tries = 0;
+      function hits(yy) { return boxes.some(function (b) { return Math.abs(b.x - q.x) < b.hw + hw && Math.abs(b.y - yy) < b.hh + hh; }); }
+      while (hits(y) && tries < 12) { tries++; y = q.y + (tries % 2 ? 1 : -1) * Math.ceil(tries / 2) * hh * 2.2; }
+      boxes.push({ x: q.x, y: y, hw: hw, hh: hh }); q.y = y;
+    });
+    arr(P.tetLabels).forEach(function (q) {
+      var tl = sEl('text', { x: r1(q.x), y: r1(q.y), class: 'tetname' + (q.degen ? ' degen' : '') + (P.tetLabels.length > 4 ? ' dense' : ''), 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': Math.round(LABEL_FONT * 0.7), 'data-tet': q.id });
+      fillLabel(tl, q.name.replace(/([\u2080-\u2089]+)/, function (x) { return '_{' + deSub(x) + '}'; }));
+      gF.appendChild(tl);
+      if (P.els.tet[q.id]) P.els.tet[q.id].label = tl;
+    });
 
     if (sk >= 1 && L.e !== false) {
       var skip = {};
@@ -1724,6 +1767,8 @@
     Object.keys(P.els.tri).forEach(function (id) {
       P.els.tri[id].classList.toggle('hi', !!hiT[id]);
       P.els.tri[id].classList.toggle('sel', !!selT[id]);
+      var tnm = P.els.tri[id].ownerSVGElement && P.els.tri[id].ownerSVGElement.querySelector('.tname[data-tid="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+      if (tnm) tnm.classList.toggle('hi', !!hiT[id] || !!selT[id] || P.pinnedTri === id);
     });
     Object.keys(P.els.vert).forEach(function (id) {
       var v = P.els.vert[id], s = selV[id] ? '' : state('vertex', id);
@@ -1742,6 +1787,12 @@
       if (badge) badge.textContent = selT[id] ? String(selT[id]) : '';
     });
     var selS = {}; (P.quad ? P.quad.picks : picks).forEach(function (p, i) { if (p.kind === 'solid') selS[p.id] = i + 1; });
+    var hotS = {}; [P.hoverSolid].concat(Object.keys(selS)).forEach(function (r) { if (r) hotS[r] = 1; });
+    Object.keys(P.els.tet || {}).forEach(function (id) { var g = P.els.tet[id]; var on = !!hotS[id]; g.classList.toggle('hi', on); if (g.label) g.label.classList.toggle('hi', on); });
+    Object.keys(hotS).forEach(function (r) {
+      var inf = solidInfo(r);
+      arr(inf.faces).forEach(function (fr) { var f = fr && factInfo(fr); if (!f) return; [f.e01, f.e12, f.e02].forEach(function (e) { var g = P.els.edge[e]; if (g) { g.classList.add('hi'); var ln = g.querySelector('.line'); if (ln) ln.setAttribute('marker-end', 'url(#ah-hi)'); } }); if (P.els.tri[fr]) P.els.tri[fr].classList.add('hi'); });
+    });
     Object.keys(P.els.scard || {}).forEach(function (id) {
       var c = P.els.scard[id], s = selS[id] ? '' : state('solid', id);
       c.classList.toggle('picked', !!selS[id]); c.classList.toggle('live', s === 'live'); c.classList.toggle('dim', s === 'dim');
@@ -3383,8 +3434,10 @@
     var q = P.quad; if (!q || q.choice == null) return false;
     var o = q.opts[q.choice];
     if (!o.allowed) { restartAnim(document.querySelector('#trip [data-act="qfill"]') || $('trip'), 'shake'); toast(prose(o.reason || 'That is an outer horn; it only fills in a Kan complex.'), 'info'); return false; }
+    // close the panel first, so the board redraws without the four picks still lit
+    P.quad = null;
     var res = doMove(['fill4', q.refs, o.idx != null ? o.idx : q.choice], q.picks);
-    if (res && res.ok) { P.quad = null; renderTrip(); }
+    if (!(res && res.ok)) { P.quad = q; renderTrip(); applyHighlights(); }
     return !!(res && res.ok);
   }
   function pentagonSVG(o, vl) {
@@ -4049,6 +4102,8 @@
       applyHighlights();
     }
     facts.addEventListener('pointerover', function (e) { hov(e, true); });
+    facts.addEventListener('pointerover', function (e) { var c = e.target.closest && e.target.closest('[data-solid]'); var v = c && e.pointerType !== 'touch' ? c.getAttribute('data-solid') : null; if (v !== P.hoverSolid) { P.hoverSolid = v; applyHighlights(); } });
+    facts.addEventListener('pointerleave', function () { if (P.hoverSolid) { P.hoverSolid = null; applyHighlights(); } });
     facts.addEventListener('pointerout', function (e) { hov(e, false); });
     facts.addEventListener('focusin', function (e) { hov(e, true); });
     facts.addEventListener('focusout', function (e) { hov(e, false); });

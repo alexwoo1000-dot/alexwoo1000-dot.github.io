@@ -68,7 +68,7 @@ function checkCandidates(s, st, tag) {
 }
 
 // ---------- 0. level table sanity ----------
-check(HC.Levels.length === 72, '72 levels (9 held back)');
+check(HC.Levels.length === 81, '81 levels');
 // "nerve or not?": the stored answer must be the true one
 HC.Levels.forEach(function (L0) {
   if (!L0.goal || L0.goal.flag !== 'verdict') return;
@@ -79,7 +79,7 @@ HC.Levels.forEach(function (L0) {
 HC.Levels.forEach(function (L, i) {
   check(L.id === i + 1, 'ids are consecutive at ' + L.name);
   check(['intro', 'puzzle', 'boss', 'sandbox'].indexOf(L.kind) >= 0, L.name + ' has kind');
-  check(L.world >= 1 && L.world <= 14, L.name + ' world');
+  check(L.world >= 1 && L.world <= 15, L.name + ' world');
   check(L.parHidden === !!L.claimable, L.name + ' parHidden follows claimable');
   if (i) check(L.world >= HC.Levels[i - 1].world, L.name + ' worlds non-decreasing');
   check(!has(L.tools, 'identity') && !has(L.tools, 'fill3'), L.name + ' lists neither identity nor fill3');
@@ -904,7 +904,7 @@ HC.Levels.forEach(function (L) {
   check(badEq === 0, 'plain text uses ≃ only for homotopies (x, 1 ; y)');
   HC.Models.forEach(function (M) { M.arrows.forEach(function (a) { check(String(a.label).indexOf('·') < 0, 'model ' + M.id + ' arrow ' + a.id + ' has no dot in its name'); }); });
   // worlds: simplicial sets is world 1 and the rest moved up by one
-  check(lv('faces').world === 1 && lv('compose').world === 2 && lv('tetra').world === 3 && lv('symmetric').world === 4 && lv('undo').world === 5 && lv('nerve').world === 6 && lv('disc').world === 7 && lv('spine').world === 8 && lv('liftpath').world === 9 && lv('oneway').world === 10 && lv('natsq').world === 11 && lv('barehands').world === 12 && lv('sandbox').world === 13, 'world numbering: Simplicial sets 1 … Natural transformations 11, Challenges 12, Sandbox 13 (higher simplices and subcategories held back)');
+  check(lv('faces').world === 1 && lv('compose').world === 2 && lv('tetra').world === 3 && lv('symmetric').world === 4 && lv('solidfact').world === 5 && lv('undo').world === 6 && lv('fullsub').world === 7 && lv('nerve').world === 8 && lv('disc').world === 9 && lv('spine').world === 10 && lv('liftpath').world === 11 && lv('oneway').world === 12 && lv('natsq').world === 13 && lv('barehands').world === 14 && lv('sandbox').world === 15, 'world numbering: Simplicial sets 1, Composition 2, Tetrahedra 3, Homotopy 4, Higher simplices 5, Kan complexes 6, Subcategories 7, Nerves 8, Skeleta 9, Anodyne 10, Lifting 11, Isomorphisms 12, Natural transformations 13, Challenges 14, Sandbox 15');
 })();
 
 // ---------- 16h. v6: solids (3-simplices as facts), 4-horns, subcategories ----------
@@ -1081,6 +1081,50 @@ HC.Levels.forEach(function (L) {
   check(En.checkSelect(mk('subcat'), ['f', 'g', 'x', 'x2', 'w', 'id:c']).ok, 'identities in the selection are ignored');
   check(has(En.candidates(cs, 'select', []).edges, 'w') && !has(En.candidates(cs, 'select', []).edges, 'id:c'), 'select candidates: the non-identity arrows');
   check(lv('fullsub').kind === 'intro' && lv('core').kind === 'boss', 'subcategory kinds');
+})();
+
+// ---------- 16i. every tetrahedron carries consistent geometry ----------
+(function () {
+  var bad = 0, seen = 0, msgs = [];
+  function geom(st, T) {
+    var q = T.faces.map(function (r) { return En.describe(st, r).boundary; });   // [e01, e12, e02] of each face
+    var d0 = q[0], d1 = q[1], d2 = q[2], d3 = q[3];
+    var ed = { '01': d3[0], '12': d3[1], '02': d3[2], '13': d2[1], '03': d2[2], '23': d1[1] };
+    var consistent = d2[0] === ed['01'] && d0[0] === ed['12'] && d1[0] === ed['02'] && d0[2] === ed['13'] && d1[1] === ed['23'] && d1[2] === ed['03'] && d0[1] === ed['23'];
+    function E(id) { return id.indexOf('id:') === 0 ? { src: id.slice(3), dst: id.slice(3) } : st.edges.filter(function (e) { return e.id === id; })[0]; }
+    var a = E(ed['01']), b = E(ed['12']), c = E(ed['23']), a2 = E(ed['02']), b2 = E(ed['13']), c2 = E(ed['03']);
+    var v = [a.src, a.dst, b.dst, c.dst];
+    var ends = a2.src === v[0] && a2.dst === v[2] && b2.src === v[1] && b2.dst === v[3] && c2.src === v[0] && c2.dst === v[3] && b.src === v[1] && c.src === v[2];
+    return { edges: ed, vertices: v, ok: consistent && ends };
+  }
+  function checkAll(st, tag) {
+    st.tetras.forEach(function (T) {
+      seen++;
+      var ok = Array.isArray(T.faces) && T.faces.length === 4 && T.faces.every(function (f) { return typeof f === 'string'; }) && Array.isArray(T.vertices) && T.vertices.length === 4 && T.edges;
+      if (ok) {
+        var g = geom(st, T);
+        ok = g.ok && ['01', '12', '23', '02', '13', '03'].every(function (k) { return T.edges[k] === g.edges[k]; }) && T.vertices.join() === g.vertices.join();
+        var ds = En.describeSolid(st, T.id);
+        ok = ok && ds && ds.consistent && ds.vertices.join() === g.vertices.join() && ds.faces.join() === T.faces.join();
+      }
+      if (!ok) { bad++; msgs.push(tag + ' ' + T.id); }
+    });
+  }
+  HC.Levels.concat(HC.HeldLevels || []).forEach(function (L) {
+    if (!L.goal) return;
+    var st = En.createState(L);
+    checkAll(st, L.name + ' start');
+    L.solution.forEach(function (step, i) {
+      var x = step[0] === '!' ? step.slice(1) : step;
+      runStep(st, step);
+      checkAll(st, L.name + ' after step ' + i);
+    });
+  });
+  // degenerate solids, glued solids, and 3-fills from the old tool
+  var th = mk('twohomotopies'); En.fill4(th, ['T1', 'T2', 'S2:G2', 'S2:s1:g'], 1); checkAll(th, 'twohomotopies');
+  var ba = mk('ball'); for (var q = 0; q < 6; q++) { var tt = HC.Levels.concat(HC.HeldLevels || []).filter(function (x) { return x.name === 'ball'; })[0]; }
+  check(seen > 100, 'tetrahedron geometry checked on ' + seen + ' tetrahedra');
+  check(bad === 0, 'vertices, edges and faces of every tetrahedron agree (' + bad + ' bad: ' + msgs.slice(0, 4) + ')');
 })();
 
 // ---------- 17. brute force ----------

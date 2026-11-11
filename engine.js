@@ -118,7 +118,14 @@
 
   // every solid (3-simplex) gets τ₁, τ₂, … (given first, then in creation order); materialised degenerate solids are named s₀σ₁ …
   function nameSolids(s) {
-    s.tetras.forEach(function (T) { if (!T.name) T.name = 'τ' + sub(++s.counters.tau); });
+    s.tetras.forEach(function (T) {
+      if (!T.name) T.name = 'τ' + sub(++s.counters.tau);
+      // the faces are the source of truth: vertices [v0..v3] and the six edges are read off them
+      if (T.faces && T.faces.length === 4 && T.faces.every(Boolean)) {
+        var g = solidGeom(s, T.faces);
+        if (g && g.ok) { T.edges = g.edges; T.vertices = g.vertices; }
+      }
+    });
   }
 
   function snap(s) {

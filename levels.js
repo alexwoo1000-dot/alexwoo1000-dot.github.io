@@ -766,8 +766,8 @@
       solution: [] }
 
   ];
-  // Held back for now (unfinished): the higher-simplices world and the subcategories world.
-  var HOLD = ['solidfact', 'thicken', 'pentagon', 'twohomotopies', 'pentagonproof', 'fullsub', 'subcat', 'subcat2', 'core'];
+  // Levels listed in HOLD are kept out of the game (HC.HeldLevels).
+  var HOLD = [];
   HC.HeldLevels = HC.Levels.filter(function (L) { return HOLD.indexOf(L.name) >= 0; });
   HC.Levels = HC.Levels.filter(function (L) { return HOLD.indexOf(L.name) < 0; });
   // worlds are numbered consecutively in the order they appear, with the sandbox last
