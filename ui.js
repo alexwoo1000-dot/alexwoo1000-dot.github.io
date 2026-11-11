@@ -1175,8 +1175,9 @@
     var el = $('moves');
     if (!P.level || isSandbox(P.level)) { el.textContent = ''; return; }
     var par = P.level.par;
-    if (P.level.goal && P.level.goal.impossible) par = 2;        // shown as 2 so the par doesn't give the answer away
-    el.innerHTML = 'moves ' + P.moves + (par != null ? ' \u00B7 par ' + par : '');
+    // levels that might be impossible show par ? until solved, so the par gives nothing away
+    var hidePar = P.level.claimable && !progress.solved[lkey(P.level)];
+    el.innerHTML = 'moves ' + P.moves + (par != null ? ' \u00B7 par ' + (hidePar ? '?' : par) : '');
     el.classList.toggle('over', par != null && P.moves > par);
   }
 
@@ -3034,6 +3035,7 @@
     return unlockedTerms().some(function (u) { return u === t || u.indexOf(t) >= 0 || t.indexOf(u) >= 0; });
   }
   function announceNewWords() {
+    if (demoOn) return;                       // not on the landing page
     progress.wordsSeen = progress.wordsSeen || {};
     var fresh = glossaryEntries().filter(function (g) { var k = stripTags(g.term || ''); return g.essential && termUnlocked(g) && !progress.wordsSeen[k]; });
     glossaryEntries().forEach(function (g) { if (termUnlocked(g)) progress.wordsSeen[stripTags(g.term || '')] = true; });
@@ -3592,8 +3594,10 @@
     var offer = $('offer');
     offer.hidden = false;
     offer.innerHTML = '<span class="intro-lede">' + prose(I.lede || '') + '</span>' +
-      '<span class="intro-act"><button type="button" class="btn primary" data-act="intro-start">' + prose(I.start || 'Start') + '</button>' +
-      (I.note ? ' <button type="button" class="linklike" data-act="intro-note">' + prose(I.note) + '</button>' : '') + '</span>';
+      '<span class="intro-say" aria-live="polite"></span>' +
+      '<span class="intro-act"><button type="button" class="btn primary" data-act="intro-start">' + prose(I.start || 'Start') + ' <span class="kbd">Enter</span></button>' +
+      (I.note ? ' <button type="button" class="linklike" data-act="intro-note">' + prose(I.note) + '</button>' : '') + '</span>' +
+      '<span class="intro-skip"><button type="button" class="linklike" data-act="intro-skip">' + prose(I.skip || 'Skip to the level list') + '</button></span>';
     introGate();
   }
   function introGate() {
@@ -3605,6 +3609,9 @@
     });
     var act = document.querySelector('#offer .intro-act');
     if (act) act.classList.toggle('ready', done);
+    var say = document.querySelector('#offer .intro-say');
+    if (say) { var t = done ? (d.done || '') : (d.hint || ''); if (say.getAttribute('data-t') !== t) { say.setAttribute('data-t', t); say.innerHTML = prose(t); say.classList.toggle('done', done); } }
+    var sk = document.querySelector('#offer [data-act="intro-skip"]'); if (sk) { sk.disabled = false; sk.removeAttribute('aria-disabled'); }
   }
   function enterIntro() {
     var base = introBase();
@@ -3649,7 +3656,7 @@
           '<span class="sh-k">' + (started ? 'Next up' : 'Start here') + '</span>' +
           '<span class="sh-t">' + prose(titleFor(clv)) + '</span>' +
           '<span class="sh-w">world ' + esc(cw) + ' · ' + prose(worldInfo(cw).title) +
-          (clv.par != null ? ' · par ' + esc(clv.goal && clv.goal.impossible ? 2 : clv.par) : '') + '</span>' +
+          (clv.par != null ? ' · par ' + (clv.claimable ? '?' : esc(clv.par)) : '') + '</span>' +
           '<span class="sh-go" aria-hidden="true">→</span>' +
           '</button>' + (started ? '' : '<p class="sh-hint">New here? Click the card to start, and the arrows on the board will show you what to do. Every other level is in the list below.</p>');
         sh.hidden = false;
@@ -3810,6 +3817,7 @@
       if (winShown() && !(e.target && e.target.closest && e.target.closest('#winbox button, #toolbar, .actions'))) { e.preventDefault(); nextLevel(); return; }
       if (tg === 'BUTTON' || tg === 'A' || tg === 'SUMMARY') return;
       if (e.target && e.target.closest && e.target.closest('#board [tabindex]')) return;
+      if (demoOn && P.won) { e.preventDefault(); introDone(); exitIntro(); startLevel(0); return; }
       if (P.trip && P.trip.res && P.trip.res.claim) { e.preventDefault(); tripClaim(); return; }
       if (P.quad && P.quad.choice != null) { e.preventDefault(); quadFill(); return; }
       if (isSelectLevel(P.level) && !P.won) { e.preventDefault(); checkSelection(); return; }
@@ -4003,6 +4011,7 @@
       var b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
       var act = b.getAttribute('data-act');
       if (act === 'intro-start') { introDone(); exitIntro(); startLevel(0); }
+      else if (act === 'intro-skip') { introDone(); exitIntro(); showScreen('map'); }
       else if (act === 'intro-note') { introDone(); exitIntro(); showNote((HC.Intro && HC.Intro.noteId) || 'simplicial'); }
     });
 
