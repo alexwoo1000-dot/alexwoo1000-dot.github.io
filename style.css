@@ -726,3 +726,65 @@ body:not(.kbd-mode) .kbadge, body:not(.kbd-mode) .kbadge-svg { display: none; }
 
 .needs { margin: 0 0 4px; font-size: 14px; color: var(--muted); }
 .needs.shut { color: var(--ink-soft); font-style: italic; }
+
+/* ===== SPEC5: named triangles, pictures, free triangles, definition card, briefing, glossary ===== */
+.mini-tri { width: 72px; height: 42px; overflow: visible; flex: 0 0 auto; }
+.fact { grid-template-columns: 6px 72px minmax(0, 1fr) auto auto auto; }
+.mt-ahp { fill: var(--ink); }
+.mt-c { font: italic 9px var(--font-math); fill: var(--muted); }
+.mt-l.q { fill: var(--accent); font-weight: bold; }
+.mt-e.q { stroke: var(--accent); stroke-dasharray: 2 2; }
+.mt-fill.tcf { fill: var(--k-identity); }
+.mt-fill.tcn { fill: var(--ok); fill-opacity: .4; }
+.mt-fill.tcw { fill: var(--accent); fill-opacity: .15; }
+.facts-sec { margin-bottom: 8px; }
+.facts-h { margin: 6px 0 2px; font-size: 14px; font-weight: bold; color: var(--ink-soft); display: inline; }
+.facts-sec > h4.facts-h { display: block; }
+.free-sec > summary { cursor: pointer; list-style: revert; padding: 2px 0; border-bottom: 1px dotted var(--line); }
+.fact.freefact .ftext { color: var(--ink-soft); }
+.fact.freefact .swatch { background: var(--k-identity); opacity: .6; }
+/* goals: verb, picture, bindings */
+.goals li { align-items: flex-start; }
+.goal-pic { flex: 0 0 auto; }
+.goal-pic .mini-tri { width: 60px; height: 36px; }
+.goal-txt { min-width: 0; }
+.goal-txt .verb { font-weight: bold; font-style: normal; margin-right: 2px; }
+.goals li.ok .verb { color: var(--ok); }
+.binds { display: block; font-size: 14px; color: var(--ink-soft); }
+/* board: names at triangle centres; identity loops always faint-visible */
+.tname { font-family: var(--font-math); font-style: italic; fill: var(--ink-soft); opacity: .8; pointer-events: none; paint-order: stroke; stroke: var(--halo); stroke-width: 6px; }
+.edge.faint .line { opacity: .35; }
+.edge.faint .elabel { opacity: .45; }
+.edge.faint:hover .line, .edge.faint:hover .elabel { opacity: .9; }
+/* tetrahedron panel */
+.tcorners, .tedges { margin: 2px 0; font-size: 15px; }
+.tc-i { font: 12px ui-monospace, Consolas, monospace; color: var(--muted); }
+.tslot .mini-tri { width: 58px; height: 34px; vertical-align: middle; }
+.chip-f { display: inline-flex; align-items: center; gap: 4px; }
+.chip-f .mini-tri { width: 46px; height: 28px; }
+.chip-f.freefact { border-style: dashed; }
+/* Definition card */
+.defcard { border: 1px solid var(--ink); border-left: 4px solid var(--ink); padding: 4px 10px; }
+.defcard summary { cursor: pointer; font-weight: bold; }
+.def-body p { margin: 4px 0; }
+.def-fig { margin: 6px 0 2px; }
+.def-fig svg { max-width: 100%; height: auto; }
+.def-fig figcaption { font-size: 13px; color: var(--muted); }
+/* briefing */
+.brief-d summary { cursor: pointer; font-weight: bold; }
+.briefing h4 { margin: 8px 0 2px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.briefing .brief-body p { margin: 2px 0; }
+.horn-pic { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.hp-cell { margin: 0; text-align: center; font-size: 12px; color: var(--ink-soft); }
+.hp { width: 60px; height: 44px; display: block; margin: 0 auto; }
+.hp-e { stroke: var(--ink); stroke-width: 1.6; fill: none; }
+.hp-m { stroke-width: 2; stroke-dasharray: 3 3; fill: none; }
+.hp-m.yes { stroke: var(--ok); stroke-dasharray: none; }
+.hp-m.iso { stroke: var(--k-composite); }
+.hp-m.no { stroke: var(--muted); }
+/* glossary groups */
+details.gl-sec > summary.gl-world { cursor: pointer; list-style: revert; }
+.gl-more { margin: 6px 0 0; font-size: 14px; color: var(--muted); font-style: italic; }
+.briefing .brief-body, .brief-map .brief-body { display: block; }
+.briefing .brief-fig { max-width: 240px; }
+.briefing { max-width: none; }

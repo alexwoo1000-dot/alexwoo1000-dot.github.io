@@ -13,6 +13,7 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" crossorigin="anonymous" id="katex-js"></script>
 </head>
 <body data-screen="map">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><marker id="mt-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,1 L9,5 L0,9 z" class="mt-ahp"/></marker></defs></svg>
 <header class="topbar">
   <button class="brand" id="brand" type="button" aria-label="Hornfiller: back to the level list">
     <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
@@ -54,6 +55,7 @@
     <div class="play-grid">
       <aside class="col-words" aria-label="About this level">
         <p id="bullets" class="bullets"></p>
+        <section id="defcard" class="panel defcard" aria-label="Definition" hidden></section>
         <section id="briefing" class="panel briefing" aria-label="World briefing" hidden></section>
         <section id="explain" class="panel explain" aria-label="Explain" hidden></section>
       </aside>

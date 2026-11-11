@@ -138,8 +138,10 @@
   var USUB = { 'ₐ': 'a', 'ₑ': 'e', 'ₕ': 'h', 'ᵢ': 'i', 'ⱼ': 'j', 'ₖ': 'k', 'ₗ': 'l', 'ₘ': 'm', 'ₙ': 'n', 'ₒ': 'o', 'ₚ': 'p', 'ᵣ': 'r', 'ₛ': 's', 'ₜ': 't', 'ᵤ': 'u', 'ᵥ': 'v', 'ₓ': 'x',
     '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9' };
   var USUP = { 'ᴸ': 'L', 'ᴿ': 'R', '¹': '1', '²': '2', '³': '3' };
+  var GREEK = { 'α': 'alpha', 'β': 'beta', 'γ': 'gamma', 'δ': 'delta', 'ε': 'varepsilon', 'η': 'eta', 'θ': 'theta', 'λ': 'lambda', 'μ': 'mu', 'ρ': 'rho', 'σ': 'sigma', 'τ': 'tau', 'φ': 'varphi', 'ψ': 'psi', 'ω': 'omega' };
   function labTeX(label) {
-    var s = String(label == null ? '' : label), out = '', i = 0;
+    var s = String(label == null ? '' : label).replace(/″/g, '′′').replace(/‴/g, '′′′'), out = '', i = 0;
+    try { s = s.normalize('NFD'); } catch (e) {}
     while (i < s.length) {
       var c = s[i];
       if (c === '_') {
@@ -160,8 +162,8 @@
       } else if (c === "'") { out += "'"; i++; }
       else if (c === '̄' || c === '̅') {
         // combining bar over the previous letter: f̄ -> \bar{f}
-        var mm = /([A-Za-z0-9])$/.exec(out);
-        out = mm ? out.slice(0, -1) + '\\bar{' + mm[1] + '}' : out;
+        var mm = /(\\[a-z]+ |[A-Za-z0-9])$/.exec(out);
+        out = mm ? out.slice(0, -mm[1].length) + '\\bar{' + mm[1].trim() + '}' : out;
         i++;
       }
       else if (c === '∘') { out += '\\circ '; i++; }
@@ -171,6 +173,7 @@
       else if (c === '≅') { out += '\\cong '; i++; }
       else if (/[A-Za-z0-9()\/?+\-=,]/.test(c)) { out += c; i++; }
       else if (c === ' ') { i++; }
+      else if (GREEK[c]) { out += '\\' + GREEK[c] + ' '; i++; }
       else { out += '\\text{' + c + '}'; i++; }
     }
     return out;
@@ -278,7 +281,7 @@
   function isSandbox(lv) {
     if (!lv || !lv.goal) return true;
     var g = lv.goal;
-    return !(arr(g.triangles).length || arr(g.edges).length || g.counts || g.min || g.flag || g.impossible);
+    return !(arr(g.triangles).length || arr(g.edges).length || g.counts || g.min || g.flag || g.impossible || g.pick != null);
   }
   // Worlds branch: a world opens once the worlds it needs are finished (their boss levels are optional);
   // inside a world, each level opens when the one before it is solved.
@@ -319,10 +322,10 @@
   };
 
   function maps(st) {
-    var m = { v: {}, e: {}, t: {} };
+    var m = { v: {}, e: {}, t: {}, sig: {} }, k = 0;
     arr(st && st.vertices).forEach(function (v) { m.v[v.id] = v; });
     arr(st && st.edges).forEach(function (e) { m.e[e.id] = e; });
-    arr(st && st.triangles).forEach(function (t) { m.t[t.id] = t; });
+    arr(st && st.triangles).forEach(function (t) { m.t[t.id] = t; if (!isThin(t)) m.sig[t.id] = ++k; });
     return m;
   }
   function rawLabel(m, id) {
@@ -352,7 +355,10 @@
     if (!o) return '';
     var from = arr(o.from).map(function (x) { return math(eTeX(m, x)); });
     var op = o.op;
-    if (op === 'compose') return 'made by composing ' + from.join(' then ');
+    if (op === 'compose') {
+      var wt = arr(P.state && P.state.triangles).filter(function (t) { return t.e02 === id && t.e01 === o.from[0] && t.e12 === o.from[1]; })[0];
+      return 'a composite of ' + from.join(' then ') + (wt ? ', witnessed by ' + math(triNameTeX(m, wt.id)) : '');
+    }
     if (op === 'horn0' || op === 'solveLeft') return 'solved for, from ' + from.join(' and ');
     if (op === 'horn2' || op === 'solveRight') return 'solved for, from ' + from.join(' and ');
     if (op === 'trip' || op === 'tetra') return 'forced by a tetrahedron';
@@ -365,18 +371,60 @@
     return (e && e.kind === 'identity') || id.indexOf('id:') === 0;
   }
   function isThin(t) { return t && (t.kind === 'thin' || /^s[01]:/.test(String(t.id))); }
-  function triTeXIds(m, a, b, c) {
-    if (mathMode()) return 'd_2 = ' + eTeX(m, a) + ',\\ d_0 = ' + eTeX(m, b) + ',\\ d_1 = ' + eTeX(m, c);
-    // plain: f·g ≃ x ("x is a composite of f then g"); with an identity in the middle: x ≃ y (homotopic)
-    if (isIdentityEdge(m, b) && !isIdentityEdge(m, a)) return eTeX(m, a) + ' \\simeq ' + eTeX(m, c);
-    return eTeXp(m, a) + ' \\cdot ' + eTeXp(m, b) + ' \\simeq ' + eTeX(m, c);
+  // SPEC5: a triangle is written by its boundary in order (d₂, d₀ ; d₁) = (first leg, second leg ; long side)
+  function triTeXIds(m, a, b, c) { return '(' + eTeX(m, a) + ',\\ ' + eTeX(m, b) + '\\,;\\ ' + eTeX(m, c) + ')'; }
+  var SUBD = '\u2080\u2081\u2082\u2083\u2084\u2085\u2086\u2087\u2088\u2089';
+  function deSub(s) { return String(s).replace(/[\u2080-\u2089]/g, function (d) { return String(SUBD.indexOf(d)); }); }
+  // names: σ₁, σ₂ … for given/made triangles; s₀f = (1_a, f ; f), s₁f = (f, 1_b ; f), s₀1_a for degenerate ones
+  function triNameTeX(m, ref) {
+    var t = m.t[ref], nm = t && t.name;
+    if (nm) {
+      var a = /^\u03C3_?\{?([0-9\u2080-\u2089]+)\}?$/.exec(nm); if (a) return '\\sigma_{' + deSub(a[1]) + '}';
+      var b = /^s_?([01\u2080\u2081])\s*:?(.+)$/.exec(nm); if (b) return 's_{' + deSub(b[1]) + '}' + (m.e[b[2]] || /^id:/.test(b[2]) ? eTeX(m, b[2]) : labTeX(b[2]));
+      return labTeX(nm);
+    }
+    var s = /^s([01]):(.+)$/.exec(String(ref || ''));
+    if (s) return 's_{' + s[1] + '}' + eTeX(m, s[2]);
+    if (m.sig && m.sig[ref]) return '\\sigma_{' + m.sig[ref] + '}';
+    return '';
   }
-  function triReadPlain(m, a, b, c) {
-    var L = function (id) { return stripTags(dispLabel(m, id)); };
-    if (isIdentityEdge(m, b) && !isIdentityEdge(m, a)) return L(a) + ' and ' + L(c) + ' are homotopic';
-    return L(c) + ' is a composite of ' + L(a) + ' then ' + L(b);
+  // the same name as plain text with _ subscripts (for the board and tooltips)
+  function triNamePlain(m, ref) {
+    var t = m.t[ref];
+    if (t && t.name) return String(t.name);
+    var s = /^s([01]):(.+)$/.exec(String(ref || ''));
+    if (s) return 's' + SUBD[+s[1]] + stripTags(rawLabel(m, s[2])).replace(/_\{?([a-z0-9])\}?/g, '$1');
+    return m.sig && m.sig[ref] ? '\u03C3' + String(m.sig[ref]).split('').map(function (d) { return SUBD[+d]; }).join('') : '';
   }
-  function triTeX(m, t) { return triTeXIds(m, t.e01, t.e12, t.e02); }
+  function factNamedTeX(m, ref, a, b, c) { var n = ref ? triNameTeX(m, ref) : ''; return (n ? n + ' : ' : '') + triTeXIds(m, a, b, c); }
+  function triReadPlain(m, a, b, c, ref) {
+    var L = function (id) { return stripTags(dispLabel(m, id)).replace(/_\{?([a-z0-9])\}?/g, '$1'); };
+    var w = ref ? triNamePlain(m, ref) : '';
+    if (isIdentityEdge(m, b) && !isIdentityEdge(m, a)) return L(a) + ' \u2243 ' + L(c) + ': ' + L(a) + ' is homotopic to ' + L(c) + (w ? ', witnessed by ' + w : '');
+    return L(c) + ' is a composite of ' + L(a) + ' then ' + L(b) + (w ? ', witnessed by ' + w : '');
+  }
+  function triTeX(m, t) { return factNamedTeX(m, t.id, t.e01, t.e12, t.e02); }
+  // a small picture of a triangle: three corners with their dots, three directed labelled edges; degenerate edges dashed
+  function miniPic(labels, ids, corners, cls) {
+    var A = { x: 8, y: 36 }, B = { x: 32, y: 8 }, C = { x: 56, y: 36 };
+    function lab(s) { s = stripTags(String(s == null ? '?' : s)).replace(/_\{?([a-z0-9])\}?/g, '$1'); return s.length > 4 ? s.slice(0, 3) + '\u2026' : s; }
+    function ln(p, q, i, ox, oy, anchor) {
+      var a = towards(p, q, 4.5), b = towards(q, p, 6.5), mx = (p.x + q.x) / 2 + ox, my = (p.y + q.y) / 2 + oy;
+      var idE = ids[i] && /^id:/.test(String(ids[i])) || /^1/.test(String(labels[i] || '')) && String(labels[i]).length <= 4 && /^1(_|[\u2080-\u209C]|$)/.test(String(labels[i]));
+      return '<path class="mt-e' + (idE ? ' id' : '') + (labels[i] === '?' ? ' q' : '') + '" d="M' + pt(a) + ' L' + pt(b) + '" marker-end="url(#mt-ah)"/>' +
+        '<text class="mt-l' + (labels[i] === '?' ? ' q' : '') + '" x="' + r1(mx) + '" y="' + r1(my) + '" text-anchor="' + anchor + '">' + esc(lab(labels[i])) + '</text>';
+    }
+    var cl = arr(corners);
+    return '<svg class="mini-tri" viewBox="-16 -6 96 56" aria-hidden="true"><path class="mt-fill ' + (cls || 'tc0') + '" d="M' + [A, B, C].map(pt).join(' L') + ' Z"/>' +
+      ln(A, B, 0, -4, -2, 'end') + ln(B, C, 1, 4, -2, 'start') + ln(A, C, 2, 0, 12, 'middle') +
+      [A, B, C].map(function (p, i) { return '<circle class="mt-v" cx="' + p.x + '" cy="' + p.y + '" r="2.8"/>' + (cl[i] ? '<text class="mt-c" x="' + (p.x + (i === 0 ? -5 : i === 2 ? 5 : 0)) + '" y="' + (p.y + (i === 1 ? -4 : 9)) + '" text-anchor="' + (i === 0 ? 'end' : i === 2 ? 'start' : 'middle') + '">' + esc(cl[i]) + '</text>' : ''); }).join('') + '</svg>';
+  }
+  function edgeEnds(m, id) { if (!id) return [null, null]; if (/^id:/.test(id)) return [id.slice(3), id.slice(3)]; var e = m.e[id]; return e ? [e.src, e.dst] : [null, null]; }
+  function triCorners(m, a, b, c) {
+    var A = edgeEnds(m, a), B = edgeEnds(m, b), C = edgeEnds(m, c);
+    return [A[0] || C[0], A[1] || B[0], B[1] || C[1]].map(function (v) { return v == null ? '?' : vLabel(m, v); });
+  }
+  function factPic(m, a, b, c, cls) { return miniPic([a, b, c].map(function (id) { return id ? stripTags(dispLabel(m, id)) : '?'; }), [a, b, c], triCorners(m, a, b, c), cls); }
   function edgeTeXFull(m, id) { var e = m.e[id]; return eTeX(m, id) + (e ? ' : ' + labTeX(vLabel(m, e.src)) + ' \\to ' + labTeX(vLabel(m, e.dst)) : ''); }
 
   /* ---------- tools ---------- */
@@ -497,7 +545,7 @@
     var st;
     try { st = freshState(lv); } catch (e) { toast('Could not load this level.', 'warn'); return; }
     P.idx = i; P.level = lv; P.state = st; P.moves = 0;
-    var tools = arr(lv.tools).length ? lv.tools.slice() : ['compose', 'identity', 'horn0', 'horn2', 'fill3'];
+    var tools = Array.isArray(lv.tools) ? lv.tools.slice() : ['compose', 'identity', 'horn0', 'horn2', 'fill3'];
     if (isSandbox(lv)) ['addVertex', 'addEdge', 'cell2', 'peel'].forEach(function (t) { if (tools.indexOf(t) < 0 && engineHas(t)) tools.push(t); });
     tools = tools.map(toolName).filter(function (t, i, a) { return TOOLS[t] && a.indexOf(t) === i; });
     tools.sort(function (a, b) { return TOOL_ORDER.indexOf(a) - TOOL_ORDER.indexOf(b); });
@@ -603,7 +651,7 @@
     var real = tris.filter(function (t) { return !isThin(t); });
     if (real.length) return 'New fact ' + math(triTeX(m, real[real.length - 1]));
     if (arr(a.tetras).length) return 'Filled, and it agrees with what you had.';
-    if (tris.length) return 'Free facts for ' + math(eTeX(m, tris[0].e02));
+    if (tris.length) return 'Free triangles for ' + math(eTeX(m, tris[0].e02));
     var es = arr(a.edges).filter(function (id) { return m.e[id]; });
     if (es.length) return 'New arrow ' + math(edgeTeXFull(m, es[es.length - 1]));
     if (arr(a.vertices).length) return 'New dot ' + math(labTeX(vLabel(m, a.vertices[0])));
@@ -686,9 +734,15 @@
     var b = part.b;
     if (eg.done && eg.bindings && typeof eg.bindings === 'object') { b = {}; for (var k in eg.bindings) b[k.charAt(0) === '?' ? k : '?' + k] = eg.bindings[k]; }
     P.goalBind = b;
+    var vcount = {}; pats.forEach(function (p) { p.slice(0, 3).forEach(function (x, j) { if (isVar(x) && p.slice(0, 3).indexOf(x) === j) vcount[x] = (vcount[x] || 0) + 1; }); });
+    var shared = {}; Object.keys(vcount).forEach(function (x) { if (vcount[x] > 1) shared[x] = 1; });
+    var seenV = {}, egTri = arr(eg.parts).filter(function (p) { return p && p.kind === 'triangle'; });
     pats.forEach(function (pat, i) {
       var ok = !!part.hit[i] || !!eg.done;
-      parts.push({ kind: 'triangle', ti: i, done: ok, html: patternHTML(pat, b, m) + (pat[3] ? ' <span class="note">over ' + math(eTeX(maps(baseOf() || {}), (arr((baseOf() || {}).triangles).filter(function (t) { return t.id === pat[3]; })[0] || {}).e02 || '')) + '</span>' : '') });
+      var fresh = pat.slice(0, 3).some(function (x) { return isVar(x) && !seenV[x]; });
+      pat.slice(0, 3).forEach(function (x) { if (isVar(x)) seenV[x] = 1; });
+      var verb = egTri[i] && egTri[i].verb ? egTri[i].verb === 'construct' : fresh;
+      parts.push({ kind: 'triangle', ti: i, done: ok, html: patternHTML(pat, b, m, shared, verb) + (pat[3] ? ' <span class="note">over ' + math(eTeX(maps(baseOf() || {}), (arr((baseOf() || {}).triangles).filter(function (t) { return t.id === pat[3]; })[0] || {}).e02 || '')) + '</span>' : '') });
     });
     var usedE = {};
     arr(g.edges).forEach(function (pr) {
@@ -707,6 +761,14 @@
         parts.push({ kind: key, done: ok, html: esc(txt) + ' <span class="now">(now ' + have + ')</span>' });
       });
     });
+    if (g.pick != null) {
+      var seq = Array.isArray(g.pick) ? g.pick : [g.pick], got = arr(st.flags && st.flags.picks);
+      seq.forEach(function (ref, i) {
+        var r = got[i], f = r && factInfo(r);
+        parts.push({ kind: 'pick', done: i < got.length, html: f ? factPic(m, f.e01, f.e12, f.e02, 'tc0') + '<span class="goal-txt"><b class="verb">Picked</b> ' + math(factNamedTeX(m, f.ref, f.e01, f.e12, f.e02)) + '</span>'
+          : '<span class="goal-txt"><b class="verb">Pick</b> ' + askText(arr(g.ask)[i], m) + '</span>' });
+      });
+    }
     if (g.flag) parts.push({ kind: 'flag', done: !!(st.flags && st.flags[g.flag]), html: g.flag === 'uniqueRefused' ? 'ask for a second answer' : g.flag === 'verdict' ? 'decide: is this the nerve of a category?' : esc(g.flag) });
     // engine parts, if they line up (impossible/claim parts are never shown: that is the player's call)
     var ep = arr(eg.parts).filter(function (p) { return p && !/impossible|claim/i.test(p.kind || ''); });
@@ -723,19 +785,32 @@
     return parts;
   }
 
-  function patternHTML(pat, b, m) {
-    function tok(x, paren) {
-      if (isVar(x)) {
-        if (b && b[x] != null) return paren ? eTeXp(m, b[x]) : eTeX(m, b[x]);
-        return '?';
-      }
-      return paren ? eTeXp(m, x) : eTeX(m, x);
-    }
-    if (mathMode()) return math('d_2 = ' + tok(pat[0]) + ',\\ d_0 = ' + tok(pat[1]) + ',\\ d_1 = ' + tok(pat[2]));
-    var mid = isVar(pat[1]) ? (b && b[pat[1]]) : pat[1];
-    var first = isVar(pat[0]) ? (b && b[pat[0]]) : pat[0];
-    if (mid && isIdentityEdge(m, mid) && !(first && isIdentityEdge(m, first))) return math(tok(pat[0]) + ' \\simeq ' + tok(pat[2]));
-    return math(tok(pat[0], true) + THEN + tok(pat[1], true) + ' \\simeq ' + tok(pat[2]));
+  // world 0: what a pick goal asks for, from goal.ask = {face, edge} | {d0, d1, d2 (labels)} | {face, degenerate}
+  function askText(a, m) {
+    if (!a) return 'the triangle described on the left';
+    function lbl(x) { var e = m.e[x]; return math(e ? eTeX(m, x) : labTeX(x)); }
+    function fname(f) { return math('d_' + String(f).replace(/^d/, '')); }
+    if (a.face && a.edge) return 'the triangle whose ' + fname(a.face) + ' is ' + lbl(a.edge);
+    if (a.face && a.degenerate != null) return 'face ' + fname(a.face) + ' of the tetrahedron' + (a.degenerate ? ' <span class="note">(it is one of the free triangles)</span>' : '');
+    var ks = ['d2', 'd0', 'd1'].filter(function (k) { return a[k] != null; });
+    if (ks.length) return 'the free triangle with ' + ks.map(function (k) { return fname(k) + ' = ' + lbl(a[k]); }).join(' and ');
+    return 'the triangle described on the left';
+  }
+  function patternHTML(pat, b, m, shared, construct) {
+    shared = shared || {};
+    var tri = pat.slice(0, 3), hasVar = construct == null ? tri.some(isVar) : !!construct;
+    function vname(x) { return shared[x] ? '?' + x.slice(1) : '?'; }
+    function tok(x) { if (isVar(x)) return b && b[x] != null ? eTeX(m, b[x]) : vname(x); return eTeX(m, x); }
+    function lab(x) { if (isVar(x)) return b && b[x] != null ? stripTags(dispLabel(m, b[x])) : '?'; return stripTags(dispLabel(m, x)); }
+    var ids = tri.map(function (x) { return isVar(x) ? (b && b[x]) || null : x; });
+    var pic = miniPic(tri.map(lab), ids, triCorners(m, ids[0], ids[1], ids[2]), 'tc0');
+    var tex = '(' + tok(tri[0]) + ',\\ ' + tok(tri[1]) + '\\,;\\ ' + tok(tri[2]) + ')';
+    var binds = tri.filter(function (x, i) { return isVar(x) && shared[x] && b && b[x] != null && tri.indexOf(x) === i; })
+      .map(function (x) { return math('?' + x.slice(1) + ' \\mapsto ' + eTeX(m, b[x])); });
+    var hom = ids[1] && isIdentityEdge(m, ids[1]) && !(ids[0] && isIdentityEdge(m, ids[0]));
+    var gloss = !hasVar && hom ? ' <span class="note">i.e. ' + math(tok(tri[0]) + ' \\simeq ' + tok(tri[2])) + '</span>' : '';
+    return '<span class="goal-pic">' + pic + '</span><span class="goal-txt"><b class="verb">' + (hasVar ? 'Construct' : 'Prove') + '</b> ' + math(tex) + gloss +
+      (binds.length ? ' <span class="binds">' + binds.join(', ') + '</span>' : '') + '</span>';
   }
 
   function checkWin(delay) {
@@ -796,6 +871,12 @@
   function handlePick(item) {
     if (!P.level) return;
     hideChooser();
+    // world 0: tapping a triangle is the move
+    if (item.kind === 'tri' && P.level.goal && P.level.goal.pick != null && !P.won) {
+      var pr = doMove(['pick', item.id], [item]);
+      if (pr && pr.ok) toggleIsolate(item.id);
+      return;
+    }
     if (P.choice) { if (item.kind === 'tri') toggleIsolate(item.id); return; }
     if (!P.tool) {
       if (item.kind === 'tri') { toggleIsolate(item.id); return; }
@@ -919,6 +1000,7 @@
     } else { ex.hidden = true; ex.innerHTML = ''; }
     // world briefing: the full panel the first time, then one click to bring it back
     progress.briefed = progress.briefed || {};
+    paintDefinition();
     var bh = paintBriefing();
     // one thing at a time: with a briefing up (it links the note), Explain starts closed and no note is offered
     if (bh) { var dd = ex.querySelector('details'); if (dd) dd.open = false; }
@@ -936,23 +1018,71 @@
     renderHints();
   }
 
-  // the briefing can be put away and brought back: it collapses to one line, it is not thrown out
+  // SPEC5 §5: the briefing is a collapsible sidebar section, open the first time, remembered closed
   function paintBriefing() {
     var bf = $('briefing'), lv = P.level;
     if (!bf) return '';
-    if (!lv || !briefingFor(lv.world)) { bf.hidden = true; bf.innerHTML = ''; bf.className = 'panel briefing'; return ''; }
-    progress.briefed = progress.briefed || {};
-    var open = !progress.briefed[lv.world];
-    if (open) {
-      bf.className = 'panel briefing';
-      bf.innerHTML = briefingHTML(lv.world, true);
-    } else {
-      bf.className = 'panel brief-closed';
-      bf.innerHTML = '<button type="button" class="brief-open" data-act="brief-show" aria-expanded="false">' +
-        '<span class="brief-open-i" aria-hidden="true">ⓘ</span> About this world: ' + prose(worldInfo(lv.world).title) + '</button>';
-    }
+    if (!lv || !briefingFor(lv.world)) { bf.hidden = true; bf.innerHTML = ''; return ''; }
+    progress.briefOpen = progress.briefOpen || {};
+    var w = lv.world, first = progress.briefOpen[w] === undefined;
+    var open = first ? true : !!progress.briefOpen[w];
+    if (first) { progress.briefOpen[w] = false; saveProgress(); }
+    bf.className = 'panel briefing';
+    bf.innerHTML = '<details class="brief-d"' + (open ? ' open' : '') + '><summary>About this world: ' + prose(worldInfo(w).title) + '</summary>' + briefingHTML(w) + '</details>';
+    var d = bf.querySelector('details');
+    d.addEventListener('toggle', function () { progress.briefOpen[w] = d.open; saveProgress(); });
     bf.hidden = false;
     return open ? 'open' : '';
+  }
+  // the Definition card: the world's definition, always at hand while playing in that world
+  function paintDefinition() {
+    var dc = $('defcard'), lv = P.level;
+    if (!dc) return;
+    var wo = null; arr(HC.Worlds).forEach(function (x) { if (x && lv && x.id == lv.world) wo = x; });
+    var def = wo && (wo.definition || wo.def);
+    if (!def) { dc.hidden = true; dc.innerHTML = ''; return; }
+    progress.defClosed = progress.defClosed || {};
+    var w = lv.world;
+    var body = (Array.isArray(def) ? def : [def]).map(function (p) { return '<p>' + prose(p) + '</p>'; }).join('');
+    dc.className = 'panel defcard';
+    dc.innerHTML = '<details' + (progress.defClosed[w] ? '' : ' open') + '><summary>Definition' + (wo.defTitle ? ': ' + prose(wo.defTitle) : '') + '</summary><div class="def-body">' + body + '<figure class="def-fig"></figure></div></details>';
+    var fig = dc.querySelector('.def-fig'), spec = wo.definitionDiagram;
+    if (spec) {
+      try {
+        if (HC.NotesView && typeof HC.NotesView.renderDiagram === 'function') { var r = HC.NotesView.renderDiagram(spec); if (typeof r === 'string') fig.innerHTML = r; else if (r && r.nodeType) fig.appendChild(r); }
+        else fig.innerHTML = drawSpecSVG(spec);
+        if (spec.caption) fig.appendChild(hEl('figcaption', null, prose(spec.caption)));
+      } catch (e) { fig.parentNode.removeChild(fig); }
+    } else fig.parentNode.removeChild(fig);
+    var d = dc.querySelector('details');
+    d.addEventListener('toggle', function () { progress.defClosed[w] = !d.open; saveProgress(); });
+    dc.hidden = false;
+  }
+  // which 2-dimensional horns can be filled in a world: none / inner / inner + outer along ≅ / all
+  function hornRule(wid) {
+    var L = levels().filter(function (l) { return l.world == wid; });
+    if (!L.length) return null;
+    if (L.some(function (l) { return l.kan; })) return 'all';
+    if (L.some(function (l) { return l.joyal; })) return 'iso';
+    var tools = {}; L.forEach(function (l) { arr(l.tools).forEach(function (t) { tools[t] = 1; }); });
+    if (!(tools.compose || tools.tetra || tools.trip || tools.horn0 || tools.horn2)) return 'none';
+    return 'inner';
+  }
+  function hornPicture(rule) {
+    if (!rule) return '';
+    var A = { x: 8, y: 34 }, B = { x: 30, y: 6 }, C = { x: 52, y: 34 };
+    var horns = [{ k: 0, legs: [[A, B], [A, C]], miss: [B, C] }, { k: 1, legs: [[A, B], [B, C]], miss: [A, C] }, { k: 2, legs: [[B, C], [A, C]], miss: [A, B] }];
+    function ok(k) { return rule === 'all' ? 'yes' : rule === 'none' ? 'no' : k === 1 ? 'yes' : rule === 'iso' ? 'iso' : 'no'; }
+    var cells = horns.map(function (h) {
+      var st = ok(h.k);
+      var svg = '<svg class="hp" viewBox="0 0 60 44" aria-hidden="true">' +
+        h.legs.map(function (l) { var a = towards(l[0], l[1], 3), b = towards(l[1], l[0], 5); return '<path class="hp-e" d="M' + pt(a) + ' L' + pt(b) + '" marker-end="url(#mt-ah)"/>'; }).join('') +
+        '<path class="hp-m ' + st + '" d="M' + pt(towards(h.miss[0], h.miss[1], 3)) + ' L' + pt(towards(h.miss[1], h.miss[0], 3)) + '"/>' +
+        [A, B, C].map(function (p) { return '<circle class="mt-v" cx="' + p.x + '" cy="' + p.y + '" r="2.6"/>'; }).join('') + '</svg>';
+      var cap = st === 'yes' ? 'fills' : st === 'iso' ? 'fills along \u2245' : 'stays open';
+      return '<figure class="hp-cell ' + st + '">' + svg + '<figcaption>' + math('\\Lambda^2_' + h.k) + ' ' + cap + '</figcaption></figure>';
+    }).join('');
+    return '<div class="horn-pic" aria-label="Which horns can be filled here">' + cells + '</div>';
   }
 
   function renderAll() {
@@ -1180,6 +1310,15 @@
   }
   // The fill runs exactly along the three drawn arrows: from each corner dot, along the arrow's own curve, to the
   // next corner dot. An identity side is a single point, so it adds nothing (it must not fill its loop).
+  // where to write a triangle's name: the centre of its corners, nudged off a degenerate (repeated) corner
+  function triCornerPos(t, geo, m) {
+    var c = [edgeEnds(m, t.e01)[0], edgeEnds(m, t.e01)[1], edgeEnds(m, t.e12)[1]].map(function (v) { return v && geo.pos[v]; });
+    if (c.some(function (p) { return !p; })) return null;
+    var g1 = geo.e[t.e01], g2 = geo.e[t.e12], g3 = geo.e[t.e02];
+    var pts = c.slice(); [g1, g2, g3].forEach(function (g) { if (g && g.mid) pts.push(g.mid); });
+    var x = 0, y = 0; pts.forEach(function (p) { x += p.x; y += p.y; });
+    return { x: x / pts.length, y: y / pts.length };
+  }
   function triPath(t, geo, m) {
     var e01 = m.e[t.e01], e12 = m.e[t.e12], e02 = m.e[t.e02];
     if (!e01 || !e12 || !e02) return null;
@@ -1226,9 +1365,8 @@
   }
 
   // plain mode: stay loops are drawn only once a shown fact or the current pick uses them; free stay-facts are not drawn
-  function shownFact(t) { return mathMode() || !isThin(t); }
+  function shownFact(t) { return !isThin(t); }
   function viewState(st, m) {
-    if (mathMode()) return st;
     var used = {};
     arr(st.triangles).forEach(function (t) { if (shownFact(t)) used[t.e01] = used[t.e12] = used[t.e02] = 1; });
     (P.trip ? P.trip.steps : P.picks.map(function (p) { return p.id; })).forEach(function (id) { used[id] = 1; });
@@ -1236,7 +1374,10 @@
       var f = P.trip.res.slots[k] && factInfo(P.trip.res.slots[k].chosen);
       if (f && !f.free) used[f.e01] = used[f.e12] = used[f.e02] = 1;
     });
-    var edges = arr(st.edges).filter(function (e) { return !isIdentityEdge(m, e.id) || used[e.id]; });
+    // SPEC5: every dot shows its identity 1_a (a degenerate edge); faint unless a shown triangle or a pick uses it
+    var edges = arr(st.edges).slice(), have = setOf(edges.map(function (e) { return e.id; }));
+    arr(st.vertices).forEach(function (v) { var id = 'id:' + v.id; if (!have[id]) edges.push({ id: id, src: v.id, dst: v.id, label: '1_' + vLabel(m, v.id), kind: 'identity', virtual: true }); });
+    P.usedIds = used;
     var keep = setOf(edges.map(function (e) { return e.id; }));
     return { vertices: st.vertices, edges: edges, tetras: st.tetras,
       triangles: arr(st.triangles).filter(function (t) { return shownFact(t) && keep[t.e01] && keep[t.e12] && keep[t.e02]; }) };
@@ -1251,10 +1392,11 @@
     arr(st.edges).forEach(function (e) {
       var g = geo.e[e.id]; if (!g) return;
       if (opts.skip && opts.skip[e.id]) return;
-      var kc = edgeKindClass(e), lab = boardLabel(m, e.id);
+      var kc = edgeKindClass(e), lab = e.virtual ? e.label : boardLabel(m, e.id);
       var isFresh = !opts.shadow && P.fresh.edges[e.id] && !reduceMotion;
       var over = opts.overClass ? opts.overClass(e.id) : '';
-      var attrs = { class: 'edge k-' + kc + (isFresh ? ' fresh' : '') + (over ? ' ' + over : '') + (opts.shadow ? ' shadow' : '') };
+      var faint = !opts.shadow && kc === 'identity' && !(P.usedIds && P.usedIds[e.id]);
+      var attrs = { class: 'edge k-' + kc + (isFresh ? ' fresh' : '') + (over ? ' ' + over : '') + (opts.shadow ? ' shadow' : '') + (faint ? ' faint' : '') };
       if (!opts.shadow) {
         attrs['data-eid'] = e.id; attrs.tabindex = '0'; attrs.role = 'button';
         attrs['aria-label'] = 'arrow ' + stripTags(lab) + ' from ' + vLabel(m, e.src) + ' to ' + vLabel(m, e.dst) + (e.iso ? ', an isomorphism' : '');
@@ -1401,7 +1543,14 @@
       var d = triPath(t, geo, m); if (!d) return;
       var p = sEl('path', { d: d, class: 'tri tc' + (i % 4) + (P.fresh.triangles[t.id] && !reduceMotion ? ' fresh' : ''), 'data-tid': t.id, 'fill-rule': 'nonzero' });
       gF.appendChild(p); P.els.tri[t.id] = p;
+      var cs = triCornerPos(t, geo, m), nm = triNamePlain(m, t.id);
+      if (cs && nm) {
+        var tn = sEl('text', { x: r1(cs.x), y: r1(cs.y), class: 'tname', 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': Math.round(LABEL_FONT * 0.72) });
+        fillLabel(tn, nm.replace(/([\u2080-\u2089]+)/, function (d) { return '_{' + deSub(d) + '}'; }));
+        P.tnames = P.tnames || []; P.tnames.push(tn);
+      }
     });
+    if (P.tnames) { P.tnames.forEach(function (tn) { gF.appendChild(tn); }); P.tnames = null; }
 
     if (sk >= 1 && L.e !== false) {
       var skip = {};
@@ -1575,7 +1724,7 @@
     }
     return null;
   }
-  function factTeX(f) { return f ? triTeXIds(P.m, f.e01, f.e12, f.e02) : '?'; }
+  function factTeX(f) { return f ? factNamedTeX(P.m, f.ref, f.e01, f.e12, f.e02) : '?'; }
   function tripVerts(steps) {
     var m = P.m, vs = [];
     steps.forEach(function (id, i) {
@@ -1805,7 +1954,8 @@
     var tkey = P.trip && P.trip.res && P.trip.res.ok !== false ? JSON.stringify([P.trip.res.vertices, P.trip.res.edges, P.trip.res.claim && P.trip.res.claim.slot]) : '';
     if (P.unfold && tkey !== P.unfoldTripKey && P.geo) { P.unfoldTripKey = tkey; P.ghostPos = {}; renderBoard(); applyHighlights(); }
     P.unfoldTripKey = tkey;
-    if (!P.trip) { el.hidden = true; el.innerHTML = ''; return; }
+    if (!P.trip && P.level && P.level.goal && P.level.goal.pick != null && arr(P.state && P.state.tetras).length) { renderGivenTetra(el, P.state.tetras[0]); return; }
+    if (!P.trip) { el.hidden = true; el.innerHTML = ''; unmountTetra3D(); return; }
     var m = P.m, r = P.trip.res || {};
     var steps = P.trip.steps || [];
     var vs = (r.vertices && r.vertices.length === 4) ? r.vertices : (steps.length === 3 && steps.every(Boolean) ? tripVerts(steps) : [null, null, null, null]);
@@ -1819,13 +1969,21 @@
     }
     var sl = r.slots || {}, cl = r.claim, claimed = P.trip.claimed, intro = isIntro(P.level), ed = tetraEdges(r);
     function q(id) { return id ? eTeXp(m, id) : '?'; }
-    var rows = SLOTS.map(function (k) {
+    // SPEC5: corners 0–3 with their dots, the six edges by corner pair, faces d₀ … d₃ by name
+    var cornerLine = '<p class="tcorners"><span class="note">corners</span> ' + vl.map(function (v, i) { return '<span class="tc-i">' + i + '</span>=' + math(labTeX(v)); }).join(', ') + '</p>';
+    var pairs = [['01', 'e01'], ['12', 'e12'], ['23', 'e23'], ['02', 'e02'], ['13', 'e13'], ['03', 'e03']];
+    var edgeLine = '<p class="tedges"><span class="note">edges</span> ' + pairs.map(function (p) { return '<span class="tc-i">' + p[0] + '</span>=' + math(ed[p[1]] ? eTeX(m, ed[p[1]]) : '?'); }).join(', ') + '</p>';
+    function chip(k, c, alt) {
+      return '<button type="button" class="mini chip-f' + (alt ? ' alt' : '') + (c.free ? ' freefact' : '') + '" data-slot="' + k + '" data-ref="' + esc(c.ref) + '">' + factPic(m, c.e01, c.e12, c.e02, c.free ? 'tcf' : 'tc0') + math(factNamedTeX(m, c.ref, c.e01, c.e12, c.e02)) + '</button>';
+    }
+    var rows = ['B', 'C', 'D', 'A'].map(function (k) {
       var s = sl[k] || {}, f = factInfo(s.chosen), cands = arr(s.cands).map(factInfo).filter(Boolean);
-      var fe = FACE_EDGES[k], tmpl = q(ed[fe[0]]) + ' \\cdot ' + q(ed[fe[1]]) + ' \\simeq ' + (ed[fe[2]] ? eTeX(m, ed[fe[2]]) : '?');
-      if (mathMode()) tmpl = 'd_2 = ' + q(ed[fe[0]]) + ',\\ d_0 = ' + q(ed[fe[1]]) + ',\\ d_1 = ' + (ed[fe[2]] ? eTeX(m, ed[fe[2]]) : '?');
+      var fe = FACE_EDGES[k], ids = fe.map(function (x) { return ed[x] || null; });
+      var tmpl = '(' + q(ids[0]) + ',\\ ' + q(ids[1]) + '\\,;\\ ' + (ids[2] ? eTeX(m, ids[2]) : '?') + ')';
       var corners = FACE_CORNERS[k].map(function (i) { return esc(vl[i]) + '<sub>' + i + '</sub>'; }).join(' ');
-      var lab = '<span class="tcorn">' + corners + '</span>' + (mathMode() ? ' ' + math('d_' + SLOT_FACE[k]) : '');
+      var lab = math('d_' + SLOT_FACE[k]) + ' <span class="tcorn">' + corners + '</span>';
       var val, cls = '';
+      var allFree = cands.length && cands.every(function (c) { return c.free; });
       if (f) {
         var mine = P.trip.choice[k] != null, alts = [];
         if (!claimed) {
@@ -1833,28 +1991,29 @@
           alts = pool.map(factInfo).filter(function (c) { return c && c.ref !== f.ref && !(c.e01 === f.e01 && c.e12 === f.e12 && c.e02 === f.e02); });
         }
         cls = k === claimed ? ' new' : ' set';
-        val = '<span class="tfact' + (k === claimed ? ' claimed' : '') + '">' + math(factTeX(f)) + '</span>' +
-          (alts.length ? ' <span class="note">or</span> ' + alts.map(function (c) {
-            return '<button type="button" class="mini chip-f alt" data-slot="' + k + '" data-ref="' + esc(c.ref) + '">' + math(factTeX(c)) + '</button>';
-          }).join(' ') : '') +
+        val = factPic(m, f.e01, f.e12, f.e02, k === claimed ? 'tcn' : f.free ? 'tcf' : 'tc0') +
+          '<span class="tfact' + (k === claimed ? ' claimed' : '') + '">' + math(factNamedTeX(m, f.ref, f.e01, f.e12, f.e02)) + '</span>' +
+          (f.free ? ' <span class="note">free (degenerate)</span>' : '') +
+          (alts.length ? ' <span class="note">or</span> ' + alts.map(function (c) { return chip(k, c, true); }).join(' ') : '') +
           (!claimed && mine && P.trip.mode === 'path' ? ' <button type="button" class="linklike tx" data-clear="' + k + '">unset</button>' : '');
       } else if (cl && cl.slot === k) {
         var cf = factInfo(cl.fact) || cl.fact, allowed = cl.allowed !== false;
         cls = allowed ? ' want' : ' locked';
-        val = '<span class="tmust">' + math(cf && cf.e01 ? factTeX(cf) : '?') + '</span> ' +
+        val = (cf && cf.e01 ? factPic(m, cf.e01, cf.e12, cf.e02, 'tcw') : '') + '<span class="tmust">' + math(cf && cf.e01 ? triTeXIds(m, cf.e01, cf.e12, cf.e02) : '?') + '</span> ' +
           '<button type="button" class="btn claim' + (allowed ? '' : ' locked') + (allowed && intro ? ' pulse' : '') + '" data-act="claim"' +
           (allowed ? '' : ' title="' + esc(stripTags(cl.reason || '')) + '"') + '>' +
           (allowed ? 'Fill <span class="kbd">Enter</span>' : LOCK_SVG + ' Locked') + '</button>';
       } else if (cands.length) {
-        val = '<span class="ttmpl">' + math(tmpl) + '</span> ' + cands.map(function (c) {
-          return '<button type="button" class="mini chip-f" data-slot="' + k + '" data-ref="' + esc(c.ref) + '">' + math(factTeX(c)) + '</button>';
-        }).join(' ');
+        // more than one triangle fits: never chosen for the player
+        val = '<span class="ttmpl">' + math(tmpl) + '</span> <span class="note">' + (cands.length > 1 ? 'choose one:' : 'fits:') + (allFree ? ' free (degenerate)' : '') + '</span> ' +
+          cands.map(function (c) { return chip(k, c, false); }).join(' ');
       } else {
         cls = ' unknown';
-        val = '<span class="ttmpl unknown">' + math(tmpl) + '</span>';
+        val = '<span class="ttmpl unknown">' + math(tmpl) + '</span> <span class="note">no triangle yet</span>';
       }
       return '<div class="tslot s' + k + cls + '" data-face="' + k + '"><span class="tlab">' + lab + '</span><span class="tval">' + val + '</span></div>';
     }).join('');
+    rows = cornerLine + edgeLine + rows;
     var sentence = 'A solid tetrahedron’s four faces must agree. Three are known — the fourth is forced.';
     var horn = '';
     if (cl) {
@@ -1872,6 +2031,25 @@
     if (!host) { host = document.createElement('div'); host.className = 'trip-view'; host.id = 'trip-view'; }
     slot.parentNode.replaceChild(host, slot);
     mountView(host, tetraModel(r, vl));
+  }
+  function renderGivenTetra(el, T) {
+    var m = P.m, vs = arr(T.vertices).length === 4 ? T.vertices : uniq(tetraVerts(T, m)).concat([null, null, null, null]).slice(0, 4);
+    var vl = vs.map(function (v) { return v == null ? '?' : vLabel(m, v); }), te = T.edges || {};
+    var edges = {}, kinds = {};
+    ['01', '12', '23', '02', '13', '03'].forEach(function (k) { var id = te[k] || te['e' + k]; edges[k] = id ? stripTags(dispLabel(m, id)) : '?'; kinds[k] = id && isIdentityEdge(m, id) ? 'identity' : 'given'; });
+    var faces = { 0: 'known', 1: 'known', 2: 'known', 3: 'known' };
+    var host = t3d && t3d.host && t3d.host.isConnected ? t3d.host : null;
+    if (host) host.parentNode.removeChild(host);
+    el.innerHTML = '<div class="trip-head"><b>The tetrahedron</b> <span class="note">drag to turn it; corners are numbered 0\u20133</span></div>' +
+      '<div class="trip-body"><div class="trip-view-slot"></div><div class="trip-slots">' +
+      '<p class="tcorners"><span class="note">corners</span> ' + vl.map(function (v, i) { return '<span class="tc-i">' + i + '</span>=' + math(labTeX(v)); }).join(', ') + '</p>' +
+      '<p class="tedges"><span class="note">edges</span> ' + ['01', '12', '23', '02', '13', '03'].map(function (k) { var id = te[k] || te['e' + k]; return '<span class="tc-i">' + k + '</span>=' + math(id ? eTeX(m, id) : '?'); }).join(', ') + '</p>' +
+      '<p class="trip-rule">Face ' + math('d_k') + ' is the triangle opposite corner ' + math('k') + ': it uses the other three corners, in order.</p></div></div>';
+    el.hidden = false;
+    var slot = el.querySelector('.trip-view-slot');
+    if (!host) { host = document.createElement('div'); host.className = 'trip-view'; host.id = 'trip-view'; }
+    slot.parentNode.replaceChild(host, slot);
+    mountView(host, { corners: vl, edges: edges, faces: faces, kinds: kinds, labels: {} });
   }
   var LOCK_SVG = '<svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="7" width="9" height="7" rx="1.2"/><path d="M5.5 7 V5 a2.5 2.5 0 0 1 5 0 V7" fill="none"/></svg>';
 
@@ -2372,7 +2550,7 @@
     var rows = [
       ['C', 'Compose'], ['T', 'Tetrahedron'], ['L / R', 'Solve for the second / first arrow'], ['1–4', 'Your theorems (when no tool is picking)'],
       ['G', 'Glue triangle'], ['D', 'Draw arrow'], ['P', 'Peel'], ['A', 'Add dot'],
-      ['1–9', 'With a tool active: the first press shows numbers on the targets, the next picks one'], ['Enter', 'Fill / claim / next level'], ['Esc', 'Clear picks / close'],
+      ['1–9', 'With a tool active: the first press shows numbers on the targets, the next picks one'], ['Enter', 'Fill / claim / next note or level'], ['Esc', 'Clear picks / close'],
       ['Z or Ctrl+Z', 'Undo'], ['Backspace', 'Remove the last pick'], ['H', 'Hint'], ['U', 'Unfold identities'],
       ['R', 'Rename the selected arrow'], ['?', 'This help']
     ];
@@ -2497,25 +2675,21 @@
     return { title: b.title || (w && w.title), soFar: b.soFar || b.so_far || b.sofar, now: b.now,
       new: b['new'] || b.newWords || b.terms, note: b.note, about: b.about || b.idea, picture: b.picture };
   }
-  function briefingHTML(wid, closable) {
+  function briefingHTML(wid) {
     var b = briefingFor(wid); if (!b) return '';
     var first = notes().filter(function (n) { var L = levels().filter(function (l) { return l.name === n.before; })[0]; return L && L.world == wid; })[0];
     var noteId = b.note || (first && first.id);
     var nw = Array.isArray(b['new']) ? b['new'].join(', ') : b['new'];
-    var rows = '';
-    if (b.soFar) rows += '<dt>So far</dt><dd>' + prose(b.soFar) + '</dd>';
-    if (b.now) rows += '<dt>Now</dt><dd>' + prose(b.now) + '</dd>';
-    if (nw) rows += '<dt>New</dt><dd>' + prose(nw) + '</dd>';
+    var sec = '';
+    if (b.soFar) sec += '<h4>So far</h4><p>' + prose(b.soFar) + '</p>';
+    if (b.now || b.about) sec += '<h4>In this world</h4>' + (b.now ? '<p>' + prose(b.now) + '</p>' : '') + (b.about ? '<p>' + prose(b.about) + '</p>' : '');
+    if (nw) sec += '<h4>New tools and words</h4><p>' + prose(nw) + '</p>';
     var pic = b.picture && b.picture.dots ? '<figure class="brief-fig">' + drawSpecSVG(b.picture) +
       (b.picture.caption ? '<figcaption>' + prose(b.picture.caption) + '</figcaption>' : '') + '</figure>' : '';
-    return '<div class="brief-body">' +
-      '<div class="brief-head"><h3 class="brief-t">' + prose(b.title || worldInfo(wid).title) + '</h3>' +
-      (closable ? '<button type="button" class="ghost brief-x" data-act="brief-ok" title="Hide this: you can open it again from the level list" aria-label="Hide the briefing">✕</button>' : '') +
-      '</div>' +
-      (rows ? '<dl class="brief-rows">' + rows + '</dl>' : '') +
-      pic +
-      (b.about ? '<p class="brief-about">' + prose(b.about) + '</p>' : '') +
-      '<p class="brief-act">' + (noteId && noteById(noteId) ? '<button type="button" class="linklike" data-note="' + esc(noteId) + '">Read the note: ' + prose(noteById(noteId).title || '') + '</button>' : '') + '</p>' +
+    var hr = hornRule(wid);
+    return '<div class="brief-body">' + sec +
+      (hr ? '<h4>Which horns fill here</h4>' + hornPicture(hr) : '') + pic +
+      (noteId && noteById(noteId) ? '<p class="brief-act"><button type="button" class="linklike" data-note="' + esc(noteId) + '">Read the note: ' + prose(noteById(noteId).title || '') + '</button></p>' : '') +
       '</div>';
   }
 
@@ -2617,40 +2791,57 @@
   }
 
   /* ---------- facts ---------- */
+  // SPEC5 §2: Facts = Triangles (given/made, named σᵢ) + Free triangles (degenerate, collapsed by default)
+  function freeTris() {
+    var st = P.state, m = P.m, out = [], seen = {};
+    function add(fi, nm) { if (!fi || seen[fi.ref]) return; seen[fi.ref] = 1; if (nm) fi.name = nm; out.push(fi); }
+    if (engineHas('freeTriangles')) {
+      try { arr(HC.Engine.freeTriangles(st)).forEach(function (f) { add(factInfo(f), f && f.name); }); return out; } catch (e) {}
+    }
+    arr(st.triangles).forEach(function (t) { if (isThin(t)) add(factInfo(t.id)); });
+    arr(st.vertices).forEach(function (v) { add(factInfo('s0:id:' + v.id)); });
+    arr(st.edges).forEach(function (e) { if (!isIdentityEdge(m, e.id)) { add(factInfo('s0:' + e.id)); add(factInfo('s1:' + e.id)); } });
+    return out;
+  }
+  function factCard(ref, f, i, kind, free) {
+    var m = P.m;
+    var c = hEl('button', { type: 'button', class: 'fact tc' + (i % 4) + (free ? ' freefact' : '') + (P.fresh.triangles[ref] && !reduceMotion ? ' fresh' : ''), 'data-tid': ref, 'aria-pressed': 'false',
+      title: triReadPlain(m, f.e01, f.e12, f.e02, ref) + (free ? ' (degenerate: built from identities, true for free)' : '') + '. Click to isolate it on the board.' },
+      '<span class="swatch" aria-hidden="true"></span>' + factPic(m, f.e01, f.e12, f.e02, 'tc' + (i % 4)) +
+      '<span class="ftext">' + math(factNamedTeX(m, ref, f.e01, f.e12, f.e02)) + '</span><span class="fkind' + (kind ? ' k-' + esc(kind) : '') + '">' + esc(free ? 'free' : KIND_NAMES[kind] || kind || '') + '</span><span class="pnum" aria-hidden="true"></span>');
+    P.els.card[ref] = c;
+    return c;
+  }
   function renderFacts() {
     var box = $('facts'), st = P.state, m = P.m;
     box.innerHTML = '';
     P.els.card = {};
     var tris = P.skel >= 2 ? arr(st.triangles).filter(shownFact) : [];
-    // solids only matter where the level is about shapes (or in math mode)
     var tets = P.skel >= 3 && (mathMode() || hasSkeleton(P.level) || (P.level.goal && (P.level.goal.min || P.level.goal.counts))) ? arr(st.tetras) : [];
     $('facts-count').textContent = tris.length ? String(tris.length) : '';
-    if (!tris.length && !tets.length) { box.innerHTML = '<p class="empty">' + (P.skel < 2 && arr(st.triangles).length ? 'Hidden by the view.' : 'None yet.') + '</p>'; return; }
-    tris.forEach(function (t, i) {
-      var kind = KIND_NAMES[t.kind] || t.kind || '';
-      var hom = isIdentityEdge(m, t.e12);
-      var c = hEl('button', { type: 'button', class: 'fact tc' + (i % 4) + (hom ? ' homotopy' : '') + (P.fresh.triangles[t.id] && !reduceMotion ? ' fresh' : ''), 'data-tid': t.id, 'aria-pressed': 'false', title: triReadPlain(m, t.e01, t.e12, t.e02) + '. Click to isolate it on the board.' },
-        '<span class="swatch" aria-hidden="true"></span>' + miniTri(m, t, i) + '<span class="ftext">' + math(triTeX(m, t)) + '</span><span class="fkind k-' + esc(t.kind || '') + '">' + esc(kind) + '</span><span class="pnum" aria-hidden="true"></span>');
-      box.appendChild(c); P.els.card[t.id] = c;
-    });
+    var sec = hEl('div', { class: 'facts-sec' });
+    sec.appendChild(hEl('h4', { class: 'facts-h' }, 'Triangles'));
+    if (!tris.length) sec.appendChild(hEl('p', { class: 'empty' }, P.skel < 2 && arr(st.triangles).length ? 'Hidden by the view.' : 'None yet.'));
+    tris.forEach(function (t, i) { sec.appendChild(factCard(t.id, t, i, t.kind, false)); });
     tets.forEach(function (T) {
       var vs = uniq(tetraVerts(T, m)).map(function (v) { return vLabel(m, v); });
-      box.appendChild(hEl('div', { class: 'fact solid' + (P.fresh.tetras[T.id] && !reduceMotion ? ' fresh' : '') },
+      sec.appendChild(hEl('div', { class: 'fact solid' + (P.fresh.tetras[T.id] && !reduceMotion ? ' fresh' : '') },
         '<span class="swatch" aria-hidden="true"></span><span class="ftext">solid ' + math(vs.map(labTeX).join('\\,')) + '</span><span class="fkind">tetrahedron</span>'));
     });
-  }
-
-  function miniTri(m, t, i) {
-    var A = { x: 6, y: 33 }, B = { x: 28, y: 6 }, C = { x: 50, y: 33 };
-    function lab(id) { var s = stripTags(dispLabel(m, id)); return s.length > 5 ? s.slice(0, 4) + '\u2026' : s; }
-    function ln(p, q, id, ox, oy, anchor) {
-      var a = towards(p, q, 4), b = towards(q, p, 6), mx = (p.x + q.x) / 2 + ox, my = (p.y + q.y) / 2 + oy;
-      return '<path class="mt-e' + (isIdentityEdge(m, id) ? ' id' : '') + '" d="M' + pt(a) + ' L' + pt(b) + '" marker-end="url(#mt-ah)"/>' +
-        '<text class="mt-l" x="' + r1(mx) + '" y="' + r1(my) + '" text-anchor="' + anchor + '">' + esc(lab(id)) + '</text>';
+    box.appendChild(sec);
+    // the degenerate triangles: there on every board, true for free, usable like any other fact
+    if (P.skel >= 2) {
+      var fr = freeTris();
+      progress.freeOpen = progress.freeOpen || {};
+      var w = P.level && P.level.world, firstWorld = w != null && w <= Math.min.apply(null, levels().map(function (l) { return l.world || 0; }));
+      var open = progress.freeOpen[w] != null ? !!progress.freeOpen[w] : !!firstWorld;
+      var det = hEl('details', { class: 'facts-sec free-sec' });
+      if (open) det.open = true;
+      det.innerHTML = '<summary><span class="facts-h">Free triangles</span> <span class="count">' + fr.length + '</span> <span class="note">degenerate, from identities</span></summary>';
+      fr.forEach(function (f, i) { det.appendChild(factCard(f.ref, f, i, 'thin', true)); });
+      det.addEventListener('toggle', function () { progress.freeOpen[w] = det.open; saveProgress(); });
+      box.appendChild(det);
     }
-    return '<svg class="mini-tri" viewBox="-14 -4 84 50" aria-hidden="true"><path class="mt-fill tc' + (i % 4) + '" d="M' + [A, B, C].map(pt).join(' L') + ' Z"/>' +
-      ln(A, B, t.e01, -4, -2, 'end') + ln(B, C, t.e12, 4, -2, 'start') + ln(A, C, t.e02, 0, 11, 'middle') +
-      [A, B, C].map(function (p) { return '<circle class="mt-v" cx="' + p.x + '" cy="' + p.y + '" r="2.6"/>'; }).join('') + '</svg>';
   }
 
   /* ---------- goal checklist ---------- */
@@ -2736,7 +2927,6 @@
   function showWin() {
     var lv = P.level, T = textFor(lv), key = lkey(lv);
     var wins = bulletsOf(T.win);
-    var hasNext = P.idx + 1 < levels().length;
     var par = lv.par, atPar = par != null && P.moves <= par;
     var html = '<p class="win-h"><b>Solved.</b>' + (par != null ? ' <span class="note">' + plural(P.moves, 'move', 'moves') + (atPar ? ', at par <span class="star">★</span>' : ', par is ' + par) + '</span>' : '') + '</p>';
     if (wins.length) html += '<p class="win-p">' + wins.map(function (w) { return prose(w); }).join(' ') + '</p>';
@@ -2747,10 +2937,11 @@
     });
     if (mathMode() && T.math && T.math.proof) html += '<div class="proof"><span class="note">proof.</span> ' + prose(T.math.proof) + ' <span class="qed">∎</span></div>';
     if (T.term) html += '<p class="term"><span class="note">new word:</span> ' + prose(T.term) + '</p>';
-    html += '<p class="win-act"><button type="button" class="btn primary" id="win-next">' + (hasNext ? 'Next' : 'Levels') + ' <span class="kbd">Enter</span></button>';
+    var nextStep = stepOrder(1);
+    var nextNote = nextStep && nextStep.t === 'note' ? noteById(nextStep.k) : null;
+    var btnLabel = nextNote ? 'Next: read the note' : nextStep ? 'Next' : 'Levels';
+    html += '<p class="win-act"><button type="button" class="btn primary" id="win-next">' + btnLabel + ' <span class="kbd">Enter</span></button>';
     if (key === 'joyal' && HC.Epilogue) html += ' <button type="button" class="btn" id="win-ending">Read the ending</button>';
-    var nextLv = levels()[P.idx + 1], nn = nextLv && noteBefore(nextLv.name);
-    if (nn) html += ' <button type="button" class="linklike" data-note="' + esc(nn.id) + '">\uD83D\uDCD6 Read the note on ' + prose(nn.title || 'what comes next') + '</button>';
     html += '</p>';
     var box = $('winbox');
     box.innerHTML = html;
@@ -2760,12 +2951,12 @@
   }
   function hideWin() { var b = $('winbox'); if (b) { b.hidden = true; b.innerHTML = ''; } }
   function winShown() { var b = $('winbox'); return !!b && !b.hidden; }
+  // "Next" walks the same reading order as the ‹ › buttons: if a note introduces the next level,
+  // it comes first, and the note's own "Play" button starts the level.
   function nextLevel() {
-    if (P.idx + 1 < levels().length) {
-      var i = P.idx + 1;
-      if (!isUnlocked(i)) { showScreen('map'); return; }
-      startLevel(i);
-    } else showScreen('map');
+    var s = stepOrder(1);
+    if (s) { if (s.t === 'note') showNote(s.k); else startLevel(s.k); return; }
+    showScreen('map');
   }
 
   /* ---------- glossary ---------- */
@@ -2841,27 +3032,29 @@
     if (sub) sub.textContent = (q || GL.world != null)
       ? 'showing ' + shown + ' of ' + G.length + ' terms · ' + open + ' unlocked'
       : open + ' of ' + G.length + ' terms unlocked by solving levels';
-    var lastW = '~none~', grid = null;
+    // SPEC5 §5: groups by world, each collapsible; locked terms fold into one "N more unlock later" line
+    progress.glClosed = progress.glClosed || {};
+    var groups = [], byW = {};
     G.forEach(function (g) {
       var w = g.world == null ? null : g.world;
       if (GL.world != null && w !== GL.world) return;
       if (q && !glossaryHit(g, q)) return;
-      if (String(w) !== String(lastW) || !grid) {
-        lastW = w;
-        var sec = hEl('section', { class: 'gl-sec' });
-        sec.appendChild(hEl('h3', { class: 'gl-world' }, (w == null ? 'More' : esc(w) + '. ' + prose(worldInfo(w).title)) +
-          ' <span class="gl-n">' + G.filter(function (x) { return (x.world == null ? null : x.world) === w; }).length + '</span>'));
-        grid = hEl('div', { class: 'gl-grid' });
-        sec.appendChild(grid); list.appendChild(sec);
-      }
-      var unlocked = termUnlocked(g);
-      var card = hEl('article', { class: 'gl-card' + (g.essential ? ' essential' : '') + (unlocked ? '' : ' locked'), 'data-term': stripTags(g.term || '') });
-      var body;
-      if (!unlocked && !q) {
-        // still readable on a fresh save: the plain sentence, plus where the term turns up
-        body = (g.plain ? '<p class="gl-plain gl-plain-locked">' + prose(g.plain) + '</p>' : '') +
-          '<p class="gl-lock">You meet this one in ' + (w == null ? 'a later world' : 'world ' + esc(w)) + '.</p>';
-      } else {
+      var k = String(w);
+      if (!byW[k]) { byW[k] = { w: w, items: [] }; groups.push(byW[k]); }
+      byW[k].items.push(g);
+    });
+    groups.forEach(function (grp) {
+      var w = grp.w, k = String(w);
+      var det = hEl('details', { class: 'gl-sec' });
+      if (!progress.glClosed[k] || q || GL.world != null) det.open = true;
+      var locked = grp.items.filter(function (g) { return !termUnlocked(g); });
+      var open = q ? grp.items : grp.items.filter(termUnlocked);
+      det.innerHTML = '<summary class="gl-world">' + (w == null ? 'More' : esc(w) + '. ' + prose(worldInfo(w).title)) +
+        ' <span class="gl-n">' + grp.items.length + '</span></summary>';
+      var grid = hEl('div', { class: 'gl-grid' });
+      open.forEach(function (g) {
+        var unlocked = termUnlocked(g);
+        var card = hEl('article', { class: 'gl-card' + (g.essential ? ' essential' : '') + (unlocked ? '' : ' locked'), 'data-term': stripTags(g.term || '') });
         var main = mathMode()
           ? (g.formal ? '<p class="gl-formal first">' + prose(g.formal) + '</p>' : '') + (g.plain ? '<p class="gl-plain">' + prose(g.plain) + '</p>' : '')
           : (g.plain ? '<p class="gl-plain">' + prose(g.plain) + '</p>' : '') + (g.formal ? '<p class="gl-formal">' + prose(g.formal) + '</p>' : '');
@@ -2870,11 +3063,14 @@
         var met = (li >= 0 && isUnlocked(li)) ? '<p class="gl-met"><span class="gl-lbl">met in</span> ' +
           '<button type="button" class="linklike" data-level="' + li + '">' + prose(titleFor(levels()[li])) + '</button></p>' : '';
         var see = arr(g.see).length ? '<p class="gl-see"><span class="gl-lbl">see</span> ' +
-          arr(g.see).map(function (s) { return '<button type="button" class="gl-ref" data-ref="' + esc(s) + '">' + esc(s) + '</button>'; }).join(' ') + '</p>' : '';
-        body = main + eg + met + see;
-      }
-      card.innerHTML = '<h4 class="gl-term">' + prose(g.term || '?') + (unlocked ? '' : ' <span class="gl-tag">locked</span>') + '</h4>' + body;
-      grid.appendChild(card);
+          arr(g.see).map(function (x) { return '<button type="button" class="gl-ref" data-ref="' + esc(x) + '">' + esc(x) + '</button>'; }).join(' ') + '</p>' : '';
+        card.innerHTML = '<h4 class="gl-term">' + prose(g.term || '?') + (unlocked ? '' : ' <span class="gl-tag">locked</span>') + '</h4>' + main + eg + met + see;
+        grid.appendChild(card);
+      });
+      det.appendChild(grid);
+      if (!q && locked.length) det.appendChild(hEl('p', { class: 'gl-more' }, plural(locked.length, 'more term unlocks', 'more terms unlock') + ' later' + (w == null ? '.' : ', in world ' + esc(w) + '.')));
+      det.addEventListener('toggle', function () { if (!q && GL.world == null) { progress.glClosed[k] = !det.open; saveProgress(); } });
+      list.appendChild(det);
     });
   }
 
@@ -3405,6 +3601,7 @@
     if (lv.base) return lv.licence === 'left'
       ? 'You are working over a <b>left fibration</b>. Upstairs you may lift any arrow of the shadow from a start you choose, and fill a horn that is missing its first face, provided a matching shape lies below it.'
       : 'You are working over an <b>inner fibration</b>, so upstairs only inner horns can be filled, and only over a matching shape below.';
+    if (lv.goal && lv.goal.pick != null) return 'This is a <b>simplicial set</b>: dots, arrows and triangles, together with the identity arrows and degenerate triangles that every simplicial set has. Nothing gets filled here; you are reading the picture.';
     if (has('witness') || has('isNerve')) return 'This is a bare <b>simplicial set</b>. Nothing gets filled here; you are judging the picture as it stands.';
     if (has('cell2') || has('addEdge') || has('peel') || has('cosk')) return 'This is a bare <b>simplicial set</b>. Nothing fills by itself, so you add and remove cells by hand.';
     if (lv.strict) return 'You are working in the <b>nerve of a category</b>, where every two arrows end to end have exactly one composite, read off the composition table.';

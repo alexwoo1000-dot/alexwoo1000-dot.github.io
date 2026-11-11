@@ -71,6 +71,34 @@
   function withProj(o, extra) { var r = {}, k; for (k in o) r[k] = o[k]; for (k in extra) r[k] = extra[k]; return r; }
 
   HC.Levels = [
+    // ---- World 0 (shown as world 1): Simplicial sets. Pick-a-fact levels: no tools, goal.pick. ----
+    // goal.pick: a fact ref, or a list of refs picked in order; a wrong pick costs a move.
+    // goal.ask: what the question asks (for the prose): face = which face of the triangle, edge = which arrow.
+    { id: 0, name: 'faces', kind: 'intro', world: 0, par: 1, vertices: tet4(),
+      edges: tetFaces(),
+      triangles: [T('G1', 'f', 'g', 'x'), T('G2', 'g', 'h', 'y'), T('G3', 'x', 'h', 'z'), T('G4', 'f', 'y', 'z')],
+      tools: [], kan: false,
+      goal: { pick: 'G2', ask: [{ face: 'd1', edge: 'y' }] },
+      solution: [['pick', 'G2']] },
+
+    { id: 0, name: 'freebies', kind: 'intro', world: 0, par: 2, freeOpen: true, vertices: two,
+      edges: [E('f', 'a', 'b')], triangles: [],
+      tools: [], kan: false,
+      goal: { pick: ['s1:f', 's0:f'], ask: [{ d0: '1_b', d1: 'f' }, { d2: '1_a', d1: 'f' }] },
+      solution: [['pick', 's1:f'], ['pick', 's0:f']] },
+
+    // corners 0,1,2,3 = a,b,b,c. Its faces d₃ = (f, 1_b ; f) and d₀ = (1_b, g ; g) are degenerate (d₂ and d₁ are the real triangle).
+    { id: 0, name: 'whichface', kind: 'intro', world: 0, par: 1, freeOpen: true, vertices: tri3,
+      edges: [E('f', 'a', 'b'), E('g', 'b', 'c'), E('h', 'a', 'c'), ID('b')],
+      triangles: [T('G1', 'f', 'g', 'h'),
+        { id: 's1:f', e01: 'f', e12: 'id:b', e02: 'f', kind: 'thin' },
+        { id: 's0:g', e01: 'id:b', e12: 'g', e02: 'g', kind: 'thin' }],
+      tetras: [{ id: 'T1', faces: ['s0:g', 'G1', 'G1', 's1:f'], missing: null, vertices: ['a', 'b', 'b', 'c'],
+        edges: { '01': 'f', '12': 'id:b', '23': 'g', '02': 'f', '13': 'g', '03': 'h' } }],
+      tools: [], kan: false,
+      goal: { pick: 's1:f', ask: [{ face: 'd3', degenerate: true }] },
+      solution: [['pick', 's1:f']] },
+
     // ---- World 1: Steps ----
     { id: 1, name: 'compose', kind: 'intro', world: 1, par: 1, vertices: tri3,
       edges: [E('f', 'a', 'b'), E('g', 'b', 'c')], triangles: [],
@@ -116,8 +144,8 @@
       edges: [E('f', 'a', 'b')], triangles: [],
       tools: ['compose', 'trip'], kan: false,
       goal: { triangles: [['id:a', 'f', '?k'], ['?k', 'id:b', 'f'], ['f', 'id:b', '?m'], ['?m', 'id:b', 'f']] },
-      solution: [['compose', 'id:a', 'f'], ['trip', ['id:a', 'f', 'id:b'], { A: 't1', D: 's0:f' }],
-        ['compose', 'f', 'id:b'], ['trip', ['f', 'id:b', 'id:b'], { A: 't3', D: 's1:f' }]] },
+      solution: [['compose', 'id:a', 'f'], ['trip', ['id:a', 'f', 'id:b'], { A: 't1', B: 's1:f', D: 's0:f' }],
+        ['compose', 'f', 'id:b'], ['trip', ['f', 'id:b', 'id:b'], { A: 't3', B: 's0:id:b', D: 's1:f' }]] },
 
     { id: 8, name: 'bracket', kind: 'boss', world: 2, par: 4, vertices: tet4(),
       edges: [E('f', 'a', 'b'), E('g', 'b', 'c'), E('h', 'c', 'd'), E('y', 'b', 'd'), E('y2', 'b', 'd', 'y′'), E('w', 'a', 'd')],
@@ -132,7 +160,7 @@
       edges: [E('f', 'a', 'b'), E('g', 'a', 'b'), ID('b')], triangles: [T('G1', 'f', 'id:b', 'g')],
       tools: ['trip'], kan: false,
       goal: { triangles: [['g', 'id:b', 'f']] },
-      solution: [['trip', ['f', 'id:b', 'id:b'], { A: 'G1', D: 's1:f' }]] },
+      solution: [['trip', ['f', 'id:b', 'id:b'], { A: 'G1', B: 's0:id:b', D: 's1:f' }]] },
 
     { id: 10, name: 'transitive', kind: 'puzzle', world: 3, par: 1, unlocks: 'link', vertices: [V('a', 20, 30), V('b', 80, 30)],
       edges: [E('f', 'a', 'b'), E('g', 'a', 'b'), E('h', 'a', 'b'), ID('b')],
@@ -563,7 +591,7 @@
       solution: [] }
 
   ];
-  HC.Levels.forEach(function (L, i) { L.id = i + 1; });
+  HC.Levels.forEach(function (L, i) { L.id = i + 1; L.world = L.world + 1; });   // world 0 (simplicial sets) is shown as world 1
   HC.LegacyLevels = [
     // ---- World 8: Lifting ----
     { id: 33, name: 'shadow', kind: 'intro', world: 8, par: 1, vertices: tri3,

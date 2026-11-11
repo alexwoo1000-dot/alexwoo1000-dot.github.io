@@ -98,6 +98,24 @@
     return baseSolve(s, null, pa, pb);
   }
 
+  // ---------- names (SPEC5) ----------
+  var SUBD = '₀₁₂₃₄₅₆₇₈₉';
+  function sub(n) { return String(n).split('').map(function (d) { return SUBD.charAt(+d); }).join(''); }
+  // canonical name of a degenerate triangle, or null: s₀f = (1_a, f ; f), s₁f = (f, 1_b ; f), s₀1_a = (1_a, 1_a ; 1_a)
+  function thinNameOf(s, a, b, c) {
+    var lb = function (id) { var e = lookupEdge(s, id); return e ? e.label : id; };
+    if (isIdId(a) && isIdId(b) && isIdId(c)) return 's₀' + lb(a);
+    if (isIdId(a) && b === c) return 's₀' + lb(b);
+    if (isIdId(b) && a === c) return 's₁' + lb(a);
+    return null;
+  }
+  // every non-degenerate triangle gets σ₁, σ₂, … (given first, then in creation order)
+  function nameTri(s, t) {
+    var tn = thinNameOf(s, t.e01, t.e12, t.e02);
+    if (tn) t.name = tn;
+    else if (!t.name) t.name = 'σ' + sub(++s.counters.sigma);
+  }
+
   function snap(s) {
     return JSON.stringify({ vertices: s.vertices, edges: s.edges, triangles: s.triangles, tetras: s.tetras, counters: s.counters, proj: s.proj });
   }
@@ -125,6 +143,7 @@
   function pushTri(s, added, t) {
     if (!t.id) t.id = 't' + (++s.counters.t);
     if (s.base && t.over === undefined) t.over = overOf(s, t.e01, t.e12, t.e02);
+    nameTri(s, t);
     s.triangles.push(t); added.triangles.push(t.id); return t;
   }
   function ensureIdEdge(s, added, v) {
@@ -179,7 +198,7 @@
     var lv = clone(level);
     var st = {
       vertices: lv.vertices || [], edges: lv.edges || [], triangles: lv.triangles || [], tetras: lv.tetras || [],
-      level: lv, counters: { e: 0, t: 0, T: 0, v: 0 }, history: [], flags: {},
+      level: lv, counters: { e: 0, t: 0, T: 0, v: 0, sigma: 0 }, history: [], flags: {},
       base: lv.base || null, proj: lv.proj || {}
     };
     function scan(list, re, key) {
@@ -190,6 +209,7 @@
     st.triangles.forEach(function (t) { if (t.kind === 'thin') t.thin = true; });
     st.edges.forEach(function (e) { if (!e.mathLabel) e.mathLabel = e.label; });
     if (st.base) st.triangles.forEach(function (t) { if (t.over === undefined) t.over = overOf(st, t.e01, t.e12, t.e02); });
+    st.triangles.forEach(function (t) { nameTri(st, t); });
     return st;
   };
 
@@ -204,18 +224,51 @@
   // ---------- texts ----------
   function edgeLabel(s, id) { var e = lookupEdge(s, id); return e ? e.label : id; }
   function mathLabelOf(s, id) { var e = lookupEdge(s, id); return e ? (e.mathLabel || e.label) : id; }
-  // plain: "f·g ≃ x" (x is a composite of f then g), "x ≃ y" when the middle arrow is an identity.
-  // text (math): "g∘f ⇒ x" / "x ≃ y".
-  function shapeTexts(s, a, b, c) {
+  // A triangle is written by its boundary (d₂, d₀ ; d₁) = (first leg, second leg ; long side).
+  //   tuple : "(f, g ; x)" always;  plain : the tuple, or "x ≃ y" when the middle arrow is an identity;
+  //   text  : math form "g∘f ⇒ x" / "x ≃ y".   boundary = edge ids [d2, d0, d1], labels = their names.
+  function shapeTexts(s, a, b, c, name) {
     var la = edgeLabel(s, a), lb = edgeLabel(s, b), lc = edgeLabel(s, c);
     var ma = mathLabelOf(s, a), mb = mathLabelOf(s, b), mc = mathLabelOf(s, c);
-    if (isIdId(b)) return { text: ma + ' ≃ ' + mc, plain: la + ' ≃ ' + lc, isHomotopy: true };
-    return { text: paren(mb) + '∘' + paren(ma) + ' ⇒ ' + mc, plain: pp(la) + '·' + pp(lb) + ' ≃ ' + lc, isHomotopy: false };
+    var tuple = '(' + la + ', ' + lb + ' ; ' + lc + ')';
+    var hom = isIdId(b);
+    return { name: name || thinNameOf(s, a, b, c) || null, boundary: [a, b, c], labels: [la, lb, lc], tuple: tuple,
+      text: hom ? ma + ' ≃ ' + mc : paren(mb) + '∘' + paren(ma) + ' ⇒ ' + mc,
+      plain: hom ? la + ' ≃ ' + lc : tuple, isHomotopy: hom, verb: hom ? 'prove' : 'construct' };
   }
   Engine.describe = function (s, triId) {
     var t = getTri(s, triId);
-    if (!t) return { text: '?', plain: '?', isHomotopy: false };
-    return shapeTexts(s, t.e01, t.e12, t.e02);
+    if (!t) { var u = null; universe(s).forEach(function (x) { if (x.ref === resolveRef(s, triId)) u = x; }); if (u) return shapeTexts(s, u.e01, u.e12, u.e02, u.name); }
+    if (!t) return { name: null, boundary: [], labels: [], tuple: '?', text: '?', plain: '?', isHomotopy: false, verb: null };
+    return shapeTexts(s, t.e01, t.e12, t.e02, t.name);
+  };
+  // a fact ref, given by id, by name (σ₃, s₀f) or by free ref (s0:f)
+  function resolveRef(s, ref) {
+    if (typeof ref !== 'string') return ref;
+    if (getTri(s, ref) || /^s[01]:/.test(ref)) return ref;
+    var hit = null;
+    s.triangles.forEach(function (t) { if (!hit && t.name === ref) hit = t.id; });
+    if (hit) return hit;
+    allEdges(s).forEach(function (e) {
+      var c = isIdEdge(e) ? [['s0:' + e.id, 's₀' + e.label]] : [['s0:' + e.id, 's₀' + e.label], ['s1:' + e.id, 's₁' + e.label]];
+      c.forEach(function (p) { if (!hit && p[1] === ref) hit = p[0]; });
+    });
+    return hit || ref;
+  }
+  // every degenerate triangle that can be used on this board
+  Engine.freeTriangles = function (s) {
+    var out = [];
+    allEdges(s).forEach(function (e) {
+      var list = isIdEdge(e) ? [['s0', 's0:' + e.id, e.id, e.id, e.id]]
+        : [['s0', 's0:' + e.id, 'id:' + e.src, e.id, e.id], ['s1', 's1:' + e.id, e.id, 'id:' + e.dst, e.id]];
+      list.forEach(function (r) {
+        var tx = shapeTexts(s, r[2], r[3], r[4], null);
+        out.push({ ref: r[1], name: tx.name, kind: r[0], edge: e.id, e01: r[2], e12: r[3], e02: r[4],
+          boundary: tx.boundary, labels: tx.labels, tuple: tx.tuple, text: tx.text, plain: tx.plain,
+          isHomotopy: tx.isHomotopy, exists: !!getTri(s, r[1]) });
+      });
+    });
+    return out;
   };
   // display-only renaming of an arrow
   Engine.rename = mut(function (s, edgeId, label) {
@@ -228,6 +281,7 @@
     if (label === e.label) return fail('That is already its name.');
     for (var i = 0; i < s.edges.length; i++) if (s.edges[i].id !== e.id && s.edges[i].label === label) return fail('Another arrow has that name.');
     e.label = label; e.mathLabel = label;
+    s.triangles.forEach(function (t) { var tn = thinNameOf(s, t.e01, t.e12, t.e02); if (tn) t.name = tn; });
     return { ok: true, added: newAdded(), message: 'Renamed to ' + label + '.' };
   });
 
@@ -382,22 +436,22 @@
       note: 'i then r is the identity; r then i is ε, which is not an identity.',
       diagram: { dots: [{ id: '0', label: '0', x: 25, y: 30 }, { id: '1', label: '1', x: 75, y: 30 }], arrows: [{ from: '0', to: '1', label: 'i' }, { from: '1', to: '0', label: 'r' }, { from: '1', to: '1', label: 'ε' }] } },
     { id: 'triangle', name: 'Hollow triangle', objects: ['0', '1', '2'],
-      arrows: [A('f', '0', '1'), A('g', '1', '2'), A('h', '0', '2'), A('k', '0', '2', 'f·g')], comp: { 'f,g': 'k' },
-      note: 'f then g is its own arrow f·g, different from h.',
+      arrows: [A('f', '0', '1'), A('g', '1', '2'), A('h', '0', '2'), A('k', '0', '2', 'k')], comp: { 'f,g': 'k' },
+      note: 'f then g is its own arrow k, different from h.',
       diagram: { dots: [{ id: '0', label: '0', x: 20, y: 46 }, { id: '1', label: '1', x: 50, y: 12 }, { id: '2', label: '2', x: 80, y: 46 }],
-        arrows: [{ from: '0', to: '1', label: 'f' }, { from: '1', to: '2', label: 'g' }, { from: '0', to: '2', label: 'h' }, { from: '0', to: '2', label: 'f·g' }] } },
+        arrows: [{ from: '0', to: '1', label: 'f' }, { from: '1', to: '2', label: 'g' }, { from: '0', to: '2', label: 'h' }, { from: '0', to: '2', label: 'k' }] } },
     { id: 'fork', name: 'Fork', objects: ['0', '1', '2'],
       arrows: [A('p', '0', '1'), A('q', '0', '1'), A('g', '1', '2'), A('x', '0', '2')], comp: { 'p,g': 'x', 'q,g': 'x' },
       note: 'p then g and q then g are the same arrow x, but p and q differ.',
       diagram: { dots: [{ id: '0', label: '0', x: 15, y: 30 }, { id: '1', label: '1', x: 50, y: 30 }, { id: '2', label: '2', x: 85, y: 30 }],
         arrows: [{ from: '0', to: '1', label: 'p' }, { from: '0', to: '1', label: 'q' }, { from: '1', to: '2', label: 'g' }] } },
     { id: 'square', name: 'Square that does not commute', objects: ['0', '1', '2', '3'],
-      arrows: [A('f', '0', '1'), A('g', '1', '3'), A('u', '0', '2'), A('v', '2', '3'), A('x', '0', '3', 'f·g'), A('y', '0', '3', 'u·v')],
-      comp: { 'f,g': 'x', 'u,v': 'y' }, note: 'The two ways round, f·g and u·v, are different arrows.',
+      arrows: [A('f', '0', '1'), A('g', '1', '3'), A('u', '0', '2'), A('v', '2', '3'), A('x', '0', '3', 'x'), A('y', '0', '3', 'y')],
+      comp: { 'f,g': 'x', 'u,v': 'y' }, note: 'The two ways round, x and y, are different arrows.',
       diagram: { dots: [{ id: '0', label: '0', x: 25, y: 12 }, { id: '1', label: '1', x: 75, y: 12 }, { id: '2', label: '2', x: 25, y: 48 }, { id: '3', label: '3', x: 75, y: 48 }],
         arrows: [{ from: '0', to: '1', label: 'f' }, { from: '1', to: '3', label: 'g' }, { from: '0', to: '2', label: 'u' }, { from: '2', to: '3', label: 'v' }] } },
     { id: 'vee', name: 'Open square', objects: ['0', '1', '2', '3'],
-      arrows: [A('f', '0', '1'), A('v', '1', '3'), A('u', '0', '2'), A('x', '0', '3', 'f·v')], comp: { 'f,v': 'x' },
+      arrows: [A('f', '0', '1'), A('v', '1', '3'), A('u', '0', '2'), A('x', '0', '3', 'x')], comp: { 'f,v': 'x' },
       note: 'Nothing goes from 2 to 3.',
       diagram: { dots: [{ id: '0', label: '0', x: 25, y: 12 }, { id: '1', label: '1', x: 75, y: 12 }, { id: '2', label: '2', x: 25, y: 48 }, { id: '3', label: '3', x: 75, y: 48 }],
         arrows: [{ from: '0', to: '1', label: 'f' }, { from: '1', to: '3', label: 'v' }, { from: '0', to: '2', label: 'u' }] } }
@@ -478,7 +532,7 @@
   };
   function shapeTextsRaw(lv, a, b, c) {
     function lab(id) { if (id.indexOf('id:') === 0) return '1'; var r = id; (lv.edges || []).forEach(function (ed) { if (ed.id === id) r = ed.label; }); return r; }
-    return lab(a) + '·' + lab(b) + ' ≃ ' + lab(c);
+    return '(' + lab(a) + ', ' + lab(b) + ' ; ' + lab(c) + ')';
   }
 
   Engine.claimImpossible = function (s, reasonId) {
@@ -514,6 +568,7 @@
     s.edges.forEach(function (ed) { used[ed.label] = 1; });
     var pool = ((s.level && s.level.names) || []).concat(FRESH);
     for (var i = 0; i < pool.length; i++) if (!used[pool[i]]) return pool[i];
+    for (var n = 1; n < 100; n++) for (var j = 0; j < FRESH.length; j++) if (!used[FRESH[j] + sub(n)]) return FRESH[j] + sub(n);
     return 'x' + (s.edges.length + 1);
   }
   function uniqueLabel(s, base) {
@@ -569,16 +624,13 @@
     s.triangles.forEach(function (t) { if (t.e01 === o[0].id && t.e12 === o[1].id && (!opt || t.over === opt.tri)) fillers++; });
     if (fillers >= 2) return fail('Already two answers for this pair.');
     f = realEdge(s, added, o[0].id); g = realEdge(s, added, o[1].id);
-    var label = uniqueLabel(s, pp(f.label) + '·' + pp(g.label));
-    var mlabel = paren(g.mathLabel || g.label) + '∘' + paren(f.mathLabel || f.label);
-    var mused = {};
-    s.edges.forEach(function (ed) { mused[ed.mathLabel] = 1; });
-    while (mused[mlabel]) mlabel += '′';
-    var e = pushEdge(s, added, { src: f.src, dst: g.dst, label: label, mathLabel: mlabel, kind: 'composite',
+    var label = freshLabel(s);
+    var e = pushEdge(s, added, { src: f.src, dst: g.dst, label: label, mathLabel: label, kind: 'composite',
       origin: { op: 'compose', from: [f.id, g.id] } });
     if (opt) s.proj[e.id] = opt.value;
-    pushTri(s, added, { e01: f.id, e12: g.id, e02: e.id, kind: 'compose' });
-    return { ok: true, added: added, swapped: swapped, message: label + ': ' + f.label + ' first, then ' + g.label + '.' };
+    var wt = pushTri(s, added, { e01: f.id, e12: g.id, e02: e.id, kind: 'compose' });
+    e.origin.witness = wt.id; e.origin.witnessName = wt.name;
+    return { ok: true, added: added, swapped: swapped, message: label + ': ' + f.label + ' first, then ' + g.label + ' (' + wt.name + ').' };
   });
 
   // ---------- identity (kept for compatibility; no level lists it) ----------
@@ -641,13 +693,14 @@
     }
     var added = newAdded();
     a = realEdge(s, added, a.id); h = realEdge(s, added, h.id);
-    // a left inverse is called a⁻¹; any other solution gets a fresh letter
-    var label = isIdEdge(h) ? uniqueLabel(s, pp(a.label) + '⁻¹') : freshLabel(s);
+    var label = freshLabel(s);   // (a solution to a·? = 1 may be called a⁻¹ in its tooltip, never as its name)
     var e = pushEdge(s, added, { src: a.dst, dst: h.dst, label: label, mathLabel: label, kind: 'solved',
       origin: { op: 'horn0', from: [a.id, h.id] } });
     if (opt) s.proj[e.id] = opt.value;
-    pushTri(s, added, { e01: a.id, e12: e.id, e02: h.id, kind: 'solved' });
-    return { ok: true, added: added, message: label + ': ' + a.label + ' then ' + label + ' gives ' + h.label + '.' };
+    var wt0 = pushTri(s, added, { e01: a.id, e12: e.id, e02: h.id, kind: 'solved' });
+    e.origin.witness = wt0.id; e.origin.witnessName = wt0.name;
+    if (isIdEdge(h)) e.origin.inverseOf = a.id;
+    return { ok: true, added: added, message: label + ': ' + a.label + ' then ' + label + ' gives ' + h.label + ' (' + wt0.name + ').' };
   });
   Engine.horn2 = mut(function (s, e12Id, e02Id, optionIndex) {
     var g = lookupEdge(s, e12Id), h = lookupEdge(s, e02Id);
@@ -661,12 +714,14 @@
     }
     var added = newAdded();
     g = realEdge(s, added, g.id); h = realEdge(s, added, h.id);
-    var label = isIdEdge(h) ? uniqueLabel(s, pp(g.label) + '⁻¹') : freshLabel(s);
+    var label = freshLabel(s);
     var e = pushEdge(s, added, { src: h.src, dst: g.src, label: label, mathLabel: label, kind: 'solved',
       origin: { op: 'horn2', from: [g.id, h.id] } });
     if (opt) s.proj[e.id] = opt.value;
-    pushTri(s, added, { e01: e.id, e12: g.id, e02: h.id, kind: 'solved' });
-    return { ok: true, added: added, message: label + ': ' + label + ' then ' + g.label + ' gives ' + h.label + '.' };
+    var wt2 = pushTri(s, added, { e01: e.id, e12: g.id, e02: h.id, kind: 'solved' });
+    e.origin.witness = wt2.id; e.origin.witnessName = wt2.name;
+    if (isIdEdge(h)) e.origin.inverseOf = g.id;
+    return { ok: true, added: added, message: label + ': ' + label + ' then ' + g.label + ' gives ' + h.label + ' (' + wt2.name + ').' };
   });
   // liftEdge: with a left licence, an arrow of S lifts from any dot over its start. The lift ends at a FRESH dot.
   function edgeLifts(s, vId) {
@@ -807,7 +862,7 @@
     if (p.err) return [];
     return p.options.map(function (c) {
       var tx = shapeTexts(s, c.miss[0], c.miss[1], c.miss[2]);
-      return { e01: c.miss[0], e12: c.miss[1], e02: c.miss[2], missing: c.m, text: tx.text, plain: tx.plain, existing: !!c.existing };
+      return { e01: c.miss[0], e12: c.miss[1], e02: c.miss[2], missing: c.m, text: tx.text, plain: tx.plain, tuple: tx.tuple, existing: !!c.existing };
     });
   };
 
@@ -835,7 +890,7 @@
     var list = [], seen = {};
     s.triangles.forEach(function (t) {
       var k = t.e01 + '|' + t.e12 + '|' + t.e02;
-      list.push({ ref: t.id, e01: t.e01, e12: t.e12, e02: t.e02, free: false, thin: t.kind === 'thin' || !!t.thin, shape: k });
+      list.push({ ref: t.id, name: t.name, e01: t.e01, e12: t.e12, e02: t.e02, free: false, thin: t.kind === 'thin' || !!t.thin, shape: k });
       seen[k] = 1;
     });
     allEdges(s).forEach(function (e) {
@@ -849,18 +904,19 @@
         var k = sh[1] + '|' + sh[2] + '|' + sh[3];
         if (seen[k]) return;
         seen[k] = 1;
-        list.push({ ref: sh[0], e01: sh[1], e12: sh[2], e02: sh[3], free: true, thin: true, shape: k });
+        list.push({ ref: sh[0], name: thinNameOf(s, sh[1], sh[2], sh[3]), e01: sh[1], e12: sh[2], e02: sh[3], free: true, thin: true, shape: k });
       });
     });
     return list;
   }
   function factObj(s, u) {
-    var tx = shapeTexts(s, u.e01, u.e12, u.e02);
-    return { ref: u.ref, e01: u.e01, e12: u.e12, e02: u.e02, text: tx.text, plain: tx.plain,
-      isHomotopy: tx.isHomotopy, free: u.free, thin: u.thin };
+    var tx = shapeTexts(s, u.e01, u.e12, u.e02, u.name);
+    return { ref: u.ref, name: tx.name, e01: u.e01, e12: u.e12, e02: u.e02, boundary: tx.boundary, labels: tx.labels,
+      tuple: tx.tuple, text: tx.text, plain: tx.plain, verb: tx.verb, isHomotopy: tx.isHomotopy, free: u.free, thin: u.thin };
   }
   // materialise a fact (real triangle id or free 's0:'/'s1:' ref) and return the triangle
   function getFact(s, added, ref) {
+    ref = resolveRef(s, ref);
     var t = getTri(s, ref);
     if (t) return t;
     var m = /^s([01]):(.+)$/.exec(ref || '');
@@ -940,7 +996,7 @@
         if (c === undefined) return;
         fixed[sl] = true;
         if (c === null) return;
-        var ref = typeof c === 'string' ? c : c.ref, u = null;
+        var ref = resolveRef(s, typeof c === 'string' ? c : c.ref), u = null;
         fits[sl].forEach(function (x) { if (x.ref === ref) u = x; });
         if (u && consistentWith(sl, u, chosen)) chosen[sl] = u; else invalid.push(sl);
       });
@@ -977,8 +1033,8 @@
       var key = f.join('|'), exists = null;
       U.forEach(function (u) { if (u.shape === key) exists = exists || u; });
       var cl = canClaim(s, X, steps);
-      var tx = shapeTexts(s, f[0], f[1], f[2]);
-      var claim = { slot: X, fact: { e01: f[0], e12: f[1], e02: f[2] }, text: tx.text, plain: tx.plain,
+      var tx = shapeTexts(s, f[0], f[1], f[2], exists ? exists.name : (thinNameOf(s, f[0], f[1], f[2]) || 'σ' + sub((s.counters.sigma || 0) + 1)));
+      var claim = { slot: X, fact: { e01: f[0], e12: f[1], e02: f[2] }, name: tx.name, boundary: tx.boundary, labels: tx.labels, tuple: tx.tuple, verb: tx.verb, text: tx.text, plain: tx.plain,
         allowed: cl.allowed, existing: false };
       if (!cl.allowed) claim.reason = cl.reason;
       if (s.base) {
@@ -1005,6 +1061,7 @@
   Engine.tetraFromFacts = function (s, refs) {
     if (!Array.isArray(refs) || refs.length !== 3) return fail('Pick three facts.');
     if (refs[0] === refs[1] || refs[1] === refs[2] || refs[0] === refs[2]) return fail('Pick three different facts.');
+    refs = refs.map(function (r) { return resolveRef(s, r); });
     var U = universe(s), facts = [];
     for (var i = 0; i < 3; i++) {
       var u = null;
@@ -1067,7 +1124,7 @@
     var T = { id: 'T' + (++s.counters.T), faces: faces, missing: SLOT_FACE[X], vertices: r.vertices,
       edges: { '01': r.edges.e01, '12': r.edges.e12, '23': r.edges.e23, '02': r.edges.e02, '13': r.edges.e13, '03': r.edges.e03 } };
     s.tetras.push(T); added.tetras.push(T.id);
-    return { ok: true, added: added, message: 'New fact: ' + shapeTexts(s, cf.e01, cf.e12, cf.e02).plain + '.' };
+    return { ok: true, added: added, message: 'New fact: ' + nt.name + ' ' + shapeTexts(s, cf.e01, cf.e12, cf.e02, nt.name).plain + '.' };
   });
 
   // ---------- theorem tools ----------
@@ -1078,7 +1135,7 @@
   function addTheorem(s, added, a, b, c, msg) {
     if (s.base && !overOf(s, a, b, c)) return fail('No triangle below to lift.');
     var nt = pushTri(s, added, { e01: a, e12: b, e02: c, kind: 'theorem' });
-    return { ok: true, added: added, message: msg + ' ' + shapeTexts(s, a, b, c).plain + '.' };
+    return { ok: true, added: added, message: msg + ' ' + nt.name + ' ' + shapeTexts(s, a, b, c, nt.name).plain + '.' };
   }
   function sameResult(s, t1, t2) {
     if (t1.e01 !== t2.e01 || t1.e12 !== t2.e12) return { err: 'They must be two answers for the same trip.' };
@@ -1170,6 +1227,33 @@
     return addTheorem(s, added, v[0], v[1], v[2], 'Proved:');
   });
 
+  // ---------- picking a fact (SPEC5 world "Simplicial sets") ----------
+  // goal.pick is a fact ref (or a list of refs, picked in order). A wrong pick costs a move (flags.penalty).
+  function shapeOfRef(s, ref) {
+    ref = resolveRef(s, ref);
+    var t = getTri(s, ref);
+    if (t) return t.e01 + '|' + t.e12 + '|' + t.e02;
+    var u = null;
+    universe(s).forEach(function (x) { if (x.ref === ref) u = x; });
+    return u ? u.shape : null;
+  }
+  Engine.pick = function (s, ref) {
+    var goal = s.level && s.level.goal;
+    if (!goal || goal.pick === undefined || goal.pick === null) return fail('There is nothing to pick here.');
+    var seq = Array.isArray(goal.pick) ? goal.pick : [goal.pick];
+    s.flags.picks = s.flags.picks || [];
+    var i = s.flags.picks.length;
+    if (i >= seq.length) return fail('Already done.');
+    var mine = shapeOfRef(s, ref), want = shapeOfRef(s, seq[i]);
+    if (mine && want && mine === want) {
+      s.flags.picks.push(resolveRef(s, ref));
+      s._ver = (s._ver || 0) + 1;
+      return { ok: true, added: newAdded(), picked: s.flags.picks.length, of: seq.length, message: s.flags.picks.length === seq.length ? 'That is it.' : 'Yes. Now the next one.' };
+    }
+    s.flags.penalty = (s.flags.penalty || 0) + 1;
+    return { ok: false, wrongPick: true, reason: 'Not that one.' };
+  };
+
   // ---------- strict levels: blanks ----------
   Engine.openBlanks = function (s) {
     return ((s.level && s.level.blanks) || []).filter(function (p) {
@@ -1185,11 +1269,11 @@
       tetras: s.tetras.length
     };
   }
-  function matchTriangles(s, pats) {
+  function matchTrianglesFull(s, pats) {
     var literal = {};
-    pats.forEach(function (p) { p.forEach(function (x) { if (x.charAt(0) !== '?') literal[x] = true; }); });
-    function rec(i, b) {
-      if (i === pats.length) return b;
+    pats.forEach(function (p) { p.forEach(function (x, i) { if (i < 3 && x.charAt(0) !== '?') literal[x] = true; }); });
+    function rec(i, b, tris) {
+      if (i === pats.length) return { b: b, tris: tris };
       var p = pats[i];
       for (var ti = 0; ti < s.triangles.length; ti++) {
         var t = s.triangles[ti], vals = [t.e01, t.e12, t.e02], nb = {}, ok = true, k;
@@ -1206,12 +1290,13 @@
           } else if (pv !== tv) ok = false;
         }
         if (ok && p.length > 3 && t.over !== p[3]) ok = false;
-        if (ok) { var r = rec(i + 1, nb); if (r) return r; }
+        if (ok) { var r = rec(i + 1, nb, tris.concat([t])); if (r) return r; }
       }
       return null;
     }
-    return rec(0, {});
+    return rec(0, {}, []);
   }
+  function matchTriangles(s, pats) { var r = matchTrianglesFull(s, pats); return r ? r.b : null; }
   function matchEdges(s, pairs) {
     var es = s.edges.filter(function (e) { return !isIdEdge(e); });
     function rec(i, used) {
@@ -1228,19 +1313,22 @@
   }
   function patTexts(s, p) {
     function lab(x) {
-      if (x.charAt(0) === '?') return '?';
+      if (x.charAt(0) === '?') return x;
       var e = lookupEdge(s, x);
       return e ? e.label : x;
     }
     function mlab(x) {
-      if (x.charAt(0) === '?') return '?';
+      if (x.charAt(0) === '?') return x;
       var e = lookupEdge(s, x);
       return e ? (e.mathLabel || e.label) : x;
     }
     var suffix = p.length > 3 ? ' over ' + String(p[3]).replace(/^S\./, '') : '';
-    if (isIdId(p[1])) return { text: mlab(p[0]) + ' ≃ ' + mlab(p[2]) + suffix, plain: lab(p[0]) + ' ≃ ' + lab(p[2]) + suffix };
-    return { text: paren(mlab(p[1])) + '∘' + paren(mlab(p[0])) + ' ⇒ ' + mlab(p[2]) + suffix,
-      plain: pp(lab(p[0])) + '·' + pp(lab(p[1])) + ' ≃ ' + lab(p[2]) + suffix };
+    var la = lab(p[0]), lb = lab(p[1]), lc = lab(p[2]);
+    var tuple = '(' + la + ', ' + lb + ' ; ' + lc + ')' + suffix;
+    var hom = isIdId(p[1]);
+    return { boundary: [p[0], p[1], p[2]], labels: [la, lb, lc], tuple: tuple,
+      text: hom ? mlab(p[0]) + ' ≃ ' + mlab(p[2]) + suffix : paren(mlab(p[1])) + '∘' + paren(mlab(p[0])) + ' ⇒ ' + mlab(p[2]) + suffix,
+      plain: hom ? la + ' ≃ ' + lc + suffix : tuple, isHomotopy: hom };
   }
 
   Engine.checkGoal = function (s) {
@@ -1249,13 +1337,24 @@
     var parts = [], allDone = true, bindings = null, wish = !!goal.impossible;
     function add(p) { if (p.plain === undefined) p.plain = p.text; parts.push(p); if (!p.done && !p.wish) allDone = false; }
     if (goal.triangles && goal.triangles.length) {
-      var acc = [];
+      var acc = [], seenVars = {};
       goal.triangles.forEach(function (p) {
         var trial = acc.concat([p]);
-        var d = !!matchTriangles(s, trial);
+        var full = matchTrianglesFull(s, trial);
+        var d = !!full;
         if (d) acc = trial;
         var tx = patTexts(s, p);
-        var part = { kind: 'triangle', pattern: p, text: tx.text, plain: tx.plain, done: d };
+        var vars = [], fresh = false, bnd = (full || matchTrianglesFull(s, acc) || { b: {} }).b;
+        [p[0], p[1], p[2]].forEach(function (x) {
+          if (x.charAt(0) !== '?' || vars.some(function (v) { return v.name === x; })) return;
+          var isNew = !seenVars[x];
+          if (isNew) fresh = true;
+          vars.push({ name: x, fresh: isNew, edge: bnd[x] || null, label: bnd[x] ? lookupEdge(s, bnd[x]).label : null });
+        });
+        [p[0], p[1], p[2]].forEach(function (x) { if (x.charAt(0) === '?') seenVars[x] = 1; });
+        var part = { kind: 'triangle', pattern: p, text: tx.text, plain: tx.plain, tuple: tx.tuple, boundary: tx.boundary, labels: tx.labels,
+          verb: fresh ? 'construct' : 'prove', vars: vars, isHomotopy: tx.isHomotopy,
+          name: d && full.tris[acc.length - 1] ? full.tris[acc.length - 1].name : null, done: d };
         if (wish) part.wish = true;
         add(part);
       });
@@ -1282,6 +1381,10 @@
           text: (kind === 'min' ? '≥ ' : '') + g[key] + ' ' + key, done: d });
       });
     });
+    if (goal.pick !== undefined && goal.pick !== null) {
+      var seq = Array.isArray(goal.pick) ? goal.pick : [goal.pick], got = (s.flags.picks || []).length;
+      seq.forEach(function (ref, i) { add({ kind: 'pick', index: i, text: 'Pick a fact', plain: 'Pick a fact', done: i < got }); });
+    }
     if (goal.flag) add({ kind: 'flag', flag: goal.flag, text: goal.flag, done: !!s.flags[goal.flag] });
     if (goal.impossible) {
       var cl = !!s.flags.claimed;
@@ -1314,7 +1417,10 @@
     picks = picks || [];
     var out = { vertices: [], edges: [], triangles: [] };
     var E = allEdges(s), i, j, k;
-    if (tool === 'identity') {
+    if (tool === 'pick') {
+      s.triangles.forEach(function (t) { out.triangles.push(t.id); });
+      Engine.freeTriangles(s).forEach(function (f) { if (!f.exists) out.triangles.push(f.ref); });
+    } else if (tool === 'identity') {
       if (picks.length) return out;
       s.vertices.forEach(function (v) { if (!getEdge(s, 'id:' + v.id)) out.vertices.push(v.id); });
       s.edges.forEach(function (e) { if (identityNeeds(s, e)) out.edges.push(e.id); });
