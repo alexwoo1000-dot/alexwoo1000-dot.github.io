@@ -63,7 +63,7 @@ function checkCandidates(s, st, tag) {
 }
 
 // ---------- 0. level table sanity ----------
-check(HC.Levels.length === 62, '62 levels');
+check(HC.Levels.length === 67, '67 levels');
 // "nerve or not?": the stored answer must be the true one
 HC.Levels.forEach(function (L0) {
   if (!L0.goal || L0.goal.flag !== 'verdict') return;
@@ -74,7 +74,7 @@ HC.Levels.forEach(function (L0) {
 HC.Levels.forEach(function (L, i) {
   check(L.id === i + 1, 'ids are consecutive at ' + L.name);
   check(['intro', 'puzzle', 'boss', 'sandbox'].indexOf(L.kind) >= 0, L.name + ' has kind');
-  check(L.world >= 1 && L.world <= 11, L.name + ' world');
+  check(L.world >= 1 && L.world <= 12, L.name + ' world');
   check(L.parHidden === !!L.claimable, L.name + ' parHidden follows claimable');
   if (i) check(L.world >= HC.Levels[i - 1].world, L.name + ' worlds non-decreasing');
   check(!has(L.tools, 'identity') && !has(L.tools, 'fill3'), L.name + ' lists neither identity nor fill3');
@@ -107,7 +107,7 @@ HC.Levels.forEach(function (L) {
   check(g0.parts.length > 0, tag + ' has parts');
   L.solution.forEach(function (step, i) {
     var st = step[0] === '!' ? step.slice(1) : step;
-    check(has(L.tools, st[0]) || st[0] === 'claim', tag + ' step ' + i + ' uses a listed tool (' + st[0] + ')');
+    check(has(L.tools, st[0]) || st[0] === 'claim' || st[0] === 'pick', tag + ' step ' + i + ' uses a listed tool (' + st[0] + ')');
     checkCandidates(s, st, tag + ' step ' + i);
     var o = runStep(s, step);
     if (o.bang) check(!o.r.ok && typeof o.r.reason === 'string', tag + ' step ' + i + ' expected to fail');
@@ -156,8 +156,8 @@ HC.Levels.forEach(function (L) {
   var a = En.compose(s, 'f', 'g'), b = En.compose(s, 'f', 'g'), c = En.compose(s, 'f', 'g');
   check(a.ok && b.ok && !c.ok && typeof c.reason === 'string', 'third compose rejected');
   check(s.edges.length === 4, 'no edge from rejected compose');
-  check(s.edges[2].label === 'f·g' && s.edges[3].label === 'f·g′', 'prime on second filler');
-  check(s.edges[2].mathLabel === 'g∘f' && s.edges[3].mathLabel === 'g∘f′', 'math labels g∘f');
+  check(s.edges[2].label === 'x' && s.edges[3].label === 'y', 'composites get fresh single letters');
+  check(s.edges[2].origin.witnessName === 'σ₁' && s.edges[3].origin.witnessName === 'σ₂', 'origin records the witnessing triangle');
   check(s.edges[2].origin.op === 'compose' && s.edges[2].origin.from.join() === 'f,g', 'origin recorded');
   check(!En.compose(s, 'f', 'h').ok, 'unknown edge rejected');
   check(!En.compose(s, 'f', 'f').ok, 'non-meeting arrows rejected');
@@ -171,10 +171,10 @@ HC.Levels.forEach(function (L) {
   var r = En.compose(s, 'id:a', 'f');
   var idE = edgeOf(s, 'id:a');
   check(r.ok && idE && idE.label === '1_a' && idE.kind === 'identity' && r.added.edges[0] === 'id:a', 'compose stay,f creates 1_a on demand');
-  check(s.edges[s.edges.length - 1].label === '1_a·f', 'composite is named by provenance: ' + s.edges[s.edges.length - 1].label);
+  check(s.edges[s.edges.length - 1].label === 'x', 'composite is a fresh letter: ' + s.edges[s.edges.length - 1].label);
   check(!En.compose(mk('unit'), 'id:zz', 'f').ok, 'unknown dot rejected');
   var h = mk('undo');
-  check(En.horn0(h, 'f', 'id:a').ok && edgeOf(h, 'id:a') && edgeOf(h, 'e1').label === 'f⁻¹', 'horn0 accepts stay');
+  check(En.horn0(h, 'f', 'id:a').ok && edgeOf(h, 'id:a') && edgeOf(h, 'e1').label === 'x', 'horn0 accepts stay');
   var d = mk('disc');
   check(!En.cell2(d, ['a', 'b', 'c']).ok, 'cell2 on dots is rejected');
   var c = En.createState(custom('disc', { edges: [{ id: 'f', src: 'a', dst: 'b', label: 'f', kind: 'drawn' }, { id: 'g', src: 'a', dst: 'b', label: 'g', kind: 'drawn' }] }));
@@ -198,9 +198,9 @@ HC.Levels.forEach(function (L) {
   ['A', 'B', 'C', 'D'].forEach(function (sl) { check(r.slots[sl] && Array.isArray(r.slots[sl].cands) && 'chosen' in r.slots[sl], 'slot ' + sl + ' shape'); });
   check(r.slots.A.chosen.ref === 'G1' && r.slots.B.chosen.ref === 'G2' && r.slots.C.chosen.ref === 'G3' && !r.slots.D.chosen, 'auto-chosen slots');
   check(r.claim && r.claim.slot === 'D' && r.claim.allowed && r.claim.fact.e01 === 'f' && r.claim.fact.e12 === 'y' && r.claim.fact.e02 === 'z', 'claim D = (f,y,z)');
-  check(r.claim.text.indexOf('⇒') > 0 && r.claim.plain === 'f·y ≃ z', 'claim texts: ' + r.claim.plain);
+  check(r.claim.text.indexOf('⇒') > 0 && r.claim.plain === '(f, y ; z)' && r.claim.tuple === '(f, y ; z)' && r.claim.name === 'σ₄' && r.claim.verb === 'construct' && r.claim.boundary.join() === 'f,y,z', 'claim texts: ' + r.claim.plain);
   check(r.slots.A.lock === true && r.slots.B.lock === true && r.slots.C.lock === false && r.slots.D.lock === false, 'A/B locked, C/D not');
-  check(r.slots.A.chosen.plain === 'f·g ≃ x' && r.slots.A.chosen.text === 'g∘f ⇒ x', 'fact texts plain/math');
+  check(r.slots.A.chosen.plain === '(f, g ; x)' && r.slots.A.chosen.text === 'g∘f ⇒ x' && r.slots.A.chosen.name === 'σ₁', 'fact texts plain/math');
   // omitted choice behaves like {}
   check(En.routeSlots(s, ['f', 'g', 'h']).claim.slot === 'D', 'choice may be omitted');
   // explicit null keeps a slot empty
@@ -225,7 +225,7 @@ HC.Levels.forEach(function (L) {
   var ru3 = En.routeSlots(u, ['f', 'g', 'id:c'], { A: 't1', D: 't1' });
   check(ru3.known && !ru3.claim, 'A = D gives (x,stay,x), which is free: nothing to claim');
   var ru4 = En.routeSlots(u, ['f', 'g', 'id:c'], { A: 't1', D: 't2' });
-  check(ru4.claim && ru4.claim.slot === 'C' && ru4.claim.fact.e02 === 'e2' && ru4.claim.plain === 'f·g ≃ f·g′', 'claim f·g ≃ f·g′: ' + (ru4.claim && ru4.claim.plain));
+  check(ru4.claim && ru4.claim.slot === 'C' && ru4.claim.fact.e02 === 'e2' && ru4.claim.plain === 'x ≃ y' && ru4.claim.verb === 'prove', 'claim x ≃ y: ' + (ru4.claim && ru4.claim.plain));
   var bad = En.routeSlots(u, ['f', 'g', 'id:c'], { A: 'G77' });
   check(bad.invalid && bad.invalid[0] === 'A' && !bad.slots.A.chosen, 'unknown ref is reported as invalid');
   var cr = En.claimRoute(u, ['f', 'g', 'id:c'], { A: 't1', D: 't2' });
@@ -262,12 +262,12 @@ HC.Levels.forEach(function (L) {
 (function () {
   var s = mk('inverses');
   var h = En.horn0(s, 'f', 'id:a');
-  check(h.ok && s.edges[s.edges.length - 1].label === 'f⁻¹' && s.edges[s.edges.length - 1].origin.op === 'horn0', 'horn0 label for identity is f⁻¹');
+  check(h.ok && s.edges[s.edges.length - 1].label === 'x' && s.edges[s.edges.length - 1].origin.op === 'horn0' && s.edges[s.edges.length - 1].origin.inverseOf === 'f', 'horn0 result is a fresh letter, remembered as an inverse of f');
   var h2 = En.horn2(s, 'f', 'id:b');
-  check(h2.ok && s.edges[s.edges.length - 1].label === 'f⁻¹′' && s.edges[s.edges.length - 1].origin.op === 'horn2', 'horn2 label f⁻¹ primed because it is taken');
+  check(h2.ok && s.edges[s.edges.length - 1].label === 'y' && s.edges[s.edges.length - 1].origin.op === 'horn2', 'horn2 result is the next fresh letter');
   check(edgeOf(s, 'id:a').label === '1_a', 'identity label is 1_a');
   var d = En.describe(s, 't1');
-  check(d.text.indexOf('⇒') > 0 && !d.isHomotopy && d.plain === 'f·f⁻¹ ≃ 1_a' && d.text === 'f⁻¹∘f ⇒ 1_a', 'describe: ' + d.plain + ' / ' + d.text);
+  check(d.text.indexOf('⇒') > 0 && !d.isHomotopy && d.plain === '(f, x ; 1_a)' && d.text === 'x∘f ⇒ 1_a' && d.name === 'σ₁' && d.verb === 'construct' && d.boundary.join() === 'f,e1,id:a', 'describe: ' + d.plain + ' / ' + d.text);
   var dv = mk('divide');
   var r = En.horn2(dv, 'g', 'h');
   check(r.ok && dv.edges[2].label === 'x' && dv.edges[2].src === 'a' && dv.edges[2].dst === 'b', 'horn2 result is a fresh letter and goes a->b');
@@ -278,7 +278,7 @@ HC.Levels.forEach(function (L) {
   var sy = mk('symmetric');
   check(En.describe(sy, 'G1').plain === 'f ≃ g' && En.describe(sy, 'G1').isHomotopy && En.describe(sy, 'G1').text === 'f ≃ g', 'describe homotopy plain/math');
   var un = mk('unit'); En.compose(un, 'id:a', 'f');
-  check(En.describe(un, 't1').plain === '1_a·f ≃ 1_a·f', 'describe stay: ' + En.describe(un, 't1').plain);
+  check(En.describe(un, 't1').plain === '(1_a, f ; x)', 'describe stay: ' + En.describe(un, 't1').plain);
 })();
 
 // ---------- 7. old fill3 / identity still work (compatibility) ----------
@@ -545,16 +545,16 @@ HC.Levels.forEach(function (L) {
   En.compose(s, 'f', 'g');
   g = En.checkGoal(s);
   check(g.parts[0].done && !g.parts[1].done && !g.parts[3].done, 'assoc parts tick one by one');
-  check(g.parts[0].text === 'g∘f ⇒ ?' && g.parts[0].plain === 'f·g ≃ ?', 'part text: ' + g.parts[0].text + ' / ' + g.parts[0].plain);
+  check(g.parts[0].text === 'g∘f ⇒ ?x' && g.parts[0].plain === '(f, g ; ?x)' && g.parts[0].verb === 'construct' && g.parts[0].name === 'σ₁' && g.parts[0].vars[0].edge === 'e1' && g.parts[0].vars[0].label === 'x', 'part text: ' + g.parts[0].text + ' / ' + g.parts[0].plain);
   var u = mk('twoways');
   En.compose(u, 'f', 'g');
   g = En.checkGoal(u);
   check(g.parts[0].done && !g.parts[1].done, 'distinct variables need distinct arrows');
   var un = mk('unique');
   var pu = En.checkGoal(un).parts;
-  check(pu[2].text === '? ≃ ?' && pu[2].plain === '? ≃ ?', 'homotopy part text: ' + pu[2].text + ' / ' + pu[2].plain);
+  check(pu[2].text === '?x ≃ ?y' && pu[2].plain === '?x ≃ ?y' && pu[2].tuple === '(?x, 1_c ; ?y)' && pu[2].verb === 'prove' && pu[0].verb === 'construct' && pu[1].verb === 'construct', 'homotopy part text: ' + pu[2].text + ' / ' + pu[2].plain);
   var unit = En.checkGoal(mk('unit')).parts;
-  check(unit[0].plain === '1_a·f ≃ ?', 'identity in part text: ' + unit[0].plain);
+  check(unit[0].plain === '(1_a, f ; ?k)', 'identity in part text: ' + unit[0].plain);
   var sp = mk('spine'); var gp = En.checkGoal(sp);
   check(gp.parts.length === 5 && gp.parts[4].kind === 'min' && gp.parts[4].have === 0 && gp.parts[4].want === 1, 'spine min part');
   var pe = En.checkGoal(mk('peel'));
@@ -598,37 +598,37 @@ HC.Levels.forEach(function (L) {
   En.compose(s, 'f', 'g');
   var r = En.compose(s, 'e1', 'h');
   var e2 = edgeOf(s, 'e2');
-  check(e2.label === '(f·g)·h' && e2.mathLabel === 'h∘(g∘f)' && e2.origin.from.join() === 'e1,h', 'nested provenance labels: ' + e2.label + ' / ' + e2.mathLabel);
+  check(e2.label === 'y' && e2.origin.from.join() === 'e1,h' && e2.origin.witnessName === 'σ₂', 'second composite: ' + e2.label);
   check(/first, then/.test(r.message) && r.swapped === false, 'toast says which comes first: ' + r.message);
   var sw = mk('compose');
   var rs = En.compose(sw, 'g', 'f');
-  check(rs.ok && rs.swapped === true && edgeOf(sw, 'e1').label === 'f·g' && /f first, then g/.test(rs.message), 'one-way connection: f first, then g');
+  check(rs.ok && rs.swapped === true && edgeOf(sw, 'e1').label === 'x' && /f first, then g/.test(rs.message), 'one-way connection: f first, then g');
   // both ways connect: pick order is used
   var lp = mk('twosided');
   var l1 = En.compose(lp, 'f', 'g'), l2 = En.compose(lp, 'g', 'f');
-  check(edgeOf(lp, 'e1').label === 'f·g' && edgeOf(lp, 'e1').src === 'a' && edgeOf(lp, 'e2').label === 'g·f' && edgeOf(lp, 'e2').src === 'b', 'pick order used when both connect');
+  check(edgeOf(lp, 'e1').origin.from.join() === 'f,g' && edgeOf(lp, 'e1').src === 'a' && edgeOf(lp, 'e2').origin.from.join() === 'g,f' && edgeOf(lp, 'e2').src === 'b', 'pick order used when both connect');
   // rename
   var rn = mk('chain'); En.compose(rn, 'f', 'g');
   var rr = En.rename(rn, 'e1', 'fg');
   check(rr.ok && edgeOf(rn, 'e1').label === 'fg' && edgeOf(rn, 'e1').mathLabel === 'fg', 'rename');
   En.compose(rn, 'e1', 'h');
-  check(edgeOf(rn, 'e2').label === 'fg·h', 'later labels use the new name: ' + edgeOf(rn, 'e2').label);
+  check(edgeOf(rn, 'e2').label === 'x', 'a renamed arrow does not change other names: ' + edgeOf(rn, 'e2').label);
   check(!En.rename(rn, 'e1', '').ok && !En.rename(rn, 'e1', 'f').ok && !En.rename(rn, 'zz', 'q').ok && !En.rename(rn, 'e1', 'abcdefghijklmnop').ok, 'rename refusals');
   check(!En.rename(rn, 'e1', 'fg').ok, 'same name refused');
   En.undo(rn);
   check(edgeOf(rn, 'e1').label === 'fg' && !edgeOf(rn, 'e2'), 'undo takes back the later compose first');
   En.undo(rn);
-  check(edgeOf(rn, 'e1').label === 'f·g', 'rename is undoable');
+  check(edgeOf(rn, 'e1').label === 'x', 'rename is undoable');
   var idn = mk('unit'); En.compose(idn, 'id:a', 'f');
   check(!En.rename(idn, 'id:a', 'z').ok, 'identity cannot be renamed');
   // inverses
   var iv = mk('undo');
   En.horn0(iv, 'f', 'id:a');
-  check(edgeOf(iv, 'e1').label === 'f⁻¹' && edgeOf(iv, 'e1').mathLabel === 'f⁻¹', 'left inverse is f⁻¹');
+  check(edgeOf(iv, 'e1').label === 'x' && edgeOf(iv, 'e1').mathLabel === 'x' && edgeOf(iv, 'e1').origin.inverseOf === 'f', 'a left inverse is a fresh letter');
   En.horn0(iv, 'f', 'id:a');
-  check(edgeOf(iv, 'e2').label === 'f⁻¹′', 'second answer is primed');
+  check(edgeOf(iv, 'e2').label === 'y', 'second answer is the next letter');
   var dv = mk('square'); En.compose(dv, 'f', 'v'); En.horn0(dv, 'u', 'e1');
-  check(edgeOf(dv, 'e2').label === 'x' && edgeOf(dv, 'e2').origin.op === 'horn0', 'non-identity solve gets a fresh letter');
+  check(edgeOf(dv, 'e2').label === 'y' && edgeOf(dv, 'e2').origin.op === 'horn0', 'non-identity solve gets a fresh letter');
   // given edges have a mathLabel
   check(mk('compose').edges.every(function (e) { return e.mathLabel === e.label; }), 'given edges: mathLabel = label');
   check(mk('compose').edges.length === 2, 'smoke');
@@ -638,7 +638,7 @@ HC.Levels.forEach(function (L) {
 (function () {
   var s = mk('tetra');
   var r = En.tetraFromFacts(s, ['G1', 'G2', 'G3']);
-  check(r.ok && r.vertices.join() === 'a,b,c,d' && r.steps.join() === 'f,g,h' && r.claim && r.claim.slot === 'D' && r.claim.plain === 'f·y ≃ z', 'tetraFromFacts: faces -> claim D');
+  check(r.ok && r.vertices.join() === 'a,b,c,d' && r.steps.join() === 'f,g,h' && r.claim && r.claim.slot === 'D' && r.claim.plain === '(f, y ; z)', 'tetraFromFacts: faces -> claim D');
   check(r.choice.A === 'G1' && r.choice.B === 'G2' && r.choice.C === 'G3' && Array.isArray(r.alternatives), 'returns steps, choice, alternatives');
   check(En.claimRoute(s, r.steps, r.choice).ok && En.checkGoal(s).done, 'claimRoute(steps, choice) completes the level');
   check(En.tetraFromFacts(mk('tetra'), ['G3', 'G1', 'G2']).claim.slot === 'D', 'order of the faces does not matter');
@@ -804,6 +804,104 @@ HC.Levels.forEach(function (L) {
   });
 })();
 
+// ---------- 16g. v5: names, free triangles, picks ----------
+(function () {
+  // triangles are named σ₁, σ₂, …: given first, then in creation order; undo gives the same name back
+  var s = mk('tetra');
+  check(s.triangles.map(function (x) { return x.name; }).join() === 'σ₁,σ₂,σ₃', 'given triangles are σ₁, σ₂, σ₃');
+  check(En.claimRoute(s, ['f', 'g', 'h'], {}).ok && s.triangles[3].name === 'σ₄', 'the next triangle is σ₄');
+  En.undo(s);
+  check(s.triangles.length === 3 && En.claimRoute(s, ['f', 'g', 'h'], {}).ok && s.triangles[3].name === 'σ₄', 'after undo the numbering continues from the same place');
+  check(En.describe(s, 't1').name === 'σ₄' || En.describe(s, s.triangles[3].id).name === 'σ₄', 'describe returns the name');
+  var d = En.describe(s, s.triangles[3].id);
+  check(d.boundary.join() === 'f,y,z' && d.labels.join() === 'f,y,z' && d.verb === 'construct' && d.tuple === '(f, y ; z)' && d.plain === '(f, y ; z)', 'describe boundary / verb / plain');
+  // degenerate triangles have canonical names; they take no σ number
+  var u = mk('unit'); En.compose(u, 'id:a', 'f');
+  check(En.claimRoute(u, ['id:a', 'f', 'id:b'], { A: 't1', B: 's₁f', D: 's₀f' }).ok, 'free faces can be given by name');
+  var thin = u.triangles.filter(function (x) { return x.thin; }).map(function (x) { return x.name; }).sort().join();
+  check(thin === 's₀f,s₁f', 'materialised degenerate triangles are s₀f and s₁f: ' + thin);
+  check(u.triangles.filter(function (x) { return !x.thin; }).map(function (x) { return x.name; }).join() === 'σ₁,σ₂', 'only the real ones count in σ');
+  var ug = En.createState(lv('unit'));
+  check(En.freeTriangles(ug).length === 4, 'free list: s₀f, s₁f, s₀1_a, s₀1_b');
+  var cur = mk('unit'); En.compose(cur, 'f', 'id:b');
+  check(En.describe(cur, 't1').name === 'σ₁', 'composing with a stay still names the witness σ₁');
+  // freeTriangles
+  var fb = mk('freebies');
+  var ft = En.freeTriangles(fb);
+  var by = {}; ft.forEach(function (x) { by[x.ref] = x; });
+  check(ft.length === 4 && by['s0:f'].name === 's₀f' && by['s1:f'].name === 's₁f' && by['s0:id:a'].name === 's₀1_a' && by['s0:id:b'].name === 's₀1_b', 'freeTriangles names: ' + ft.map(function (x) { return x.name; }));
+  check(by['s1:f'].boundary.join() === 'f,id:b,f' && by['s1:f'].labels.join() === 'f,1_b,f' && by['s1:f'].tuple === '(f, 1_b ; f)' && by['s1:f'].plain === 'f ≃ f' && by['s1:f'].exists === false, 'free triangle boundary (d₂, d₀ ; d₁)');
+  check(by['s0:f'].boundary.join() === 'id:a,f,f' && by['s0:f'].plain === '(1_a, f ; f)' && by['s0:id:a'].boundary.join() === 'id:a,id:a,id:a', 'more free boundaries');
+  check(En.describe(fb, 's1:f').name === 's₁f' && En.describe(fb, 's₀f').tuple === '(1_a, f ; f)', 'describe works on free refs and names');
+  En.rename(En.createState(lv('freebies')), 'f', 'q');
+  var rs = mk('freebies');
+  check(En.rename(rs, 'f', 'q').ok && En.freeTriangles(rs).map(function (x) { return x.name; }).indexOf('s₁q') >= 0, 'free names follow a rename');
+  // pick goals
+  var fa = mk('faces');
+  check(!En.checkGoal(fa).done && En.checkGoal(fa).parts.length === 1 && En.checkGoal(fa).parts[0].kind === 'pick', 'faces: one pick part');
+  var w1 = En.pick(fa, 'G1');
+  check(!w1.ok && w1.wrongPick === true && fa.flags.penalty === 1 && !En.checkGoal(fa).done, 'a wrong pick costs a move');
+  check(!En.pick(fa, 'G4').ok && fa.flags.penalty === 2, 'again');
+  check(En.pick(fa, 'σ₂').ok && En.checkGoal(fa).done, 'a name works as a pick; the right pick finishes it');
+  check(!En.pick(fa, 'G2').ok, 'nothing left to pick');
+  var fr = mk('freebies');
+  check(!En.pick(fr, 's0:f').ok && fr.flags.penalty === 1, 'freebies: the order matters (s₁f first)');
+  var p1 = En.pick(fr, 's1:f');
+  check(p1.ok && p1.picked === 1 && p1.of === 2 && !En.checkGoal(fr).done && En.checkGoal(fr).parts.length === 2 && En.checkGoal(fr).parts[0].done && !En.checkGoal(fr).parts[1].done, 'freebies: first pick');
+  check(En.pick(fr, 's₀f').ok && En.checkGoal(fr).done, 'freebies: second pick by name');
+  var wf = mk('whichface');
+  check(wf.tetras.length === 1 && wf.tetras[0].vertices.join() === 'a,b,b,c' && wf.tetras[0].faces.join() === 's0:g,G1,G1,s1:f', 'whichface has the tetrahedron a,b,b,c');
+  check(wf.tetras[0].faces.every(function (r) { return !!wf.triangles.filter(function (x) { return x.id === r; })[0]; }), 'its faces are triangles of the board');
+  check(!En.pick(wf, 's0:g').ok && !En.pick(wf, 'G1').ok && En.pick(wf, 's1:f').ok && En.checkGoal(wf).done, 'whichface: d₃ = s₁f is the answer');
+  check(!En.pick(mk('compose'), 'x').ok, 'nothing to pick in an ordinary level');
+  var cp = En.candidates(mk('faces'), 'pick', []);
+  check(has(cp.triangles, 'G1') && has(cp.triangles, 's1:f'), 'candidates for pick: real triangles and free ones');
+  // the picks are the only moves of the world: they teach (d₂, d₀ ; d₁)
+  var f1 = lv('faces');
+  var long = f1.triangles.filter(function (x) { return x.e02 === 'y'; });
+  check(long.length === 1 && long[0].id === 'G2', 'exactly one triangle has y as its long side');
+  // goals say construct or prove
+  var as = En.checkGoal(mk('assoc')).parts.map(function (p) { return p.verb; }).join();
+  check(as === 'construct,construct,construct,prove', 'assoc: three constructions and one proof: ' + as);
+  var un = En.checkGoal(mk('unique')).parts.map(function (p) { return p.verb; }).join();
+  check(un === 'construct,construct,prove', 'unique: construct, construct, prove: ' + un);
+  var ty = En.checkGoal(mk('twoways')).parts.map(function (p) { return p.verb; }).join();
+  check(ty === 'construct,construct', 'twoways: two constructions');
+  // after a binding, the part shows the bound arrow
+  var tw = mk('unique'); En.compose(tw, 'f', 'g'); En.compose(tw, 'f', 'g');
+  var tp = En.checkGoal(tw).parts[2];
+  check(tp.vars.length === 2 && tp.vars[0].edge === 'e1' && tp.vars[1].edge === 'e2' && tp.vars[0].fresh === false, 'prove-part keeps the ?x ↦ x binding');
+  // no middle dot anywhere in plain text, and the only ≃ is for (x, 1 ; y)
+  var bad = 0, badEq = 0, seen = 0;
+  function scan(str, hom) {
+    if (typeof str !== 'string') return;
+    seen++;
+    if (str.indexOf('·') >= 0) bad++;
+    if (str.indexOf('≃') >= 0 && !hom) badEq++;
+  }
+  HC.Levels.forEach(function (L) {
+    var st = En.createState(L), k;
+    function sweep() {
+      st.triangles.forEach(function (x) { var dd = En.describe(st, x.id); scan(dd.plain, dd.isHomotopy); scan(dd.tuple, true); });
+      En.freeTriangles(st).forEach(function (x) { scan(x.plain, x.isHomotopy); scan(x.tuple, true); });
+      En.checkGoal(st).parts.forEach(function (p) { scan(p.plain, p.isHomotopy); scan(p.tuple, true); });
+      st.edges.forEach(function (e) { scan(e.label, true); });
+    }
+    sweep();
+    L.solution.forEach(function (step) {
+      var o = runStep(st, step);
+      if (o.r && o.r.message) scan(o.r.message, true);
+      if (o.r && o.r.reason) scan(o.r.reason, true);
+      sweep();
+    });
+  });
+  check(seen > 500 && bad === 0, 'no middle dot in any plain text, label or message (' + seen + ' strings, ' + bad + ' bad)');
+  check(badEq === 0, 'plain text uses ≃ only for homotopies (x, 1 ; y)');
+  HC.Models.forEach(function (M) { M.arrows.forEach(function (a) { check(String(a.label).indexOf('·') < 0, 'model ' + M.id + ' arrow ' + a.id + ' has no dot in its name'); }); });
+  // worlds: simplicial sets is world 1 and the rest moved up by one
+  check(lv('faces').world === 1 && lv('freebies').world === 1 && lv('whichface').world === 1 && lv('compose').world === 2 && lv('tetra').world === 3 && lv('sandbox').world === 12, 'world numbering: Simplicial sets = 1, Composition = 2, …, Playground = 12');
+})();
+
 // ---------- 17. brute force ----------
 function snapKey(s) {
   // canonical up to the names of derived arrows: provenance labels do not depend on the order of moves
@@ -820,7 +918,7 @@ function snapKey(s) {
 // a degenerate (thin) triangle, so the number of unmet triangle patterns / missing tetrahedra bounds the moves still needed.
 function lowerBound(s) {
   var goal = s.level.goal;
-  if (!goal || goal.counts || goal.edges || goal.flag) return 0;
+  if (!goal || goal.counts || goal.edges || goal.flag || goal.pick !== undefined) return 0;
   var g = En.checkGoal(s), tri = 0, tet = 0;
   g.parts.forEach(function (p) {
     if (p.kind === 'triangle' && !p.done) tri++;
@@ -884,6 +982,8 @@ function moves(s) {
     else if (tool === 'cell2') { for (i = 0; i < E.length; i++) for (j = i + 1; j < E.length; j++) for (k = j + 1; k < E.length; k++) out.push(['cell2', [E[i], E[j], E[k]]]); }
     else if (tool === 'peel') out.push(['peel']);
     else if (tool === 'cosk') out.push(['cosk']);
+    else if (tool === 'cell3') { var TT = s.triangles.filter(function (x) { return !x.thin && x.kind !== 'thin'; }).map(function (x) { return x.id; });
+      for (i = 0; i < TT.length; i++) for (j = i + 1; j < TT.length; j++) for (k = j + 1; k < TT.length; k++) for (var q = k + 1; q < TT.length; q++) out.push(['cell3', [TT[i], TT[j], TT[k], TT[q]]]); }
     else if (tool === 'isNerve') out.push(['isNerve']);
     else if (tool === 'witness') { En.candidates(s, 'witness', []).edges.concat(En.candidates(s, 'witness', []).vertices.map(function (v) { return 'id:' + v; })).forEach(function (a) {
       var c2 = En.candidates(s, 'witness', [a]); c2.edges.concat(c2.vertices.map(function (v) { return 'id:' + v; })).forEach(function (b) { out.push(['witness', a, b]); }); }); }
@@ -918,16 +1018,16 @@ function search(L, limit, deadline) {
 }
 // the search really finds things: every non-impossible level with par <= 2 is found at depth par
 HC.Levels.forEach(function (L) {
-  if (!L.goal || L.goal.impossible || L.par > 2 || process.env.SKIP_SEARCH || process.env.ONLY) return;
+  if (!L.goal || L.goal.pick !== undefined || L.goal.impossible || L.par > 2 || process.env.SKIP_SEARCH || process.env.ONLY) return;
   check(search(L, L.par, Date.now() + 60000) === L.par, 'search finds ' + L.name + ' at par ' + L.par);
 });
 var t0 = Date.now(), skipped = [];
 HC.Levels.forEach(function (L) {
-  if (!L.goal || process.env.SKIP_SEARCH || (process.env.ONLY && process.env.ONLY !== L.name)) return;
+  if (!L.goal || L.goal.pick !== undefined || process.env.SKIP_SEARCH || (process.env.ONLY && process.env.ONLY !== L.name)) return;
   var imp = !!L.goal.impossible;
   var limit = imp ? 4 : Math.min(L.par - 1, 5);
   if (limit < 1) { check(true, 'nothing shorter than par ' + L.par); return; }
-  var t1 = Date.now(), dl = t1 + 90000;
+  var t1 = Date.now(), dl = t1 + 180000;
   var f = search(L, limit, dl);
   var timedOut = Date.now() > dl;
   if (timedOut) skipped.push(L.name);

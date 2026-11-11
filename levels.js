@@ -332,6 +332,13 @@
       goal: { triangles: [['f', 'g', 'x'], ['g', 'h', 'y'], ['x', 'h', 'z'], ['f', 'y', 'z']], counts: { tetras: 0 } },
       solution: [['cell2', ['f', 'g', 'x']], ['cell2', ['g', 'h', 'y']], ['cell2', ['x', 'h', 'z']], ['cell2', ['f', 'y', 'z']]] },
 
+    { id: 0, name: 'ball', kind: 'puzzle', world: 6, par: 5, vertices: tet4(),
+      edges: tetFaces(), triangles: [],
+      tools: ['cell2', 'cell3'], kan: false,
+      goal: { counts: { triangles: 4, tetras: 1 } },
+      solution: [['cell2', ['f', 'g', 'x']], ['cell2', ['g', 'h', 'y']], ['cell2', ['x', 'h', 'z']], ['cell2', ['f', 'y', 'z']],
+        ['cell3', ['t1', 't2', 't3', 't4']]] },
+
     { id: 0, name: 'fillin', kind: 'intro', world: 6, par: 1, vertices: tri3,
       edges: hollow(), triangles: [],
       tools: ['cosk'], kan: false,
@@ -389,6 +396,13 @@
       goal: { triangles: [['g', 'h', '?y'], ['f', '?y', 'z'], ['h', 'i', '?w'], ['x', '?w', 't']] },
       solution: [['compose', 'g', 'h'], ['trip', ['f', 'g', 'h'], { A: 'G1', B: 't1', C: 'G2' }],
         ['compose', 'h', 'i'], ['trip', ['x', 'h', 'i'], { A: 'G2', B: 't3', C: 'G3' }]] },
+
+    { id: 0, name: 'halfspine', kind: 'puzzle', world: 7, par: 3, claimable: true, vertices: tet4(),
+      edges: [E('f', 'a', 'b'), E('g', 'b', 'c'), E('h', 'c', 'd'), E('y', 'b', 'd')],
+      triangles: [T('G1', 'g', 'h', 'y')],
+      tools: ['compose', 'trip'], kan: false,
+      goal: { triangles: [['f', 'g', '?x'], ['f', 'y', '?z'], ['?x', 'h', '?z']], min: { tetras: 1 } },
+      solution: [['compose', 'f', 'g'], ['compose', 'f', 'y'], ['trip', ['f', 'g', 'h'], { A: 't1', B: 'G1', D: 't2' }]] },
 
     { id: 0, name: 'opensquare', kind: 'puzzle', world: 7, par: 1, claimable: true, vertices: sq4,
       edges: [E('f', 'a', 'b'), E('v', 'b', 'd'), E('u', 'a', 'c')], triangles: [],

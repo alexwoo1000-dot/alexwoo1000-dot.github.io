@@ -468,6 +468,9 @@
     addVertex: { label: 'Add vertex', key: 'A', desc: 'Tap an empty spot.',
       picks: [pickStep('Tap an empty spot.', ['point'], 'spot')],
       run: function (p) { return ['addVertex', p[0].x, p[0].y]; } },
+    cell3: { label: 'Glue solid', key: 'B', desc: 'Fill in four triangles that close up into a hollow tetrahedron.',
+      picks: [pickStep('Pick 4 triangles that close up.', ['tri'], '1'), pickStep('Pick a 2nd triangle.', ['tri'], '2'), pickStep('Pick a 3rd triangle.', ['tri'], '3'), pickStep('Pick a 4th triangle.', ['tri'], '4')],
+      run: function (p) { return ['cell3', [p[0].id, p[1].id, p[2].id, p[3].id]]; } },
     peel: { label: 'Peel', key: 'P', desc: 'Remove the top layer.', instant: true, picks: [],
       run: function () { return ['peel']; } },
     same: { label: 'Same', key: '1', desc: 'Two composites of the same pair are homotopic.', theorem: true,
@@ -511,8 +514,9 @@
   ICONS.witness = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18 L11 7 L19 18" fill="none"/><path d="M15 4 L21 10 M21 4 L15 10" fill="none"/></svg>';
   ICONS.isNerve = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 L11 7 L19 19 Z" fill="none"/><path d="M14 6 L17 9 L22 3" fill="none"/></svg>';
   ICONS.cosk = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19 L12 5 L20 19 Z" fill="currentColor" fill-opacity=".25"/></svg>';
+  ICONS.cell3 = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 L3 17 L11 21 L21 16 Z" fill="currentColor" fill-opacity=".25"/><path d="M12 3 L3 17 L11 21 L21 16 Z M12 3 L11 21" fill="none"/></svg>';
   ICONS.divide = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12 H19" fill="none"/><circle cx="12" cy="6.5" r="1.6"/><circle cx="12" cy="17.5" r="1.6"/></svg>';
-  var TOOL_ORDER = ['witness', 'isNerve', 'liftEdge', 'compose', 'identity', 'horn0', 'horn2', 'fill3', 'tetra', 'addVertex', 'addEdge', 'cell2', 'peel', 'cosk', 'same', 'flip', 'link', 'swapin', 'divide'];
+  var TOOL_ORDER = ['witness', 'isNerve', 'liftEdge', 'compose', 'identity', 'horn0', 'horn2', 'fill3', 'tetra', 'addVertex', 'addEdge', 'cell2', 'cell3', 'peel', 'cosk', 'same', 'flip', 'link', 'swapin', 'divide'];
   ['compose', 'horn0', 'horn2', 'tetra', 'witness'].forEach(function (t) { TOOLS[t].stay = true; });
   var THEOREM_NAMES = { same: 'Same', flip: 'Flip', link: 'Link', swapin: 'Swap in', divide: 'Divide' };
   function toolName(t) { return t === 'trip' ? 'tetra' : t; }
@@ -533,7 +537,7 @@
   function hasSkeleton(lv) {
     if (!lv) return false;
     if (isSandbox(lv)) return true;
-    return arr(lv.tools).some(function (t) { return t === 'addEdge' || t === 'cell2' || t === 'peel' || t === 'addVertex' || t === 'cosk'; });
+    return arr(lv.tools).some(function (t) { return t === 'addEdge' || t === 'cell2' || t === 'cell3' || t === 'peel' || t === 'addVertex' || t === 'cosk'; });
   }
   function isIntro(lv) { return !lv || !lv.kind || lv.kind === 'intro' || lv.kind === 'sandbox'; }
   function mathMode() { return progress.mode === 'math'; }
@@ -1298,10 +1302,10 @@
 
   function edgeD(g) {
     if (g.type === 'q') {
-      var a = towards(g.P0, g.C, VR + 3), b = towards(g.P1, g.C, VR + 4);
+      var a = towards(g.P0, g.C, VR + 3), b = towards(g.P1, g.C, VR + 12);
       return 'M' + pt(a) + ' Q' + pt(g.C) + ' ' + pt(b);
     }
-    var a2 = towards(g.P0, g.C1, VR + 3), b2 = towards(g.P1, g.C2, VR + 4);
+    var a2 = towards(g.P0, g.C1, VR + 3), b2 = towards(g.P1, g.C2, VR + 12);
     return 'M' + pt(a2) + ' C' + pt(g.C1) + ' ' + pt(g.C2) + ' ' + pt(b2);
   }
   function seg(g, fwd) {
@@ -1477,7 +1481,7 @@
 
     var defs = sEl('defs');
     ['given', 'composite', 'identity', 'solved', 'sel', 'hi'].forEach(function (k) {
-      var mk = sEl('marker', { id: 'ah-' + k, viewBox: '0 0 12 10', refX: '11', refY: '5', markerWidth: '20', markerHeight: '17', markerUnits: 'userSpaceOnUse', orient: 'auto' });
+      var mk = sEl('marker', { id: 'ah-' + k, viewBox: '0 0 12 10', refX: '6', refY: '5', markerWidth: '20', markerHeight: '17', markerUnits: 'userSpaceOnUse', orient: 'auto' });
       mk.appendChild(sEl('path', { d: 'M0,0 L12,5 L0,10 L3,5 Z', class: 'ah ah-' + k }));
       defs.appendChild(mk);
     });
@@ -1596,6 +1600,7 @@
 
   function applyHighlights() {
     var m = P.m; if (!m) return;
+    try { drawFreeOverlay(); } catch (e) {}
     var hiE = {}, hiT = {}, selE = {}, selV = {}, selT = {};
     [P.hoverTri, P.pinnedTri].forEach(function (id) {
       var t = id && m.t[id]; if (!t) return;
@@ -1694,6 +1699,67 @@
       var tx = sEl('text', { 'text-anchor': 'middle', 'dominant-baseline': 'central', y: 1 }); tx.textContent = String(i + 1);
       g.appendChild(tx); gT.appendChild(g);
     });
+  }
+
+  /* A free (degenerate) triangle is not drawn on the board, because two of its corners are the same vertex.
+     While one is hovered or pinned, draw it opened up: the repeated vertex gets a copy, joined to it by the
+     identity arrow, and the triangle is shaded, so the player can see exactly which triangle it is. */
+  function drawFreeOverlay() {
+    var svg = $('board'); if (!svg) return;
+    var old = svg.querySelector('.free-ov'); if (old) old.parentNode.removeChild(old);
+    var pk = (P.choice ? P.choice.picks : P.trip ? P.trip.picks : P.picks) || [];
+    var ref = [P.hoverTri, P.pinnedTri].concat(pk.filter(function (p) { return p && p.kind === 'tri'; }).map(function (p) { return p.id; }).reverse()).filter(function (r) { return r && /^s[01]:/.test(r); })[0];
+    if (!ref || !P.geo || !P.m || !engineHas('describe')) return;
+    var d; try { d = HC.Engine.describe(P.state, ref); } catch (e) { return; }
+    var bd = d && d.boundary; if (!bd || bd.length !== 3) return;
+    var m = P.m;
+    function ends(id) { if (/^id:/.test(id)) { var v = id.slice(3); return { src: v, dst: v, id: true }; } var e = m.e[id]; return e ? { src: e.src, dst: e.dst } : null; }
+    var A = ends(bd[0]), B = ends(bd[1]); if (!A || !B) return;
+    var v0 = A.src, v1 = A.dst, v2 = B.dst;                       // corners 0, 1, 2 (two of them coincide)
+    var pos = P.geo.pos; if (!pos[v0] || !pos[v1] || !pos[v2]) return;
+    var cen = { x: 0, y: 0 }, n = 0; Object.keys(pos).forEach(function (k) { cen.x += pos[k].x; cen.y += pos[k].y; n++; }); cen.x /= n || 1; cen.y /= n || 1;
+    function away(p, from, len) {
+      var dx = p.x - from.x, dy = p.y - from.y, l = Math.sqrt(dx * dx + dy * dy);
+      var nx, ny;
+      if (l < 1) { nx = p.x - cen.x; ny = p.y - cen.y; var l2 = Math.sqrt(nx * nx + ny * ny); if (l2 < 1) { nx = 0; ny = -1; } else { nx /= l2; ny /= l2; } }
+      else { nx = -dy / l; ny = dx / l; if ((p.x + from.x) / 2 - cen.x > 0 ? nx < 0 : nx > 0) { nx = -nx; ny = -ny; } }
+      return { x: p.x + nx * len, y: p.y + ny * len };
+    }
+    // corner positions, with copies for repeated vertices
+    var P0 = pos[v0], P1 = pos[v1], P2 = pos[v2], copies = [];
+    if (v1 === v0 && v2 === v0) { P1 = away(P0, P0, 110); P2 = { x: P0.x + (P1.x - P0.x) * 0.2 + 95, y: P0.y + (P1.y - P0.y) * 0.6 }; copies = [[P1, v0, '′'], [P2, v0, '″']]; }
+    else if (v1 === v0) { P1 = away(P0, P2, Math.max(80, Math.min(140, 0.45 * Math.hypot(P2.x - P0.x, P2.y - P0.y)))); copies = [[P1, v0, '′']]; }
+    else if (v2 === v1) { P2 = away(P1, P0, Math.max(80, Math.min(140, 0.45 * Math.hypot(P1.x - P0.x, P1.y - P0.y)))); copies = [[P2, v1, '′']]; }
+    var g = sEl('g', { class: 'free-ov', 'aria-hidden': 'true' });
+    g.appendChild(sEl('path', { class: 'free-ov-face', d: 'M' + pt(P0) + ' L' + pt(P1) + ' L' + pt(P2) + ' Z' }));
+    [[P0, P1, bd[0]], [P1, P2, bd[1]], [P0, P2, bd[2]]].forEach(function (s) {
+      var a = s[0], b = s[1]; if (Math.hypot(b.x - a.x, b.y - a.y) < 2) return;
+      var p0 = towards(a, b, VR + 3), p1 = towards(b, a, VR + 12), idE = /^id:/.test(s[2]);
+      g.appendChild(sEl('path', { class: 'free-ov-e' + (idE ? ' id' : ''), d: 'M' + pt(p0) + ' L' + pt(p1), 'marker-end': 'url(#ah-' + (idE ? 'identity' : 'hi') + ')' }));
+      var mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
+      var tx = sEl('text', { x: r1(mid.x - dy / l * 22), y: r1(mid.y + dx / l * 22), class: 'elabel free-ov-l', 'text-anchor': 'middle', 'dominant-baseline': 'central' });
+      fillLabel(tx, idE ? '1_' + vLabel(m, s[2].slice(3)) : dispLabel(m, s[2]));
+      g.appendChild(tx);
+    });
+    copies.forEach(function (c) {
+      var vg = sEl('g', { class: 'free-ov-v', transform: 'translate(' + pt(c[0]) + ')' });
+      vg.appendChild(sEl('circle', { r: VR, class: 'vdot' }));
+      var t = sEl('text', { class: 'vlabel', 'text-anchor': 'middle', 'dominant-baseline': 'central', y: 1 }); t.textContent = vLabel(m, c[1]) + c[2];
+      vg.appendChild(t); g.appendChild(vg);
+    });
+    var cap = sEl('text', { x: r1((P0.x + P1.x + P2.x) / 3), y: r1((P0.y + P1.y + P2.y) / 3), class: 'free-ov-name', 'text-anchor': 'middle', 'dominant-baseline': 'central' });
+    cap.textContent = d.name || '';
+    g.appendChild(cap);
+    svg.appendChild(g);
+    // make sure the copies are inside the visible frame
+    try {
+      var vb = svg.viewBox.baseVal, xs = [P0.x, P1.x, P2.x], ys = [P0.y, P1.y, P2.y];
+      if (Math.min.apply(null, xs) - VR < vb.x || Math.max.apply(null, xs) + VR > vb.x + vb.width || Math.min.apply(null, ys) - VR < vb.y || Math.max.apply(null, ys) + VR > vb.y + vb.height) {
+        var x0 = Math.min(vb.x, Math.min.apply(null, xs) - VR - 30), y0 = Math.min(vb.y, Math.min.apply(null, ys) - VR - 30);
+        var x1 = Math.max(vb.x + vb.width, Math.max.apply(null, xs) + VR + 30), y1 = Math.max(vb.y + vb.height, Math.max.apply(null, ys) + VR + 30);
+        svg.setAttribute('viewBox', [r1(x0), r1(y0), r1(x1 - x0), r1(y1 - y0)].join(' '));
+      }
+    } catch (e) {}
   }
 
   /* ================= the Tetrahedron panel (SPEC4 §3) =================
@@ -2747,7 +2813,7 @@
     });
     var L = levels(), li = -1; L.forEach(function (l, i) { if (l.name === n.before) li = i; });
     var foot = hEl('p', { class: 'note-foot' });
-    foot.innerHTML = (li >= 0 && isUnlocked(li) ? '<button type="button" class="btn primary" data-play="' + li + '">Play: ' + prose(titleFor(L[li])) + '</button> ' : '') +
+    foot.innerHTML = (li >= 0 && isUnlocked(li) ? '<button type="button" class="btn primary" data-play="' + li + '">Play: ' + prose(titleFor(L[li])) + ' <span class="kbd">Enter</span></button> ' : '') +
       '<button type="button" class="linklike" data-act="note-back">Back</button>';
     box.appendChild(foot);
   }
@@ -3121,7 +3187,7 @@
         var star = solved && lv.par != null && progress.best[key] != null && progress.best[key] <= lv.par;
         var li = hEl('li', { value: String(i + 1), class: (solved ? 'solved' : '') + (open ? '' : ' locked') + (i === current ? ' current' : '') });
         var nb = noteBefore(lv.name);
-        if (nb) { var nli = hEl('li', { class: 'noteli' }, '<button type="button" class="node notenode" data-note="' + esc(nb.id) + '">\uD83D\uDCD6 ' + prose(nb.title || 'Note') + '</button>' + (progress.notesRead && progress.notesRead[nb.id] ? ' <span class="note">read</span>' : '')); ol.appendChild(nli); }
+        if (nb) { var nli = hEl('li', { class: 'noteli' }, '<button type="button" class="node notenode" data-note="' + esc(nb.id) + '">\uD83D\uDCD6 ' + prose(nb.title || 'Note') + '</button>' + (nb.aside ? ' <span class="note">optional aside</span>' : '') + (progress.notesRead && progress.notesRead[nb.id] ? ' <span class="note">read</span>' : '')); ol.appendChild(nli); }
         var boss = lv.kind === 'boss';
         if (boss) li.className += ' boss';
         li.innerHTML = '<button type="button" class="node" data-level="' + i + '"' + (open ? '' : ' aria-disabled="true"') + '>' + prose(titleFor(lv)) + '</button>' +
@@ -3249,6 +3315,7 @@
       return;
     }
     if (k === '?' || (k === '/' && e.shiftKey)) { e.preventDefault(); if ($('help').hidden) openHelp(); else $('help').hidden = true; return; }
+    if (!anyOverlay() && !playing() && document.body.getAttribute('data-screen') === 'note' && e.key === 'Enter' && !(e.target && /^(BUTTON|A|INPUT|TEXTAREA|SELECT|SUMMARY)$/.test(e.target.tagName))) { e.preventDefault(); goStep(1); return; }
     if (anyOverlay() || !playing()) return;
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (k === 'z' || k === 'Z')) { e.preventDefault(); undo(); return; }
     if (e.ctrlKey || e.metaKey) return;

@@ -789,3 +789,14 @@ details.gl-sec > summary.gl-world { cursor: pointer; list-style: revert; }
 .briefing .brief-body, .brief-map .brief-body { display: block; }
 .briefing .brief-fig { max-width: 240px; }
 .briefing { max-width: none; }
+
+/* arrows end inside their arrowheads; a square end keeps thick highlighted lines from showing past the tip */
+.edge .line { stroke-linecap: butt; }
+/* a free (degenerate) triangle shown opened up while it is hovered or pinned */
+.free-ov { pointer-events: none; }
+.free-ov-face { fill: var(--hi); fill-opacity: .28; stroke: none; }
+.free-ov-e { fill: none; stroke: var(--hi); stroke-width: 5; stroke-linecap: butt; }
+.free-ov-e.id { stroke: var(--k-identity); stroke-width: 3; stroke-dasharray: 8 6; }
+.free-ov-v .vdot { fill: var(--paper); stroke: var(--ink); stroke-width: 2; stroke-dasharray: 4 3; }
+.free-ov-v .vlabel { fill: var(--ink); }
+.free-ov-name { font: italic 22px var(--font-math); fill: var(--ink); paint-order: stroke; stroke: var(--halo); stroke-width: 6px; }

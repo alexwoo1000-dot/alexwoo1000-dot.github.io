@@ -1087,7 +1087,7 @@ HC.Reasons = {
 HC.Notes = [
 
   { id: "simplicial", before: "faces", title: "Vertices, arrows, triangles", body: [
-    { p: "Define a $n$-<b>simplex</b> as a directed (filled) triangle of dimension $n$: vertices, arrows, triangles with interior, solid tetrahedra, and so on. " },
+    { p: "Define a $n$-<b>simplex</b> as a directed (filled) triangle of dimension $n$: vertices, arrows, triangles with interior, solid tetrahedra, and so on.  (In this game, we'll only work with $n \le 3$, for obvious reasons.)" },
     { p: "A <b>simplicial set</b> is composed of many simplices, possibly glued together along their directed components." },
     { diagram: { caption: "One simplicial set.", glow: { pts: ["y3","y4","y5"], cx: 72, cy: 38, r: 27, op: 0.26 }, dots: [{id:"y0",label:"0",x:4,y:30},{id:"y1",label:"1",x:26,y:2},{id:"y2",label:"2",x:48,y:30},{id:"y3",label:"3",x:72,y:16},{id:"y4",label:"4",x:52,y:56},{id:"y5",label:"5",x:92,y:56},{id:"y6",label:"6",x:72,y:43},{id:"y7",label:"7",x:26,y:50},{id:"y8",label:"8",x:100,y:6},{id:"y9",label:"9",x:108,y:20}],
       arrows: [{from:"y0",to:"y1"},{from:"y1",to:"y2"},{from:"y0",to:"y2"},{from:"y2",to:"y3"},{from:"y1",to:"y3"},{from:"y0",to:"y7"},{from:"y7",to:"y2"},{from:"y4",to:"y5"},{from:"y3",to:"y4"},{from:"y3",to:"y5"},{from:"y6",to:"y4"},{from:"y6",to:"y5"},{from:"y6",to:"y3"},{from:"y8",to:"y9"}],
@@ -1261,7 +1261,7 @@ HC.Notes = [
   ]},
 
   { id: "counter", before: "nofill", title: "How to prove something is impossible", body: [
-    { p: "Showing a goal <i>can</i> be reached is easy to check: you do it. Showing it can <i>never</i> be reached is harder, because you cannot try every sequence of moves. Mathematicians use a <b>counterexample</b>: one concrete world in which everything you were given is true and the goal is false." },
+    { p: "Showing a goal <i>can</i> be reached is easy to check: you do it. Showing it can <i>never</i> be reached is harder, because you cannot try every sequence of moves. In this world, we'll construct counterexamples: one concrete world in which everything you were given is true and the goal is false." },
     { diagram: { dots: [{id:"a",label:"0",x:20,y:46},{id:"b",label:"1",x:50,y:12},{id:"c",label:"2",x:80,y:46}],
                  arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"a",to:"c",label:"h"},{from:"a",to:"c",label:"k"}] } },
     { p: "Here the worlds are small ordinary categories, where composing has exactly one answer. In the picture, the pair $f,g$ has its own composite $k$, a different arrow from $h$. If your starting picture fits inside this world, with $h$ on $h$, then the claim that $h$ is a composite of $f$ and $g$ is false there." },

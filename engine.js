@@ -405,6 +405,37 @@
     return { ok: true, added: newAdded(), message: 'Every pair has exactly one composite: a nerve.' };
   };
 
+  // glue a solid: four triangles that form the boundary of a tetrahedron get a 3-simplex inside
+  function cell3Assign(s, ids) {
+    var T = ids.map(function (id) { return getTri(s, id); });
+    if (T.some(function (t) { return !t; })) return null;
+    var perms = [];
+    (function rec(a, rest) { if (!rest.length) { perms.push(a); return; } rest.forEach(function (x, i) { rec(a.concat([x]), rest.slice(0, i).concat(rest.slice(i + 1))); }); })([], [0, 1, 2, 3]);
+    for (var p = 0; p < perms.length; p++) {
+      var d0 = T[perms[p][0]], d1 = T[perms[p][1]], d2 = T[perms[p][2]], d3 = T[perms[p][3]];
+      // d3 = (01, 12; 02), d2 = (01, 13; 03), d1 = (02, 23; 03), d0 = (12, 23; 13)
+      if (d3.e01 !== d2.e01 || d3.e12 !== d0.e01 || d3.e02 !== d1.e01 || d2.e12 !== d0.e02 || d2.e02 !== d1.e02 || d1.e12 !== d0.e12) continue;
+      var e01 = lookupEdge(s, d3.e01), e12 = lookupEdge(s, d3.e12), e23 = lookupEdge(s, d1.e12);
+      if (!e01 || !e12 || !e23) continue;
+      var vs = [e01.src, e01.dst, e12.dst, e23.dst];
+      if (vs.filter(function (v, i) { return vs.indexOf(v) === i; }).length < 4) continue;
+      return { faces: [d0.id, d1.id, d2.id, d3.id], vertices: vs,
+        edges: { '01': d3.e01, '12': d3.e12, '23': d1.e12, '02': d3.e02, '13': d2.e12, '03': d2.e02 } };
+    }
+    return null;
+  }
+  Engine.cell3 = mut(function (s, ids) {
+    if (!Array.isArray(ids) || ids.length !== 4) return fail('Pick four triangles.');
+    if (new Set(ids).size !== 4) return fail('Pick four different triangles.');
+    var a = cell3Assign(s, ids);
+    if (!a) return fail("Those four triangles don't close up into a hollow tetrahedron.");
+    if (tetExists(s, a.faces)) return fail('That solid is already there.');
+    var added = newAdded();
+    var tt = { id: 'T' + (++s.counters.T), faces: a.faces, missing: null, vertices: a.vertices, edges: a.edges, kind: 'cell' };
+    s.tetras.push(tt); added.tetras.push(tt.id);
+    return { ok: true, added: added, message: 'Glued a solid inside the four triangles.' };
+  });
+
   Engine.peel = mut(function (s) {
     var removed = { vertices: [], edges: [], triangles: [], tetras: [] };
     if (s.tetras.length) {
@@ -1474,6 +1505,8 @@
         if (!cellCheck(s, tr).err) tr.forEach(function (x) { ok2[x.id] = x; });
       }
       E.forEach(function (e) { if (ok2[e.id] && picks.indexOf(e.id) < 0) addPick(out, e); });
+    } else if (tool === 'cell3') {
+      s.triangles.forEach(function (t) { if (!t.thin && t.kind !== 'thin' && picks.indexOf(t.id) < 0) out.triangles.push(t.id); });
     } else if (tool === 'witness') {
       if (!picks.length) { s.edges.forEach(function (x) { out.edges.push(x.id); }); s.vertices.forEach(function (v) { out.vertices.push(v.id); }); }
       else if (picks.length === 1) {
