@@ -180,7 +180,7 @@ HC.Worlds = [
     definition: "Four harder problems. Each one uses only ideas from earlier worlds, and none of them says how.",
     hornsFill: "inner",
     brief: { sofar: "You've met every tool the game has.",
-      now: "These four problems don't tell you which tetrahedron to build or which degenerate triangle to reach for, and one of them may not be solvable at all.",
+      now: "Challenge puzzles here.",
       new: "Nothing new: only harder." } },
 
   { id: 13, title: "Sandbox", mathTitle: "Sandbox", blurb: "",
