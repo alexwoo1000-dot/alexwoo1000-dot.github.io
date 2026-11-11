@@ -34,6 +34,12 @@ for f in engine.js levels.js text.js tetra3d.js notesview.js ui.js make-site.js;
             echo "pre-push: SYNTAX ERROR in $f at line $line"
             snippet=$(sed -n "${line}p" "$f" | tr -d '\r' | cut -c1-110)
             echo "    $line | $snippet"
+            # the parser reports the token after the problem, so the previous line is the usual culprit
+            prev=$((line - 1))
+            if [ "$prev" -ge 1 ]; then
+                psnip=$(sed -n "${prev}p" "$f" | tr -d '\r' | cut -c1-110)
+                echo "    $prev | $psnip   <- if line $line starts an element, this line is missing a comma or a brace"
+            fi
         else
             echo "pre-push: SYNTAX ERROR in $f"
         fi
