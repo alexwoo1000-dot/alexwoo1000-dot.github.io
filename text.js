@@ -3,7 +3,8 @@ var HC = (typeof window !== 'undefined' ? window : globalThis).HC || ((typeof wi
 /* Text for HORNFILLER v5. Strings may contain inline HTML and $...$ LaTeX.
    Triangles are written by their boundary (d_2, d_0 ; d_1) = (first leg, second leg ; long side), e.g. (f, g ; x),
    and by name: sigma_1, sigma_2, ... (given ones first, then in creation order); degenerate ones are s_0 f = (1_a, f ; f)
-   and s_1 f = (f, 1_b ; f). The relation x ~ y (homotopy) is written only after it has been defined as a triangle (x, 1_b ; y). */
+   and s_1 f = (f, 1_b ; f). The relation x ~ y (homotopy) is used only after the note "homotopy" (before the level
+   `unique`), which defines it as a triangle (x, 1_b ; y). */
 
 // needs: worlds that must be finished (bosses optional) before a world opens. The map branches.
 HC.WorldNeeds = { 1: [], 2: [1], 3: [2], 4: [3], 5: [4], 6: [3], 7: [2], 8: [4], 9: [5], 10: [5], 11: [10], 12: [2] };
@@ -11,1030 +12,205 @@ HC.WorldNeeds = { 1: [], 2: [1], 3: [2], 4: [3], 5: [4], 6: [3], 7: [2], 8: [4],
 HC.Worlds = [
 
   { id: 1, title: "Simplicial sets", mathTitle: "Simplicial sets", blurb: "",
-    definition: "A <b>simplicial set</b> $X$ is a family of sets: vertices $X_0$, arrows $X_1$, triangles $X_2$, tetrahedra $X_3$, and so on. An arrow has a source and a target. A triangle $\\sigma$ has three faces, all arrows: $d_2\\sigma$ joins its corners $0$ and $1$, $d_0\\sigma$ joins $1$ and $2$, and $d_1\\sigma$ joins $0$ and $2$. We write $\\sigma=(d_2\\sigma,\\,d_0\\sigma\\,;\\,d_1\\sigma)$: first leg, second leg, long side. Every vertex $a$ has a <b>degenerate</b> arrow $1_a$, and every arrow $f:a\\to b$ has two degenerate triangles, $s_0f=(1_a,f\\,;\\,f)$ and $s_1f=(f,1_b\\,;\\,f)$; the same pattern continues in higher dimensions.",
+    definition: "A <b>simplicial set</b> $X$ has a set of vertices, a set of arrows, a set of triangles, a set of tetrahedra, and so on, with face maps: an arrow has a source and a target, and a triangle $\\sigma$ has three arrows as faces, $d_2\\sigma$ from corner $0$ to $1$, $d_0\\sigma$ from $1$ to $2$ and $d_1\\sigma$ from $0$ to $2$, written $\\sigma=(d_2\\sigma,\\,d_0\\sigma\\,;\\,d_1\\sigma)$. It also has degeneracies: every vertex $a$ has an arrow $1_a:a\\to a$, and every arrow $f:a\\to b$ has triangles $s_0f=(1_a,f\\,;\\,f)$ and $s_1f=(f,1_b\\,;\\,f)$.",
     definitionDiagram: { dots: [{id:"a",label:"0",x:12,y:44},{id:"b",label:"1",x:50,y:8},{id:"c",label:"2",x:88,y:44}],
       arrows: [{from:"a",to:"b",label:"d₂σ"},{from:"b",to:"c",label:"d₀σ"},{from:"a",to:"c",label:"d₁σ"}], fills: [["a","b","c"]] },
     hornsFill: "none",
     brief: {
-      sofar: "You have not played anything yet.",
-      now: "You will read triangles by their three sides and find the degenerate ones that every simplicial set contains for free.",
-      new: "Faces $d_0,d_1,d_2$, the notation $(f,g\\,;\\,x)$, and the degenerate arrows and triangles $1_a$, $s_0f$, $s_1f$.",
-      about: "No arrow or triangle is built in this world. Each level asks you to identify a simplex from its faces, which is the skill every later proof depends on.",
-      picture: { caption: "A triangle $\\sigma=(f,g\\,;\\,x)$: legs $f,g$ and long side $x$.",
+      sofar: "Nothing yet. Every board in this game is a simplicial set, so this world teaches you to read one.",
+      now: "You will look at triangles and tetrahedra that are already drawn and pick out the one a question describes. Nothing is built here; you only point.",
+      new: "Faces $d_0,d_1,d_2$ of a triangle, the notation $(f,g\\,;\\,x)$ for a triangle with legs $f,g$ and long side $x$, the identity arrow $1_a$ at each vertex, and the two degenerate triangles $s_0f$ and $s_1f$ on each arrow.",
+      about: "Every later level names triangles by their three sides, so a minute spent learning to read $(f,g\\,;\\,x)$ here saves a lot of squinting later.",
+      picture: { caption: "The triangle $(f,g\\,;\\,x)$: first leg $f$, second leg $g$, long side $x$.",
         dots: [{ id: "a", label: "0", x: 12, y: 44 }, { id: "b", label: "1", x: 50, y: 10 }, { id: "c", label: "2", x: 88, y: 44 }],
         arrows: [{ from: "a", to: "b", label: "f" }, { from: "b", to: "c", label: "g" }, { from: "a", to: "c", label: "x" }],
         fills: [["a", "b", "c"]] } } },
 
   { id: 2, title: "Composition", mathTitle: "Composition", blurb: "",
-    definition: "Let $f:a\\to b$ and $g:b\\to c$ be arrows. A <b>composite</b> of $f$ and $g$ is an arrow $x:a\\to c$ together with a triangle $\\sigma=(f,g\\,;\\,x)$ that witnesses it. The two arrows $f,g$ form the <b>horn</b> $\\Lambda^2_1$, a triangle with its long side removed, and a <b>filler</b> of the horn is a triangle with those two sides. In this world every such horn has a filler, but nothing says the filler is unique: a pair may have several composites, each with its own witness.",
+    definition: "Arrows $f:a\\to b$ and $g:b\\to c$ form a <b>horn</b> $\\Lambda^2_1$. A <b>composite</b> of $f$ and $g$ is an arrow $x:a\\to c$ together with a triangle $(f,g\\,;\\,x)$; that triangle is a <b>filler</b> of the horn.",
     definitionDiagram: { dots: [{id:"a",label:"a",x:12,y:44},{id:"b",label:"b",x:50,y:8},{id:"c",label:"c",x:88,y:44}],
       arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"a",to:"c",label:"x",dashed:true}], ghost: [["a","b","c"]] },
     hornsFill: "inner",
     brief: {
-      sofar: "You can read a triangle by its boundary and name the degenerate ones.",
-      now: "You will fill the horn $\\Lambda^2_1$ to construct composites, and discover that a pair of arrows can have more than one.",
-      new: "The tool Compose; a composite and its witnessing triangle.",
-      about: "Composition here is a construction with a witness, not a function. Constructing a composite means choosing a filler of $\\Lambda^2_1$.",
-      picture: { caption: "Two sides given; the long side is what you construct.",
+      sofar: "You can read a triangle from its three sides and you know the degenerate triangles $s_0f$ and $s_1f$.",
+      now: "You will take two arrows that meet end to start and add the missing third side together with a triangle on all three. Then you will do it twice on the same pair and get two different answers.",
+      new: "The tool Compose, which fills the horn $\\Lambda^2_1$; the words horn, filler and composite.",
+      about: "Here a composite comes with a receipt: the triangle that shows it is one. The game never decides that one composite is the right one, and the third level makes that visible.",
+      picture: { caption: "Two sides are given. Compose draws the third side and fills the triangle.",
         dots: [{ id: "a", label: "a", x: 12, y: 44 }, { id: "b", label: "b", x: 50, y: 10 }, { id: "c", label: "c", x: 88, y: 44 }],
         arrows: [{ from: "a", to: "b", label: "f" }, { from: "b", to: "c", label: "g" }, { from: "a", to: "c", label: "?", dashed: true }],
         fills: [], ghost: [["a", "b", "c"]] } } },
 
   { id: 3, title: "Tetrahedra", mathTitle: "Tetrahedra", blurb: "",
-    definition: "A <b>tetrahedron</b> is a 3-simplex with corners $0,1,2,3$ and four triangular faces $d_0,\\dots,d_3$, where $d_i$ is the face omitting corner $i$. Its corners may lie over the same vertex, and then some faces are degenerate. If three faces of a tetrahedron are known and the fourth is $d_1$ or $d_2$, the three form an inner horn $\\Lambda^3_1$ or $\\Lambda^3_2$. In this world every such horn has a filler, which is a tetrahedron, and the filler's remaining face is a new triangle. The same tetrahedra define homotopy: parallel arrows $x,y:a\\to b$ are <b>homotopic</b>, $x\\simeq y$, if a triangle $(x,1_b\\,;\\,y)$ exists. That is only a definition; the next world studies the relation.",
+    definition: "A <b>tetrahedron</b> has corners $0,1,2,3$ and four triangular faces $d_0,\\dots,d_3$, where $d_i$ is the face that omits corner $i$. Three faces whose missing fourth face is $d_1$ or $d_2$ form an <b>inner horn</b> $\\Lambda^3_1$ or $\\Lambda^3_2$, and a filler of it is a tetrahedron with those three faces.",
     definitionDiagram: { dots: [{id:"a",label:"0",x:8,y:46},{id:"b",label:"1",x:50,y:6},{id:"c",label:"2",x:50,y:32},{id:"d",label:"3",x:92,y:46}],
       arrows: [{from:"a",to:"b",label:""},{from:"b",to:"d",label:""},{from:"a",to:"d",label:""},{from:"a",to:"c",label:""},{from:"c",to:"d",label:""},{from:"b",to:"c",label:""}], fills: [["a","b","c"],["b","c","d"],["a","c","d"]] },
     hornsFill: "inner",
     brief: {
-      sofar: "You can construct composites, and you have seen that a pair of arrows can have several.",
-      now: "You will use tetrahedra to relate composites to each other, and to show that following an identity changes nothing up to a triangle.",
-      new: "The tool Tetrahedron, the face names $d_0,\\dots,d_3$, and the inner horns $\\Lambda^3_1$, $\\Lambda^3_2$.",
-      about: "A tetrahedron is the smallest shape whose faces constrain one another. Filling a 3-horn is how the game proves that two constructions agree.",
-      picture: { caption: "Three faces fit together; the fourth is forced.",
+      sofar: "You can construct composites, and you have seen one pair of arrows get two different ones.",
+      now: "You will hand the Tetrahedron tool three triangles that fit together and receive the fourth face. With it you relate the two ways of composing three arrows, compare two composites of the same pair, and check what composing with an identity does.",
+      new: "The tool Tetrahedron, which fills the inner horns $\\Lambda^3_1$ and $\\Lambda^3_2$; homotopy $x\\simeq y$, defined in the note before the third level; the tool Same, which you earn there.",
+      about: "Each answer you get here is a triangle, never an equation. A tetrahedron is the smallest place where three triangles can force a fourth.",
+      picture: { caption: "Three faces of a tetrahedron are filled; the tool supplies the fourth.",
         dots: [{ id: "a", label: "0", x: 8, y: 46 }, { id: "b", label: "1", x: 50, y: 6 }, { id: "c", label: "2", x: 50, y: 32 }, { id: "d", label: "3", x: 92, y: 46 }],
         arrows: [{ from: "a", to: "b", label: "" }, { from: "b", to: "d", label: "" }, { from: "a", to: "d", label: "" }, { from: "a", to: "c", label: "" }, { from: "c", to: "d", label: "" }, { from: "b", to: "c", label: "" }],
         fills: [["a", "b", "c"], ["b", "c", "d"], ["a", "c", "d"]] } } },
 
   { id: 4, title: "Homotopy", mathTitle: "Homotopy", blurb: "",
-    definition: "Let $x,y:a\\to b$ be parallel arrows. We say $x$ is <b>homotopic</b> to $y$, and write $x\\simeq y$, if there is a triangle with boundary $(x,1_b\\,;\\,y)$. This is the whole definition, and different triangles give different witnesses. Symmetry, transitivity and compatibility with composition are not part of it. They are theorems, proved in this world by filling inner horns $\\Lambda^3_k$. Each proof becomes a tool: Flip, Link, Swap in.",
+    definition: "Parallel arrows $x,y:a\\to b$ are <b>homotopic</b>, written $x\\simeq y$, if there is a triangle $(x,1_b\\,;\\,y)$.",
     definitionDiagram: { dots: [{id:"a",label:"0 = a",x:10,y:44},{id:"b",label:"1 = b",x:50,y:8},{id:"c",label:"2 = b",x:90,y:44}],
       arrows: [{from:"a",to:"b",label:"x"},{from:"b",to:"c",label:"1_b",kind:"identity",dashed:true},{from:"a",to:"c",label:"y"}], fills: [["a","b","c"]] },
     hornsFill: "inner",
     brief: {
-      sofar: "You can build tetrahedra and use them to show that two composites are related.",
-      now: "You will prove that homotopy, defined as a triangle $(x,1_b\\,;\\,y)$, is symmetric and transitive, and that homotopic arrows can replace one another in triangles.",
-      new: "The theorem tools Flip, Link and Swap in, each the one-click form of a proof you give.",
-      about: "Homotopy is introduced as a bare definition. Everything that makes it behave like equality has to be proved, and the proofs are the puzzles.",
-      picture: { caption: "$x\\simeq y$ means a triangle $(x,1_b\\,;\\,y)$ exists.",
+      sofar: "You can build tetrahedra, and you showed that two composites of the same pair are homotopic.",
+      now: "You will prove that homotopy can be reversed, that it chains, and that a homotopic arrow can replace another inside a triangle. Each proof is one tetrahedron with an identity among its edges, and each one you finish becomes a tool.",
+      new: "The theorem tools Flip (reverse a homotopy), Link (chain two) and Swap in (replace an arrow in a triangle by a homotopic one).",
+      about: "The definition $x\\simeq y$ reads in one direction only, with $x$ first and $1_b$ after it. Everything that lets you treat homotopic arrows as interchangeable has to be earned, one tetrahedron at a time.",
+      picture: { caption: "A homotopy from $x$ to $y$: a triangle whose second leg is $1_b$.",
         dots: [{ id: "a", label: "a", x: 10, y: 44 }, { id: "b", label: "b", x: 50, y: 10 }, { id: "c", label: "b", x: 90, y: 44 }],
         arrows: [{ from: "a", to: "b", label: "x" }, { from: "b", to: "c", label: "1_b", kind: "identity" }, { from: "a", to: "c", label: "y" }],
         fills: [["a", "b", "c"]] } } },
 
   { id: 5, title: "Undo everything", mathTitle: "Kan complexes", blurb: "",
-    definition: "A simplicial set is a <b>Kan complex</b> if every horn $\\Lambda^n_k\\to X$ has a filler, outer horns ($k=0$ and $k=n$) included. For $\\Lambda^2_0$ this means: given arrows $f:a\\to b$ and $h:a\\to c$, there is an arrow $g:b\\to c$ and a triangle $(f,g\\,;\\,h)$. Taking $h=1_a$ gives $g$ with $(f,g\\,;\\,1_a)$, a left inverse of $f$. Dually $\\Lambda^2_2$ gives right inverses. In this world all horns fill, so every arrow can be undone up to homotopy.",
+    definition: "A <b>Kan complex</b> is a simplicial set in which every horn $\\Lambda^n_k$, $0\\le k\\le n$, has a filler. For $f:a\\to b$, an arrow $g$ with a triangle $(f,g\\,;\\,1_a)$ is a <b>left inverse</b> of $f$, and an arrow $k$ with a triangle $(k,f\\,;\\,1_b)$ is a <b>right inverse</b>.",
     definitionDiagram: { dots: [{id:"a",label:"0",x:12,y:10},{id:"b",label:"1",x:88,y:10},{id:"c",label:"2",x:50,y:48}],
       arrows: [{from:"a",to:"b",label:"f"},{from:"a",to:"c",label:"h"},{from:"b",to:"c",label:"?",dashed:true}], ghost: [["a","b","c"]] },
     hornsFill: "all",
     brief: {
-      sofar: "Only horns missing a middle side could be filled, and homotopy is a relation you can manipulate with tools.",
-      now: "You will fill outer horns to construct left and right inverses, and show that the two agree up to homotopy.",
-      new: "The tools Solve $f\\cdot ?=h$ and Solve $?\\cdot g=h$, which fill $\\Lambda^2_0$ and $\\Lambda^2_2$; isomorphisms.",
-      about: "Outer horns are the new fillings available. They allow an arrow to be walked backwards, and so they change what the space can contain.",
-      picture: { caption: "Two sides leave the same vertex; the missing one is an inverse when $h=1_a$.",
+      sofar: "Only inner horns could be filled, and homotopy became something you can reverse, chain and substitute.",
+      now: "You will fill outer horns too. Two arrows leaving the same vertex give you the third side; with $1_a$ as one of them, that third side is an inverse. Then you cancel arrows and invert a composite.",
+      new: "The two Solve tools, which fill the outer horns $\\Lambda^2_0$ and $\\Lambda^2_2$; outer tetrahedra $\\Lambda^3_0$, $\\Lambda^3_3$; left and right inverses; isomorphisms.",
+      about: "Think of the arrows as paths you can walk in a space. Walking a path backwards is always allowed in a space, and that is what the outer horns provide. The boss of this world turns the outer horns off again, so watch which steps needed them.",
+      picture: { caption: "Two arrows leave $a$. Solve supplies the side between their ends; with $h=1_a$ it is an inverse of $f$.",
         dots: [{ id: "a", label: "a", x: 12, y: 10 }, { id: "b", label: "b", x: 88, y: 10 }, { id: "c", label: "c", x: 50, y: 46 }],
         arrows: [{ from: "a", to: "b", label: "f" }, { from: "a", to: "c", label: "h" }, { from: "b", to: "c", label: "?", dashed: true }],
         fills: [], ghost: [["a", "b", "c"]] } } },
 
   { id: 6, title: "Nerves of categories", mathTitle: "Nerves of categories", blurb: "",
-    definition: "The <b>nerve</b> $N(\\mathcal C)$ of a category $\\mathcal C$ has the objects as vertices, the morphisms as arrows, and as $n$-simplices the chains of $n$ composable morphisms. A triangle is a pair $f,g$ together with their composite. In a nerve every inner horn has exactly one filler, and a simplicial set in which every inner horn has a unique filler is the nerve of a category. Quasi-categories only ask for existence, so composites there are unique up to homotopy but not literally.",
+    definition: "The <b>nerve</b> $N(\\mathcal C)$ of a category $\\mathcal C$ is the simplicial set whose $n$-simplices are chains $a_0\\to a_1\\to\\dots\\to a_n$ of composable morphisms. Its vertices are the objects, its arrows are the morphisms, and its triangles are the pairs $(f,g)$ with boundary $(f,g\\,;\\,g\\circ f)$.",
     definitionDiagram: { dots: [{id:"a",label:"a",x:8,y:36},{id:"b",label:"b",x:36,y:12},{id:"c",label:"c",x:64,y:36},{id:"d",label:"d",x:92,y:12}],
       arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"c",to:"d",label:"h"}] },
     hornsFill: "inner",
     brief: {
-      sofar: "Composites existed but were many, related by homotopy.",
-      now: "You will meet simplicial sets in which each pair of composable arrows has exactly one triangle, and learn to tell such a set from one that does not.",
-      new: "Nerves, the composition table (Rulebook), and the verdict tools for deciding whether a picture is a nerve.",
-      about: "A nerve is a quasi-category with no slack: every composite is determined. Spotting a missing or doubled triangle is how you show a picture is not one.",
-      picture: { caption: "Every pair has a composite, and only one.",
-        dots: [{ id: "a", label: "a", x: 8, y: 26 }, { id: "b", label: "b", x: 50, y: 26 }, { id: "c", label: "c", x: 92, y: 26 }],
-        arrows: [{ from: "a", to: "b", label: "f" }, { from: "b", to: "c", label: "g" }, { from: "a", to: "c", label: "x" }],
-        fills: [] } } },
+      sofar: "In the worlds so far a pair of arrows could have many composites, related by homotopies.",
+      now: "You will work in pictures that come from ordinary categories, where a composition table gives each pair exactly one composite. Then you will judge pictures yourself: is this one a nerve, and if not, which pair of arrows gives it away?",
+      new: "Nerves of categories; the composition table; the buttons It is a nerve and Not a nerve: show a bad pair.",
+      about: "A nerve is the special case with no choices left: every pair of arrows that meet has exactly one triangle on it. A picture fails the test when some pair has no triangle or has two.",
+      picture: { caption: "In a nerve the pair $f,g$ has exactly one triangle, with long side $g\\circ f$.",
+        dots: [{ id: "a", label: "a", x: 12, y: 44 }, { id: "b", label: "b", x: 50, y: 10 }, { id: "c", label: "c", x: 88, y: 44 }],
+        arrows: [{ from: "a", to: "b", label: "f" }, { from: "b", to: "c", label: "g" }, { from: "a", to: "c", label: "g∘f" }],
+        fills: [["a", "b", "c"]] } } },
 
   { id: 7, title: "Bones", mathTitle: "Skeleta and cells", blurb: "",
-    definition: "The <b>$n$-skeleton</b> $\\mathrm{sk}_nX$ is the simplicial subset generated by the simplices of dimension at most $n$. The <b>boundary</b> $\\partial\\Delta^n=\\mathrm{sk}_{n-1}\\Delta^n$ is the union of all faces of $\\Delta^n$ without its interior. To <b>attach an $n$-cell</b> to $X$ along a map $\\partial\\Delta^n\\to X$ is to form the pushout $X\\sqcup_{\\partial\\Delta^n}\\Delta^n$. The <b>coskeleton</b> $\\mathrm{cosk}_n$ is right adjoint to $\\mathrm{sk}_n$; it fills every boundary above dimension $n$ in the unique possible way.",
+    definition: "The <b>$n$-skeleton</b> $\\mathrm{sk}_nX$ is the simplicial subset of $X$ generated by its simplices of dimension at most $n$, and $\\partial\\Delta^n=\\mathrm{sk}_{n-1}\\Delta^n$ is the <b>boundary</b> of the $n$-simplex. <b>Attaching an $n$-cell</b> to $X$ along a map $\\partial\\Delta^n\\to X$ means forming the pushout $X\\sqcup_{\\partial\\Delta^n}\\Delta^n$, and the <b>coskeleton</b> $\\mathrm{cosk}_n$ is the right adjoint of $\\mathrm{sk}_n$.",
     definitionDiagram: { dots: [{id:"a",label:"0",x:12,y:46},{id:"b",label:"1",x:50,y:8},{id:"c",label:"2",x:88,y:46}],
       arrows: [{from:"a",to:"b",label:""},{from:"b",to:"c",label:""},{from:"a",to:"c",label:""}], ghost: [["a","b","c"]] },
     hornsFill: "none",
     brief: {
-      sofar: "You have filled horns inside shapes that were given to you.",
-      now: "You will assemble and dismantle shapes by dimension, using skeleta, cells and coskeleta.",
-      new: "The tools Draw arrow, Glue triangle, Peel and Fill in; boundaries and cells.",
-      about: "Nothing fills a horn here. Shapes are built by gluing cells along boundaries, which is a different operation from filling a horn, and the next world depends on the difference.",
-      picture: { caption: "$\\partial\\Delta^2$: a boundary with no interior. A 2-cell fills it.",
+      sofar: "You filled horns: shapes with exactly one face missing.",
+      now: "You will build shapes from parts. Draw arrows, glue a triangle into a closed loop of three, glue two triangles onto the same loop to get a sphere, peel layers off a solid, wrap a tetrahedron's wire frame in four faces, and finally fill that shell with a solid ball.",
+      new: "The tools Draw arrow, Glue triangle, Glue solid, Peel and Fill in; boundaries, cells, skeleta and coskeleta.",
+      about: "No horn is filled in this world. Gluing a cell onto a closed boundary can change the shape, for example by capping a circle with a disc, and the world after this one shows that filling horns never can.",
+      picture: { caption: "$\\partial\\Delta^2$: three sides with nothing inside. Glue triangle fills it with a 2-cell.",
         dots: [{ id: "a", label: "0", x: 12, y: 46 }, { id: "b", label: "1", x: 50, y: 8 }, { id: "c", label: "2", x: 88, y: 46 }],
         arrows: [{ from: "a", to: "b", label: "" }, { from: "b", to: "c", label: "" }, { from: "a", to: "c", label: "" }],
         fills: [], ghost: [["a", "b", "c"]] } } },
 
   { id: 8, title: "Possible or not?", mathTitle: "Anodyne maps", blurb: "",
-    definition: "A map of simplicial sets is <b>anodyne</b> if it is built from horn inclusions $\\Lambda^n_k\\hookrightarrow\\Delta^n$ by pushouts, composition and retracts; it is <b>inner anodyne</b> if only inner horns are used. Anodyne maps are weak homotopy equivalences, so they never change the shape. By contrast $\\partial\\Delta^2\\hookrightarrow\\Delta^2$ is not anodyne, since it turns a circle into a disc. To show a goal is impossible, exhibit a quasi-category that contains your data but not the goal, and say why.",
+    definition: "A map of simplicial sets is <b>anodyne</b> if it belongs to the smallest class of maps that contains the horn inclusions $\\Lambda^n_k\\hookrightarrow\\Delta^n$ and is closed under pushouts, composition and retracts. It is <b>inner anodyne</b> if the same holds with inner horns ($0<k<n$) only.",
     definitionDiagram: { dots: [{id:"a",label:"0",x:12,y:46},{id:"b",label:"1",x:50,y:8},{id:"c",label:"2",x:88,y:46}],
       arrows: [{from:"a",to:"b",label:""},{from:"b",to:"c",label:""},{from:"a",to:"c",label:"",dashed:true}], ghost: [["a","b","c"]] },
     hornsFill: "inner",
     brief: {
-      sofar: "You know that gluing a cell and filling a horn are different operations.",
-      now: "You will decide, goal by goal, whether horn fillings can reach it; when they cannot, you will build a model that proves it.",
-      new: "The button This can't be done, with the counter-models and reasons behind it; anodyne maps.",
-      about: "Horn fillings add a face but never change the shape, so a goal that would change the shape cannot be reached. Recognising that is the skill tested here.",
-      picture: { caption: "A closed loop of arrows: no horn is missing a side.",
+      sofar: "You have filled horns in many worlds and, in Bones, glued cells onto closed boundaries.",
+      now: "Each level states a goal, and some of the goals are impossible. When a goal can be reached, reach it. When it cannot, press This can't be done and pick a small category in which everything you were given holds and the goal fails.",
+      new: "The button This can't be done and the counter-models behind it; anodyne and inner anodyne maps.",
+      about: "Your moves fill horns, and a category can fill every inner horn itself. So if the goal is false in some category that contains your picture, no sequence of moves can reach it.",
+      picture: { caption: "A closed square of arrows with nothing across it. No horn here is missing a side.",
         dots: [{ id: "a", label: "", x: 12, y: 8 }, { id: "b", label: "", x: 56, y: 8 }, { id: "c", label: "", x: 56, y: 46 }, { id: "d", label: "", x: 12, y: 46 }],
         arrows: [{ from: "a", to: "b", label: "" }, { from: "b", to: "c", label: "" }, { from: "c", to: "d", label: "" }, { from: "d", to: "a", label: "" }],
         fills: [] } } },
 
   { id: 9, title: "Lifting", mathTitle: "Left fibrations", blurb: "",
-    definition: "A map $p:X\\to S$ of simplicial sets sends vertices, arrows and triangles of $X$ to those of $S$, preserving faces. A <b>lifting problem</b> for $p$ is a map $\\Lambda^n_k\\to X$ together with a filler $\\Delta^n\\to S$ of its image; a <b>lift</b> is a filler $\\Delta^n\\to X$ over it. The map $p$ is an <b>inner fibration</b> if every lifting problem with $0<k<n$ has a lift, and a <b>left fibration</b> if every problem with $0\\le k<n$ does. Here $S$ is fixed and everything you build in $X$ must lie over what exists in $S$.",
+    definition: "A <b>lifting problem</b> for a map $p:X\\to S$ is a horn $\\Lambda^n_k\\to X$ together with an $n$-simplex of $S$ whose faces are the images of the horn's faces; a <b>lift</b> is a filler of the horn in $X$ that $p$ sends to that simplex. The map $p$ is an <b>inner fibration</b> if every lifting problem with $0<k<n$ has a lift, and a <b>left fibration</b> if every lifting problem with $0\\le k<n$ has one.",
     definitionDiagram: { dots: [{id:"a",label:"x",x:10,y:8},{id:"b",label:"y",x:50,y:8},{id:"c",label:"z",x:90,y:8},{id:"A",label:"a",x:10,y:48},{id:"B",label:"b",x:50,y:48},{id:"C",label:"c",x:90,y:48}],
       arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"A",to:"B",label:"p f"},{from:"B",to:"C",label:"p g"},{from:"a",to:"A",label:"",dashed:true},{from:"b",to:"B",label:"",dashed:true},{from:"c",to:"C",label:"",dashed:true}] },
     hornsFill: "left",
     brief: {
-      sofar: "Every shape you built was filled in by horn fillings inside a single simplicial set.",
-      now: "You will build over a second, fixed simplicial set $S$, where the kind of map $p$ decides which horns can be filled.",
-      new: "The tool Lift arrow, and the difference between inner fibrations and left fibrations.",
-      about: "A lift must lie over a piece of $S$ that is already there. When a filling has a choice, the game asks which piece of $S$ your simplex should lie over.",
-      picture: { caption: "Every simplex upstairs lies over one below.",
+      sofar: "Every shape so far lived on its own. You filled horns in one simplicial set at a time.",
+      now: "Now there are two floors. Downstairs is a fixed simplicial set $S$, the shadow, and everything you build upstairs in $X$ must sit over something that already exists in $S$. The kind of map decides which horns you may fill upstairs.",
+      new: "The tool Lift arrow; the shadow $S$ and the map $p:X\\to S$; inner fibrations and left fibrations.",
+      about: "A left fibration lets you lift an arrow of $S$ from any vertex you choose, but the lift ends wherever the map puts it. Several levels hinge on that: you control where a lift starts, and only a horn can control where it ends.",
+      picture: { caption: "Each vertex and arrow upstairs lies over a vertex or arrow of $S$ below.",
         dots: [{ id: "a", label: "x", x: 10, y: 8 }, { id: "b", label: "y", x: 50, y: 8 }, { id: "c", label: "z", x: 90, y: 8 }, { id: "A", label: "a", x: 10, y: 46 }, { id: "B", label: "b", x: 50, y: 46 }, { id: "C", label: "c", x: 90, y: 46 }],
         arrows: [{ from: "a", to: "b", label: "f" }, { from: "b", to: "c", label: "g" }, { from: "A", to: "B", label: "" }, { from: "B", to: "C", label: "" }, { from: "a", to: "A", label: "", dashed: true }, { from: "b", to: "B", label: "", dashed: true }, { from: "c", to: "C", label: "", dashed: true }],
         fills: [] } } },
 
   { id: 10, title: "Isomorphisms", mathTitle: "Joyal's theorem", blurb: "",
-    definition: "An arrow $f:a\\to b$ is an <b>isomorphism</b>, or equivalence, if there are arrows $g,k:b\\to a$ and triangles $(f,g\\,;\\,1_a)$ and $(k,f\\,;\\,1_b)$. <b>Joyal's theorem</b> says that in a quasi-category an outer horn $\\Lambda^n_0\\to X$ with $n\\ge2$ has a filler whenever its first edge is an isomorphism, and dually for $\\Lambda^n_n$ and the last edge. In this world the padlock on an outer face opens exactly for arrows marked $\\cong$; for all other arrows only inner horns fill.",
+    definition: "An arrow $f:a\\to b$ is an <b>isomorphism</b> if there are arrows $g,k:b\\to a$ and triangles $(f,g\\,;\\,1_a)$ and $(k,f\\,;\\,1_b)$. <b>Joyal's theorem</b>: in a quasi-category, a horn $\\Lambda^n_0$ ($n\\ge2$) whose edge from corner $0$ to corner $1$ is an isomorphism has a filler, and so does a horn $\\Lambda^n_n$ whose edge from corner $n-1$ to corner $n$ is an isomorphism.",
     definitionDiagram: { dots: [{id:"a",label:"0",x:14,y:30},{id:"b",label:"1",x:86,y:30}],
       arrows: [{from:"a",to:"b",label:"f ≅"},{from:"b",to:"a",label:"g"}] },
     hornsFill: "inner+iso",
     brief: {
-      sofar: "In a Kan complex every outer horn fills, and every arrow can be undone.",
-      now: "You will find out when an outer horn can be filled in a space that is only a quasi-category, and what cancelling and inverting need.",
-      new: "The mark $\\cong$, one-sided and two-sided inverses, and Joyal's theorem.",
-      about: "Without a blanket assumption, outer horns are filled only where an isomorphism makes it legitimate. Several goals here are impossible for exactly that reason.",
-      picture: { caption: "A reversible arrow: outer horns along it may be filled.",
+      sofar: "In the Kan world every horn filled, so every arrow could be undone and cancelled.",
+      now: "Here only inner horns fill, as in a general quasi-category. You will find goals that are now impossible, such as inverting an arbitrary arrow or cancelling one, and then see which of them come back when an arrow is marked $\\cong$.",
+      new: "The mark $\\cong$ on an arrow, one-sided inverses, idempotents, and Joyal's theorem. On the Tetrahedron tool an outer missing face shows a padlock, and the padlock opens only along an arrow marked $\\cong$.",
+      about: "Each impossible goal here was easy in the Kan world, and the counter-model you pick shows which outer horn it secretly needed.",
+      picture: { caption: "An isomorphism $f$ with an inverse $g$. Outer horns whose end edge is $f$ can be filled.",
         dots: [{ id: "a", label: "a", x: 14, y: 26 }, { id: "b", label: "b", x: 86, y: 26 }],
         arrows: [{ from: "a", to: "b", label: "f ≅" }, { from: "b", to: "a", label: "g" }],
         fills: [] } } },
 
   { id: 11, title: "Squares", mathTitle: "Natural transformations", blurb: "",
-    definition: "A <b>square</b> in a simplicial set is a map $\\Delta^1\\times\\Delta^1\\to X$: two triangles $(f,\\beta\\,;\\,d)$ and $(\\alpha,f'\\,;\\,d)$ that share the long side $d$. It is an arrow from $f$ to $f'$ in the arrow category, that is, a natural transformation with components $\\alpha$ and $\\beta$. Squares can be pasted, and when $\\alpha,\\beta$ are isomorphisms a square can be inverted. Each of these facts is a proof by inner horns plus the tool Divide.",
+    definition: "A <b>commuting square</b> from $f:a\\to b$ to $f':a'\\to b'$ consists of arrows $\\alpha:a\\to a'$, $\\beta:b\\to b'$ and $d:a\\to b'$ with triangles $(f,\\beta\\,;\\,d)$ and $(\\alpha,f'\\,;\\,d)$; equivalently, it is a map $\\Delta^1\\times\\Delta^1\\to X$.",
     definitionDiagram: { dots: [{id:"a",label:"a",x:10,y:8},{id:"b",label:"b",x:58,y:8},{id:"c",label:"a′",x:10,y:46},{id:"d",label:"b′",x:58,y:46}],
       arrows: [{from:"a",to:"b",label:"f"},{from:"a",to:"c",label:"α"},{from:"b",to:"d",label:"β"},{from:"c",to:"d",label:"f′"},{from:"a",to:"d",label:"d"}], fills: [["a","b","d"],["a","c","d"]] },
     hornsFill: "inner+iso",
     brief: {
-      sofar: "You can invert isomorphisms and cancel them.",
-      now: "You will treat a square as an arrow between arrows and show that squares paste and invert.",
-      new: "The tool Divide, commuting squares, and natural isomorphisms.",
-      about: "A square is two triangles sharing a long side. Pasting and inverting squares is the same reasoning as before, one level up.",
-      picture: { caption: "A square: two triangles on one long side.",
+      sofar: "You can invert isomorphisms, cancel them, and fill outer horns along them.",
+      now: "You will treat a commuting square as an arrow from its top side $f$ to its bottom side $f'$. You build squares, move isomorphisms across triangles, paste two squares into one, and show that a square with invertible sides can be turned around.",
+      new: "Commuting squares; the theorem tool Divide, earned in the second level; composites of isomorphisms; natural isomorphisms.",
+      about: "The arguments are the ones you already know, with tetrahedra and Swap in, applied to arrows whose endpoints are themselves arrows.",
+      picture: { caption: "A commuting square: two triangles sharing the diagonal $d$.",
         dots: [{ id: "a", label: "a", x: 10, y: 8 }, { id: "b", label: "b", x: 58, y: 8 }, { id: "c", label: "a′", x: 10, y: 46 }, { id: "d", label: "b′", x: 58, y: 46 }],
         arrows: [{ from: "a", to: "b", label: "f" }, { from: "a", to: "c", label: "α" }, { from: "b", to: "d", label: "β" }, { from: "c", to: "d", label: "f′" }, { from: "a", to: "d", label: "d" }],
         fills: [["a", "b", "d"], ["a", "c", "d"]] } } },
 
   { id: 12, title: "Sandbox", mathTitle: "Sandbox", blurb: "",
-    definition: "Every tool is available and no goal has to be met. The sandbox is a simplicial set that you modify: add vertices and arrows, fill horns, glue and peel cells. Whatever you build is a legitimate simplicial set, and with the Kan option on every horn can be filled.",
+    definition: "The sandbox is a simplicial set that you edit with every tool; no goal is set.",
     definitionDiagram: { dots: [{id:"a",label:"0",x:14,y:44},{id:"b",label:"1",x:50,y:10},{id:"c",label:"2",x:86,y:44}],
       arrows: [{from:"a",to:"b",label:""},{from:"b",to:"c",label:""},{from:"a",to:"c",label:""}], fills: [["a","b","c"]] },
     hornsFill: "all" }
 ];
 
+/* What a first-time visitor sees: a page about the game, before any of it. */
+HC.Intro = {
+  title: "Hornfiller",
+  lede: "A puzzle game about higher category theory.",
+  demo: {
+    hint: "Tap $f$, then $g$.",
+    done: "The triangle is the proof that $x$ is a composite of $f$ then $g$, and every level in the game is about building or finding shapes like that one."
+  },
+  start: "Start the first level",
+  note: "Read the first note instead",
+  noteId: "simplicial"
+};
+
+
 HC.Text = {
 
-  /* ---------------- World 1: Composition ---------------- */
-
-  compose: {
-    title: "Constructing a composite",
-    bullets: ["Given arrows $f:a\\to b$ and $g:b\\to c$.", "Construct a triangle $(f,g\\,;\\,?)$: a composite of $f$ then $g$."],
-    explain: "The arrows $f$ and $g$ meet at $b$, so together they form the horn $\\Lambda^2_1$: a triangle with its long side removed. Compose fills it. The game adds a new arrow from $a$ to $c$, which it labels with a fresh letter, and a triangle $\\sigma_1=(f,g\\,;\\,x)$ whose boundary is $f$, $g$ and the new arrow. That triangle is the witness: it is what makes $x$ <i>a</i> composite of $f$ then $g$. The goal says Construct because one side is unknown; once you have built the triangle, the unknown is bound to $x$.",
-    hints: ["Compose needs two arrows that meet at a vertex.", "Compose: click $f$, then $g$."],
-    win: ["You filled $\\Lambda^2_1$: $x$ is a composite of $f$ then $g$, witnessed by $\\sigma_1$."],
-    term: "Composite",
-    math: {
-      say: "A 2-simplex $\\sigma$ of $X$ with $d_2\\sigma=f$, $d_0\\sigma=g$, $d_1\\sigma=h$ (a map $\\Delta^2\\to X$) witnesses $h$ as a composite of $f$ and $g$. Every inner horn $\\Lambda^2_1\\to X$ in a quasi-category extends to such a $\\sigma$.",
-      proof: "Fill $\\Lambda^2_1\\to X$ on $(f,g)$: the filler $\\sigma_1$ has $d_1\\sigma_1=x$."
-    }
-  },
-
-  chain: {
-    title: "Composing a composite",
-    bullets: ["Given arrows $f:a\\to b$, $g:b\\to c$, $h:c\\to d$.", "Construct a composite of a composite of $f,g$ with $h$."],
-    explain: "A composite is an arrow like any other, so it can itself be composed. First construct a composite $x$ of $f$ and $g$, witnessed by $\\sigma_1=(f,g\\,;\\,x)$. It runs from $a$ to $c$, where $h$ begins, so $x$ and $h$ form another horn $\\Lambda^2_1$. Filling it gives an arrow $y$ from $a$ to $d$ and a triangle $\\sigma_2=(x,h\\,;\\,y)$. The triangle $\\sigma_2$ shows that $y$ is a composite of $x$ and $h$. It does not yet relate $y$ to a composite built in the other order, from $g$ and $h$ first.",
-    hints: ["Join two neighbours first. Then use the result.", "Compose: $f$, $g$. Compose: $x$, $h$."],
-    win: ["$y$ is a composite of $x$ and $h$, witnessed by $\\sigma_2$."],
-    term: "Iterated composite",
-    math: {
-      say: "In a quasi-category every inner horn $\\Lambda^n_i\\to X$ ($0<i<n$) has a filler. Composition therefore iterates: composable $f,g,h$ give a composite $x$ of $(f,g)$, then a composite $y$ of $(x,h)$.",
-      proof: "Fill $\\Lambda^2_1$ on $(f,g)$ for $\\sigma_1$, then again on $(x,h)$ for $\\sigma_2$."
-    }
-  },
-
-  twoways: {
-    title: "Composites are not unique",
-    bullets: ["Given arrows $f:a\\to b$ and $g:b\\to c$.", "Construct two composites of $f$ then $g$."],
-    explain: "Compose $f$ and $g$ twice. Each time the game fills the same horn $\\Lambda^2_1$, but a filler is a choice and not a computation: you obtain two arrows $x$ and $y$ with different witnesses, $\\sigma_1=(f,g\\,;\\,x)$ and $\\sigma_2=(f,g\\,;\\,y)$. Both are composites of $f$ then $g$, and nothing yet relates $x$ to $y$. Later you will prove they are homotopic, which is weaker than being equal. Until then, say “a composite” of $f$ then $g$, since no one of them is singled out.",
-    hints: ["Fill the same horn $(f,g)$ a second time.", "Compose: $f$, $g$. Compose: $f$, $g$ again."],
-    win: ["$x$ and $y$ are composites of $f$ then $g$, with witnesses $\\sigma_1$ and $\\sigma_2$."],
-    term: "Non-unique composites",
-    math: {
-      say: "A filler of $\\Lambda^2_1\\to X$ is not unique: a composite of $f$ and $g$ is any edge $h$ carrying a 2-simplex with boundary $(f,g;h)$. Different fillers give different composites, unique only up to homotopy.",
-      proof: "Fill $\\Lambda^2_1$ on $(f,g)$ twice, choosing fillers $\\sigma_1\\ne\\sigma_2$ with different $d_1$."
-    }
-  },
-
-  /* ---------------- World 2: Tetrahedra ---------------- */
-
-  tetra: {
-    title: "A fourth face",
-    bullets: ["Given $\\sigma_1=(f,g\\,;\\,x)$, $\\sigma_2=(g,h\\,;\\,y)$, $\\sigma_3=(x,h\\,;\\,z)$.", "Prove a triangle $(f,y\\,;\\,z)$ exists."],
-    explain: "A tetrahedron has corners $0,1,2,3$ and four faces; $d_i$ is the face that omits corner $i$. Take the path $f,g,h$ with corners $a,b,c,d$. Then $d_3=(f,g\\,;\\,x)=\\sigma_1$, $d_0=(g,h\\,;\\,y)=\\sigma_2$ and $d_1=(x,h\\,;\\,z)=\\sigma_3$ are the three faces you have, and the missing $d_2=(f,y\\,;\\,z)$ is the one you want. The three known faces form the horn $\\Lambda^3_2$, which is inner, so it has a filler: a tetrahedron whose fourth face is the new triangle.",
-    hints: ["Tetrahedron takes three triangles that fit together.", "Tetrahedron: path $f,g,h$; $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=\\sigma_3$. Fill."],
-    win: ["Face $d_2$ is $(f,y\\,;\\,z)$: $z$ is also a composite of $f$ and $y$."],
-    term: "Inner horn $\\Lambda^3_2$",
-    math: {
-      say: "A 3-simplex has faces $d_0,\\dots,d_3$. Given three of them forming an inner horn $\\Lambda^3_1$ or $\\Lambda^3_2$, a quasi-category supplies a 3-simplex $\\Delta^3\\to X$, and its remaining face is a new 2-simplex.",
-      proof: "Fill $\\Lambda^3_2\\to X$ on $(a,b,c,d)$ with faces $d_3=\\sigma_1,d_0=\\sigma_2,d_1=\\sigma_3$; $d_2$ is the target."
-    }
-  },
-
-  assoc: {
-    title: "Two bracketings",
-    bullets: ["Given arrows $f$, $g$, $h$ end to end.", "Relate the two ways of bracketing them by a triangle."],
-    explain: "A path $f,g,h$ can be composed in two orders: $f$ with $g$ first and then with $h$, or $g$ with $h$ first and then $f$ with the result. In ordinary algebra the answers agree. Here they are different arrows, and what you prove is that they are related by a triangle. If $x$ is a composite of $f,g$, $y$ of $g,h$ and $z$ of $x,h$, then $(f,y\\,;\\,z)$ exists, so $z$ is also a composite of $f$ and $y$. The three constructions are three faces of a tetrahedron, and the fourth face is the relation. The two bracketings therefore agree up to a witness, a triangle, and not by an equation.",
-    hints: ["Construct three composites, then use one tetrahedron.", "Compose: $f$, $g$. $g$, $h$. $x$, $h$. Tetrahedron: path $f,g,h$ with $\\sigma_1,\\sigma_2,\\sigma_3$. Fill."],
-    win: ["$z$ is a composite of $x,h$ and also of $f,y$, by $\\sigma_4$."],
-    term: "Associativity",
-    math: {
-      say: "Composites $x$ of $(f,g)$, $y$ of $(g,h)$ and $z$ of $(x,h)$ give an inner horn $\\Lambda^3_2$. Its filler yields a 2-simplex $(f,y;z)$: $z$ is also a composite of $f$ and $y$. Associativity holds up to homotopy.",
-      proof: "Fill $\\Lambda^3_2$ on $(a,b,c,d)$ with $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=\\sigma_3$; $d_2=\\sigma_4=(f,y;z)$."
-    }
-  },
-
-  unique: {
-    title: "Two composites, one triangle",
-    bullets: ["Construct two composites $x,y$ of $f$ then $g$.", "Prove a triangle $(x,1_c\\,;\\,y)$ exists: $x\\simeq y$."],
-    explain: "Parallel arrows $x,y$ are <b>homotopic</b>, written $x\\simeq y$, if there is a triangle $(x,1_c\\,;\\,y)$ whose second leg is the degenerate arrow $1_c$. This is the whole definition; that homotopy is an equivalence relation has still to be proved. Here you construct two composites of $f,g$ and prove they are homotopic. The tetrahedron has corners $a,b,c,c$ and path $f,g,1_c$. Its faces $d_3=\\sigma_1$ and $d_2=\\sigma_2$ are your two witnesses, and $d_0=s_1g=(g,1_c\\,;\\,g)$ is degenerate, so it exists without being made. The missing face $d_1$ is the homotopy.",
-    hints: ["The path ends in the degenerate arrow $1_c$.", "Compose: $f$, $g$ twice. Tetrahedron: path $f,g,1_c$; $d_3=\\sigma_1$, $d_2=\\sigma_2$. Fill."],
-    win: ["The face $d_1$ is $(x,1_c\\,;\\,y)$, so $x\\simeq y$. New tool: Same."],
-    term: "Homotopy",
-    math: {
-      say: "Edges $f,g:a\\to b$ are homotopic if some 2-simplex has boundary $(f,1_b;g)$. Any two composites $x,y$ of $(f,g)$ are homotopic: the horn $\\Lambda^3_1$ with faces $\\sigma_1,\\sigma_2,s_1(g)$ fills.",
-      proof: "Fill $\\Lambda^3_1$ on $(a,b,c,c)$ with $d_3=\\sigma_1$, $d_2=\\sigma_2$, $d_0=s_1g$; $d_1$ is $(x,1_c;y)$."
-    }
-  },
-
-  unit: {
-    title: "Composing with an identity",
-    bullets: ["Construct composites $x$ of $(1_a,f)$ and $y$ of $(f,1_b)$.", "Prove $x\\simeq f$ and $y\\simeq f$."],
-    explain: "Every vertex has a degenerate arrow: $1_a$ at $a$ and $1_b$ at $b$. They are arrows like any other, so they can be composed. Compose $1_a$ with $f$ for a composite $x$ with witness $\\sigma_1=(1_a,f\\,;\\,x)$. The tetrahedron on the path $1_a,f,1_b$ has corners $a,a,b,b$. It has $d_3=\\sigma_1$ and the free faces $d_2=s_0f=(1_a,f\\,;\\,f)$ and $d_0=s_1f$; its missing $d_1$ is $(x,1_b\\,;\\,f)$, which says $x\\simeq f$. The same argument on the path $f,1_b,1_b$, using $s_1f=(f,1_b\\,;\\,f)$, handles composing with $1_b$ on the right.",
-    hints: ["Each tetrahedron here has degenerate faces.", "Compose: $1_a$, $f$. Tetrahedron: path $1_a,f,1_b$; $\\sigma_1,s_1f,s_0f$. Compose: $f$, $1_b$. Tetrahedron: path $f,1_b,1_b$; $\\sigma_3,s_01_b,s_1f$."],
-    win: ["Both composites with an identity are homotopic to $f$."],
-    term: "Unit law",
-    math: {
-      say: "Unit laws up to homotopy: a composite $x$ of $(1_a,f)$ and a composite $y$ of $(f,1_b)$ both satisfy $x\\simeq f\\simeq y$. The horns $\\Lambda^3_1$ with faces $\\sigma,s_0(f)$ resp. $\\sigma,s_1(f)$ fill.",
-      proof: "Fill $\\Lambda^3_1$ on $(a,a,b,b)$ with $d_3=\\sigma_1$, $d_2=s_0f$; $d_1=(x,1_b;f)$. Repeat on $(a,b,b,b)$ with $\\sigma_3,s_1f$."
-    }
-  },
-
-  bracket: {
-    title: "Two routes round",
-    bullets: ["Given $\\sigma_1=(g,h\\,;\\,y)$ and $\\sigma_3=(f,y\\,;\\,w)$.", "Construct $x$ for $f,g$, then $z$ for $x,h$; prove $z\\simeq w$."],
-    explain: "You are given one bracketing: $w$ is a composite of $f$ and $y$, and $y$ is a composite of $g$ and $h$. You construct the other: $x$ for $f,g$, then $z$ for $x,h$. The tetrahedron on the path $f,g,h$ has $d_3=\\sigma_4=(f,g\\,;\\,x)$, $d_0=\\sigma_1$ and $d_1=\\sigma_5=(x,h\\,;\\,z)$, and its missing face is $(f,y\\,;\\,z)$. Now $z$ and $w$ are both composites of the same pair $f,y$, and an earlier result gives homotopy between any two such composites. The proof is therefore a tetrahedron followed by a tool.",
-    hints: ["You already know how to compare two composites of one pair.", "Compose: $f$, $g$. $x$, $h$. Tetrahedron: path $f,g,h$ with $\\sigma_4,\\sigma_1,\\sigma_5$. Fill. Same: $\\sigma_6,\\sigma_3$."],
-    win: ["$z$ and $w$ are composites of $f,y$, so $z\\simeq w$."],
-    term: "Coherence of bracketing",
-    math: {
-      say: "Both $z$ and $w$ are composites of $(f,y)$, once the associativity 2-simplex $(f,y;z)$ exists. Any two composites of the same pair are homotopic, so $z\\simeq w$ using two inner horns.",
-      proof: "Fill $\\Lambda^3_2$ on $(a,b,c,d)$ to get $(f,y;z)$; then fill $\\Lambda^3_1$ on $(a,b,d,d)$ with $s_1y$ to get $(z,1_d;w)$."
-    }
-  },
-
-  /* ---------------- World 3: Homotopy ---------------- */
-
-  symmetric: {
-    title: "Symmetry is a theorem",
-    bullets: ["Given $f\\simeq g$, witnessed by $\\sigma_1=(f,1_b\\,;\\,g)$.", "Prove $g\\simeq f$."],
-    explain: "By definition $f\\simeq g$ means that a triangle $(f,1_b\\,;\\,g)$ exists, and the definition says nothing about the other direction. To obtain $(g,1_b\\,;\\,f)$ use the tetrahedron on the path $f,1_b,1_b$. Its corners $1,2,3$ all lie over $b$, so the edges $12$ and $23$ are two different copies of $1_b$. The faces are $d_3=\\sigma_1$, the degenerate $d_2=s_1f=(f,1_b\\,;\\,f)$ and the degenerate $d_0=s_01_b$. The missing face $d_1$ is the triangle you want, so symmetry follows from the inner horn $\\Lambda^3_1$.",
-    hints: ["Three corners of the tetrahedron lie over the same vertex.", "Tetrahedron: path $f,1_b,1_b$; $d_3=\\sigma_1$, $d_2=s_1f$, $d_0=s_01_b$. Fill."],
-    win: ["$d_1$ is $(g,1_b\\,;\\,f)$, so $g\\simeq f$. New tool: Flip."],
-    term: "Symmetry of $\\simeq$",
-    math: {
-      say: "Homotopy of edges is symmetric: from $\\sigma$ with boundary $(f,1_b;g)$, an inner horn $\\Lambda^3_1$ with faces $\\sigma$, $s_1f$, $s_0(1_b)$ fills, and $d_1$ has boundary $(g,1_b;f)$.",
-      proof: "Fill $\\Lambda^3_1$ on $(a,b,b,b)$ with $d_3=\\sigma_1$, $d_2=s_1f$, $d_0=s_01_b$; $d_1$ is $g\\simeq f$."
-    }
-  },
-
-  transitive: {
-    title: "Transitivity is a theorem",
-    bullets: ["Given $f\\simeq g$ and $g\\simeq h$, witnessed by $\\sigma_1,\\sigma_2$.", "Prove $f\\simeq h$."],
-    explain: "A relation defined by a triangle must be shown to chain. Take the same path $f,1_b,1_b$. This time the known faces are $d_3=\\sigma_1=(f,1_b\\,;\\,g)$ and $d_1=\\sigma_2=(g,1_b\\,;\\,h)$, plus the degenerate $d_0=s_01_b$. They form the horn $\\Lambda^3_2$, and the missing face $d_2$ is $(f,1_b\\,;\\,h)$. Together with symmetry, and with the degenerate triangle $s_1f$ which shows $f\\simeq f$, this makes $\\simeq$ an equivalence relation on the arrows from $a$ to $b$.",
-    hints: ["Use the same path as before, with different faces.", "Tetrahedron: path $f,1_b,1_b$; $d_3=\\sigma_1$, $d_1=\\sigma_2$. Fill."],
-    win: ["$d_2$ is $(f,1_b\\,;\\,h)$, so $f\\simeq h$. New tool: Link."],
-    term: "Transitivity of $\\simeq$",
-    math: {
-      say: "Homotopy is transitive: an inner horn $\\Lambda^3_2$ with faces for $f\\simeq g$, $g\\simeq h$ and $s_0(1_b)$ gives $f\\simeq h$. So homotopy is an equivalence relation, and edges modulo it form the homotopy category $hX$.",
-      proof: "Fill $\\Lambda^3_2$ on $(a,b,b,b)$ with $d_3=\\sigma_1$, $d_1=\\sigma_2$, $d_0=s_01_b$; $d_2$ is $f\\simeq h$."
-    }
-  },
-
-  whisker: {
-    title: "Homotopy and composition",
-    bullets: ["Given $f\\simeq k$ by $\\sigma_1$ and $x$ a composite of $f,g$ by $\\sigma_2$.", "Prove $x$ is also a composite of $k,g$."],
-    explain: "Homotopic arrows ought to be interchangeable inside triangles, or the relation would be of little use. Here $\\sigma_1=(f,1_b\\,;\\,k)$ and $\\sigma_2=(f,g\\,;\\,x)$. The tetrahedron on the path $f,1_b,g$ has corners $a,b,b,c$, with faces $d_3=\\sigma_1$ and $d_2=\\sigma_2$, and the degenerate face $d_0=s_0g=(1_b,g\\,;\\,g)$. The missing face $d_1$ is $(k,g\\,;\\,x)$: replacing $f$ by $k$ keeps $x$ a composite. The three known faces form the inner horn $\\Lambda^3_1$. Swap in will do the same for any triangle.",
-    hints: ["The corners are $a,b,b,c$; one face is degenerate.", "Tetrahedron: path $f,1_b,g$; $d_3=\\sigma_1$, $d_2=\\sigma_2$. Fill."],
-    win: ["$d_1$ is $(k,g\\,;\\,x)$. New tool: Swap in."],
-    term: "Compatibility with composition",
-    math: {
-      say: "If $f\\simeq k$ and $\\sigma$ witnesses $x$ as a composite of $(f,g)$, then $x$ is also a composite of $(k,g)$. The inner horn $\\Lambda^3_1$ on $(a,b,b,c)$ fills.",
-      proof: "Fill $\\Lambda^3_1$ on $(a,b,b,c)$ with $d_3=\\sigma_1$, $d_2=\\sigma_2$, $d_0=s_0g$; $d_1$ is $(k,g;x)$."
-    }
-  },
-
-  swap: {
-    title: "Homotopy from either end",
-    bullets: ["Given $f\\simeq g$, witnessed by $\\sigma_1=(f,1_b\\,;\\,g)$.", "Prove a triangle $(1_a,f\\,;\\,g)$ exists."],
-    explain: "The definition of $f\\simeq g$ puts the degenerate arrow at the end: $(f,1_b\\,;\\,g)$. One can ask for it at the start instead, $(1_a,f\\,;\\,g)$. These are different triangles with different boundaries, and no definition says that they exist together. The tetrahedron on $1_a,f,1_b$, with corners $a,a,b,b$, has the degenerate faces $d_3=s_0f$ and $d_0=s_1f$, and $d_1=\\sigma_1$. The missing face $d_2$ is the triangle you want, from the inner horn $\\Lambda^3_2$.",
-    hints: ["Two of the three known faces are degenerate.", "Tetrahedron: path $1_a,f,1_b$; $d_3=s_0f$, $d_0=s_1f$, $d_1=\\sigma_1$. Fill."],
-    win: ["$d_2$ is $(1_a,f\\,;\\,g)$: the homotopy exists from either end."],
-    term: "Two-sided homotopy",
-    math: {
-      say: "Edges are homotopic if some 2-simplex has boundary $(f,1_b;g)$. In a quasi-category this is equivalent to a 2-simplex with boundary $(1_a,f;g)$, via an inner horn $\\Lambda^3_2$.",
-      proof: "Fill $\\Lambda^3_2$ on $(a,a,b,b)$ with $d_3=s_0f$, $d_0=s_1f$, $d_1=\\sigma_1$; $d_2$ has boundary $(1_a,f;g)$."
-    }
-  },
-
-  relay: {
-    title: "Chains of homotopies",
-    bullets: ["Given $x_3\\simeq x_2\\simeq x_1\\simeq x_0$ and $\\sigma_5=(x_0,h\\,;\\,z)$.", "Prove $z$ is a composite of $x_3$ and $h$."],
-    explain: "Each given homotopy points one way: $\\sigma_3$ relates $x_3$ to $x_2$, $\\sigma_2$ relates $x_2$ to $x_1$, $\\sigma_1$ relates $x_1$ to $x_0$. The triangle you have, $\\sigma_5$, has $x_0$ as its first leg, and the goal wants $x_3$ there. To substitute you need a homotopy $x_0\\simeq x_3$, so chain the three given ones into $x_3\\simeq x_0$ and reverse it. Link chains two homotopies end to end, Flip reverses one, and Swap in replaces a leg of a triangle. These are the theorems you proved, now used as tools.",
-    hints: ["Chain the homotopies first, then reverse the result.", "Link: $\\sigma_3,\\sigma_2$. Link: $\\sigma_6,\\sigma_1$. Flip: $\\sigma_7$. Swap in: $\\sigma_8,\\sigma_5$."],
-    win: ["$(x_3,h\\,;\\,z)$ exists: homotopic arrows are interchangeable in a triangle."],
-    term: "Interchangeability",
-    math: {
-      say: "Homotopic edges are interchangeable in 2-simplices: $x_3\\simeq x_0$ and $(x_0,h;z)$ give $(x_3,h;z)$. Chaining three homotopies and reversing the result uses the symmetry and transitivity of $\\simeq$.",
-      proof: "Link $\\sigma_3,\\sigma_2$ and $\\sigma_6,\\sigma_1$ (each $\\Lambda^3_2$); Flip $\\sigma_7$ ($\\Lambda^3_1$); Swap in on $\\sigma_5$ ($\\Lambda^3_1$)."
-    }
-  },
-
-  fourway: {
-    title: "Five vertices, two routes",
-    bullets: ["Given triangles $\\sigma_1,\\dots,\\sigma_4$ on arrows $f,g,h,i$ in a row.", "Construct a long composite via $x,h,i$; prove it is $\\simeq s$."],
-    explain: "Two routes lead from $a$ to $e$. One is given: $s$ is a composite of $f$ and $u$. The other you build from $x$: a composite $z$ of $x,h$, and then a composite $w$ of $z,i$. To compare them, use two tetrahedra in turn. The first, on the path $x,h,i$, has faces $\\sigma_6=(x,h\\,;\\,z)$, $\\sigma_2$ and $\\sigma_7=(z,i\\,;\\,w)$, and produces $(x,y\\,;\\,w)$. The second, on $f,g,y$, uses $\\sigma_1$, $\\sigma_3$ and that new triangle, and produces $(f,u\\,;\\,w)$. Now $w$ and $s$ are both composites of $f$ and $u$. Each step needs a triangle that the previous one made, so plan the chain before you click.",
-    hints: ["Two tetrahedra build a triangle on $f$ and $u$ ending at $w$.", "Compose: $x$, $h$. $z$, $i$. Tetrahedron: $x,h,i$ with $\\sigma_6,\\sigma_2,\\sigma_7$. Tetrahedron: $f,g,y$. Same: $\\sigma_9,\\sigma_4$."],
-    win: ["$w$ and $s$ are composites of $f,u$, so $w\\simeq s$."],
-    term: "Higher associativity",
-    math: {
-      say: "Two composites of the five-vertex chain are related by the associahedron relation: tetrahedra fill inner horns $\\Lambda^3_k$ to produce $(f,u;w)$, and uniqueness of composites up to homotopy gives $w\\simeq s$.",
-      proof: "Fill $\\Lambda^3_2$ on $(a,c,d,e)$ for $(x,y;w)$, then $\\Lambda^3_2$ on $(a,b,c,e)$ for $(f,u;w)$; apply Same to $\\sigma_9,\\sigma_4$."
-    }
-  },
-
-  /* ---------------- World 4: Undo everything ---------------- */
-
-  undo: {
-    title: "A left inverse",
-    bullets: ["Given an arrow $f:a\\to b$.", "Construct a triangle $(f,?\\,;\\,1_a)$."],
-    explain: "The arrows $f$ and $1_a$ both leave $a$, so they form the horn $\\Lambda^2_0$: a triangle with its second leg removed. This horn is outer, because the missing face is $d_0$, which omits corner 0 and lies at the end of the trip rather than in the middle. A general quasi-category need not fill it; in this world every horn fills. Solve fills it, giving an arrow $x$ from $b$ to $a$ and a triangle $\\sigma_1=(f,x\\,;\\,1_a)$. The arrow $x$ is a <b>left inverse</b> of $f$: following $f$ with $x$ is, by the triangle, the identity at $a$.",
-    hints: ["The two arrows leave the same vertex.", "Solve $f\\cdot ?=h$: click $f$, then $1_a$."],
-    win: ["$x$ satisfies $(f,x\\,;\\,1_a)$: it is a left inverse of $f$."],
-    term: "Outer horn $\\Lambda^2_0$",
-    math: {
-      say: "A horn $\\Lambda^2_0\\to X$ with edges $f$ and $1_a$ has a filler $\\sigma$ with $d_2\\sigma=f$, $d_1\\sigma=1_a$; then $x=d_0\\sigma$ is a left inverse of $f$. Kan complexes fill all $\\Lambda^n_k$, including outer horns.",
-      proof: "Fill $\\Lambda^2_0$ on $(f,1_a)$: the filler $\\sigma_1$ has $d_0\\sigma_1=x$."
-    }
-  },
-
-  divide: {
-    title: "A missing first leg",
-    bullets: ["Given $g:b\\to c$ and $h:a\\to c$.", "Construct a triangle $(?,g\\,;\\,h)$."],
-    explain: "Now $g$ and $h$ end at the same vertex $c$, so they form $\\Lambda^2_2$, the horn missing its first leg. Filling it gives an arrow $x:a\\to b$ and a triangle $\\sigma_1=(x,g\\,;\\,h)$: $h$ is a composite of $x$ then $g$. It is the mirror image of the previous level, and it resembles solving for an unknown factor: you know the second step $g$ and the whole trip $h$, and you recover the first step. Again a general quasi-category need not allow this; here every horn fills.",
-    hints: ["The two arrows arrive at the same vertex.", "Solve $?\\cdot g=h$: click $g$, then $h$."],
-    win: ["$h$ is a composite of $x$ then $g$, witnessed by $\\sigma_1$."],
-    term: "Outer horn $\\Lambda^2_2$",
-    math: {
-      say: "A horn $\\Lambda^2_2\\to X$ with edges $g:b\\to c$ and $h:a\\to c$ has a filler $\\sigma$ with $d_0\\sigma=g$, $d_1\\sigma=h$; $x=d_2\\sigma$ is a left divisor of $h$ by $g$. Kan complexes fill these.",
-      proof: "Fill $\\Lambda^2_2$ on $(g,h)$; the filler $\\sigma_1$ has $d_2\\sigma_1=x$."
-    }
-  },
-
-  inverses: {
-    title: "Inverses on both sides",
-    bullets: ["Given an arrow $f:a\\to b$.", "Construct a left and a right inverse, and prove they are homotopic."],
-    explain: "A left inverse of $f$ is an arrow $x$ with a triangle $(f,x\\,;\\,1_a)$. A right inverse is an arrow $y$ with $(y,f\\,;\\,1_b)$. Two different Solve tools build them, from $\\Lambda^2_0$ and $\\Lambda^2_2$. They need not be literally equal, but one tetrahedron proves $y\\simeq x$. Its path is $y,f,x$, with corners $b,a,b,a$. The faces $d_3=\\sigma_2=(y,f\\,;\\,1_b)$ and $d_0=\\sigma_1=(f,x\\,;\\,1_a)$ are the two inverse triangles, and $d_1=s_0x$ is degenerate. An arrow with both inverses is an <b>isomorphism</b>, and its inverse is determined up to homotopy.",
-    hints: ["One Solve for each side, then a tetrahedron.", "Solve $f\\cdot ?=h$: $f$, $1_a$. Solve $?\\cdot g=h$: $f$, $1_b$. Tetrahedron: path $y,f,x$; $\\sigma_2,\\sigma_1,s_0x$."],
-    win: ["$y\\simeq x$: the left and right inverses are homotopic.", "So $f$ is an isomorphism."],
-    term: "Isomorphism",
-    math: {
-      say: "In a Kan complex an edge $f$ has a left inverse $x$ ($\\Lambda^2_0$) and a right inverse $y$ ($\\Lambda^2_2$), and $y\\simeq x$ by an inner horn $\\Lambda^3_2$. So $f$ is an equivalence and $X$ is an $\\infty$-groupoid.",
-      proof: "Fill $\\Lambda^3_2$ on $(b,a,b,a)$ with $d_3=\\sigma_2$, $d_0=\\sigma_1$, $d_1=s_0x$; $d_2$ is $y\\simeq x$."
-    }
-  },
-
-  cancel: {
-    title: "Cancelling an arrow",
-    bullets: ["Given $\\sigma_1,\\dots,\\sigma_4$: $p$ and $q$ both compose with $h$ to $x$.", "Prove $f\\simeq k$."],
-    explain: "Cancelling means that if two arrows give the same result after a further step, they were homotopic before it. Here $p$ is a composite of $f,g$ and $q$ of $k,g$, and both compose with $h$ to reach $x$. The tetrahedron on $p,1_c,h$ has the two $h$ triangles as faces $d_1=\\sigma_4$ and $d_2=\\sigma_3$, plus the degenerate $d_0=s_0h$. Its missing face is $d_3=(p,1_c\\,;\\,q)$, so $p\\simeq q$. The missing face omits corner 3, so the three known faces form the outer horn $\\Lambda^3_3$, which can be filled because every horn fills in this world. Swapping $q$ for $p$ in $\\sigma_1$ gives $(f,g\\,;\\,q)$, and a second outer tetrahedron on $f,1_b,g$ cancels $g$.",
-    hints: ["Cancel one arrow at a time. The missing face is the last one.", "Tetrahedron: path $p,1_c,h$ with $\\sigma_4,\\sigma_3$. Swap in: $\\sigma_5,\\sigma_1$. Tetrahedron: $f,1_b,g$ with $\\sigma_2,\\sigma_6$."],
-    win: ["$(p,1_c\\,;\\,q)$ cancels $h$ and $(f,1_b\\,;\\,k)$ cancels $g$: $f\\simeq k$."],
-    term: "Cancellation",
-    math: {
-      say: "In a Kan complex, if $x$ is a composite of $(p,h)$ and of $(q,h)$ then $p\\simeq q$: right cancellation by $h$, via the outer horn $\\Lambda^3_3\\to X$. Applied twice it cancels $g$ as well.",
-      proof: "Fill $\\Lambda^3_3$ on $(a,c,c,d)$ with $d_1=\\sigma_4$, $d_2=\\sigma_3$, $d_0=s_0h$; Swap in; fill $\\Lambda^3_3$ on $(a,b,b,c)$ for $f\\simeq k$."
-    }
-  },
-
-  socks: {
-    title: "Socks and shoes",
-    bullets: ["Given left inverses $\\bar f,\\bar g$ of $f,g$, and $w$ composing $\\bar g,\\bar f$.", "Construct a composite $x$ of $f,g$ and prove $(x,w\\,;\\,1_a)$."],
-    explain: "A left inverse of $f$ is an arrow $\\bar f$ with a triangle $(f,\\bar f\\,;\\,1_a)$. You are given such arrows for $f$ and $g$, and $w$ is a composite of $\\bar g$ and $\\bar f$ by $\\sigma_4$. To show that $w$ undoes a composite $x$ of $f,g$, cancel from the inside, as you take off shoes before socks. First show $(x,\\bar g\\,;\\,f)$: after $x$, following $\\bar g$ leaves $f$. Then follow with $\\bar f$. Each step is one tetrahedron using only inner horns. A given homotopy may be needed so that the triangle for $g$ matches the one the tetrahedron wants.",
-    hints: ["Cancel $g$ with $\\bar g$ first, then $f$ with $\\bar f$.", "Compose: $f$, $g$. Swap in: $\\sigma_5,\\sigma_2$. Tetrahedron: $f,g,\\bar g$ with $\\sigma_6,\\sigma_7$. Tetrahedron: $x,\\bar g,\\bar f$ with $\\sigma_8,\\sigma_4,\\sigma_1$."],
-    win: ["$(x,w\\,;\\,1_a)$ exists: $w$ undoes $x$, in reverse order."],
-    term: "Inverse of a composite",
-    math: {
-      say: "If $f,g$ have left inverses $\\bar f,\\bar g$, then a composite $w$ of $(\\bar g,\\bar f)$ is a left inverse of a composite $x$ of $(f,g)$. Both steps use only inner horns $\\Lambda^3_1,\\Lambda^3_2$, so this holds in every quasi-category.",
-      proof: "Fill an inner horn on $(a,b,c,b)$ to get $(x,\\bar g;f)$, then on $(a,c,b,a)$ to get $(x,w;1_a)$."
-    }
-  },
-
-  /* ---------------- World 5: Nerves of categories ---------------- */
-
-  nerve: {
-    title: "The Rulebook",
-    bullets: ["The Rulebook lists a composite for each pair.", "Construct a triangle $(f,g\\,;\\,?)$."],
-    explain: "In a category composition is a function: each pair $f,g$ has exactly one composite. The Rulebook shows the table for this picture, and Compose follows it, so the triangle you make is $(f,g\\,;\\,h)$ with the long side already listed. The simplicial set built from a category in this way is its <b>nerve</b>: vertices are objects, arrows are morphisms, triangles are composable pairs together with their composite, and higher simplices are longer chains. In a nerve every inner horn has exactly one filler.",
-    hints: ["Look up the pair in the Rulebook.", "Compose: click $f$, then $g$."],
-    win: ["The Rulebook gave $(f,g\\,;\\,h)$: $h$ is the composite of $f$ and $g$."],
-    term: "Nerve of a category",
-    math: {
-      say: "The nerve $N_\\bullet(\\mathcal C)$ of a category has $n$-simplices the chains of $n$ composable morphisms. Every inner horn $\\Lambda^n_i\\to N_\\bullet(\\mathcal C)$ has a unique filler; for $n=2$ it is the composite $g\\circ f$.",
-      proof: "The 2-simplex $(f,g;h)$ with $h=g\\circ f$ is the unique filler of $\\Lambda^2_1$."
-    }
-  },
-
-  onlyone: {
-    title: "Only one filler",
-    bullets: ["The same Rulebook.", "Try to construct a second composite of $f$ and $g$."],
-    explain: "In earlier worlds, composing the same pair twice gave two different arrows. In a nerve that cannot happen: the Rulebook has a single entry for $f,g$, so once the triangle $(f,g\\,;\\,h)$ exists a second attempt would have to produce the same triangle again, and the game refuses. This is what unique fillers mean: the horn $\\Lambda^2_1$ has exactly one filler. In a general quasi-category fillers are only unique up to homotopy, and uniqueness on the nose separates the nerve of a category from an arbitrary ∞-category. The goal is reached when the second attempt is refused.",
-    hints: ["Compose $f,g$ once. Then try the same again.", "Compose: $f$, $g$. Compose: $f$, $g$ again."],
-    win: ["The second attempt was refused: $\\Lambda^2_1$ has exactly one filler."],
-    term: "Unique fillers",
-    math: {
-      say: "Unique inner horn fillers characterise nerves: $X\\cong N_\\bullet(\\mathcal C)$ iff each inner horn $\\Lambda^n_i\\to X$ has exactly one extension to $\\Delta^n$. In a general quasi-category fillers are only unique up to homotopy.",
-      proof: "A second filler of $\\Lambda^2_1$ on $(f,g)$ is refused: it would equal $\\sigma_1$."
-    }
-  },
-
-  nerve3: {
-    title: "A blank Rulebook entry",
-    bullets: ["One Rulebook entry, for $f$ and the composite of $g,h$, is blank.", "Prove a triangle exists there."],
-    explain: "The Rulebook lists composites for $f,g$, for $g,h$ and for the composite of $f,g$ with $h$. It has no entry for $f$ together with the composite of $g,h$. In a category the missing entry follows from associativity. In a simplicial set it follows from a tetrahedron: compose what the Rulebook allows, then use Tetrahedron on the path $f,g,h$. Its three faces are the triangles you made, and the fourth face is the triangle that fills in the blank. In a nerve, associativity is recorded by this solid.",
-    hints: ["Compose the listed entries. A tetrahedron fills the blank.", "Compose: $f$, $g$. $g$, $h$. $f\\!g$, $h$. Tetrahedron: path $f,g,h$ with $\\sigma_1,\\sigma_2,\\sigma_3$. Fill."],
-    win: ["The tetrahedron's fourth face filled in the blank entry."],
-    term: "Associativity in a nerve",
-    math: {
-      say: "A 3-simplex of $N_\\bullet(\\mathcal C)$ is a chain $a\\to b\\to c\\to d$ with all its composites; associativity $h\\circ(g\\circ f)=(h\\circ g)\\circ f$ says its faces are consistent. Inner horns $\\Lambda^3_k$ fill uniquely.",
-      proof: "Fill $\\Lambda^3_2$ on $(a,b,c,d)$ with $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=\\sigma_3$; $d_2$ fills the blank."
-    }
-  },
-
-  segalno: {
-    title: "Nerve or not?",
-    bullets: ["A nerve has exactly one triangle on every composable pair.", "Decide whether this picture is a nerve; justify a No with a pair."],
-    explain: "The nerve of a category has, for every two arrows end to end, exactly one triangle with those two legs: not none, and not two. Equivalently, every inner horn $\\Lambda^2_1$ has exactly one filler. This picture has arrows $f$ and $g$ meeting at $b$ and no triangle at all, so the pair $f,g$ breaks the rule. Either declare the picture a nerve, or name a pair of arrows whose horn has no filler or more than one.",
-    hints: ["Is there a triangle with legs $f$ and $g$?", "Not a nerve: pick $f$, then $g$."],
-    win: ["No triangle has legs $f,g$: that horn $\\Lambda^2_1$ has no filler."],
-    term: "Spine",
-    math: {
-      say: "$X\\cong N(\\mathcal C)$ for a category $\\mathcal C$ iff every inner horn has a unique filler; equivalently every spine $I^n\\to X$ extends uniquely to $\\Delta^n$ (the Segal condition).",
-      proof: "The horn $\\Lambda^2_1\\to X$ given by $(f,g)$ has no filler."
-    }
-  },
-
-  segalyes: {
-    title: "One of each",
-    bullets: ["Given $\\sigma_1=(f,g\\,;\\,h)$ on $a\\to b\\to c$.", "Decide whether this picture is a nerve."],
-    explain: "Check every pair of arrows that meet end to end, identities included. Each vertex has a degenerate arrow, and for every arrow $f$ the degenerate triangles $s_0f=(1_a,f\\,;\\,f)$ and $s_1f=(f,1_b\\,;\\,f)$ exist automatically, so a pair containing an identity already has its triangle. The only other pair is $f,g$, and it has exactly one triangle, $\\sigma_1$. Every pair has exactly one triangle, so every inner horn has exactly one filler and the picture is the nerve of the category $a\\to b\\to c$.",
-    hints: ["List the pairs that meet end to end. There are few.", "Press It is a nerve."],
-    win: ["Every pair has exactly one triangle: this is the nerve of $a\\to b\\to c$."],
-    term: "Segal condition",
-    math: {
-      say: "This simplicial set is $\\Delta^2=N([2])$: every horn $\\Lambda^2_1\\to\\Delta^2$ has exactly one filler, as composition in the poset $[2]$ is unique.",
-      proof: "The only non-degenerate horn is $(f,g)$, filled uniquely by $\\sigma_1$ with long side $h$."
-    }
-  },
-
-  twofill: {
-    title: "Too many fillers",
-    bullets: ["Given $\\sigma_1=(f,g\\,;\\,x)$ and $\\sigma_2=(f,g\\,;\\,x')$.", "Decide whether this picture is a nerve."],
-    explain: "A picture can fail to be a nerve because something is missing, and also because something is doubled. In a category, composing $f$ then $g$ has one answer. Here the pair $f,g$ has two triangles with different long sides $x$ and $x'$. In earlier worlds that was normal: such a picture can be a perfectly good ∞-category, with $x$ and $x'$ homotopic. It is therefore not the nerve of an ordinary category, because the horn $\\Lambda^2_1$ on $(f,g)$ has two fillers.",
-    hints: ["Count the triangles whose legs are $f$ and $g$.", "Not a nerve: pick $f$, then $g$."],
-    win: ["Two triangles on $f,g$: possibly an ∞-category, but not a nerve."],
-    term: "Unique fillers",
-    math: {
-      say: "A quasi-category is the nerve of a category iff inner horns fill uniquely. Here $\\Lambda^2_1\\to X$ given by $(f,g)$ has two distinct fillers.",
-      proof: "The 2-simplices $\\sigma_1,\\sigma_2$ both fill the horn $(f,g)$."
-    }
-  },
-
-  hiddenhole: {
-    title: "Find the missing triangle",
-    bullets: ["Given $\\sigma_1,\\sigma_2,\\sigma_3$ on four vertices and six arrows.", "Decide whether this picture is a nerve."],
-    explain: "With more arrows there are more pairs to check, and composites are arrows too: a pair can start or end with one. List every pair that meets end to end and look for its triangle among $\\sigma_1=(f,g\\,;\\,x)$, $\\sigma_2=(g,h\\,;\\,y)$ and $\\sigma_3=(x,h\\,;\\,z)$, and among the degenerate triangles. A single pair with no triangle is enough to say No, and a single pair with two triangles is enough as well. Pairs involving $x$ and $y$ are the easiest to overlook.",
-    hints: ["Pairs may involve the composites $x$ and $y$.", "Not a nerve: pick $f$, then $y$."],
-    win: ["The pair $f,y$ has no triangle: its horn $\\Lambda^2_1$ has no filler."],
-    term: "Inner horn",
-    math: {
-      say: "A nerve fills every spine uniquely, so with $(f,g;x)$, $(g,h;y)$, $(x,h;z)$ present the face $(f,y;z)$ is forced. Here the horn $\\Lambda^2_1$ on $(f,y)$ has no filler.",
-      proof: "No 2-simplex has legs $(f,y)$: the horn $\\Lambda^2_1\\to X$ they define does not extend."
-    }
-  },
-
-  quotient: {
-    title: "A collapsed triangle",
-    bullets: ["Given $\\sigma_1=(1_p,e\\,;\\,e')$, with $e,e':p\\to c$.", "Decide whether this picture is a nerve."],
-    explain: "The degenerate triangle $s_0e=(1_p,e\\,;\\,e)$ exists in every simplicial set, so the pair $1_p,e$ already has one triangle. The given triangle $\\sigma_1=(1_p,e\\,;\\,e')$ is a second one, with a different long side $e'$. Hence the horn $\\Lambda^2_1$ on $(1_p,e)$ has two fillers and the picture is not a nerve. Geometrically $\\sigma_1$ is a full triangle with one side collapsed to a vertex, the vertex $p$. A triangle with an identity for a leg relates two different arrows, which a nerve never allows.",
-    hints: ["The degenerate triangle on $1_p,e$ is always present.", "Not a nerve: click the vertex $p$, then $e$."],
-    win: ["Two triangles on $(1_p,e)$: the degenerate $s_0e$ and $\\sigma_1$."],
-    term: "Collapsed triangle",
-    math: {
-      say: "$\\Delta^2/\\Delta^{\\{0,1\\}}$ is not a nerve: the horn $(1_p,e)$ has two fillers, the degenerate $s_0(e)$ and the image $\\sigma$ of the top simplex, with $d_1\\sigma=e'\\neq e$.",
-      proof: "$s_0e$ has boundary $(1_p,e;e)$ and $\\sigma_1$ has boundary $(1_p,e;e')$: two fillers of one inner horn."
-    }
-  },
-
-  /* ---------------- World 6: Bones ---------------- */
-
-  disc: {
-    title: "Attaching a cell",
-    bullets: ["Given three vertices $a,b,c$.", "Draw a loop of three arrows and glue one triangle onto it."],
-    explain: "We now build shapes instead of filling horns. The <b>boundary</b> $\\partial\\Delta^2$ of a triangle is its three sides without the interior, and Draw arrow produces one when you connect $a,b,c$ in a loop. Gluing a triangle onto it attaches a 2-cell: the boundary of the new triangle lands on arrows you already have. No new arrow is made for the sides of the glued triangle, unlike in composing, where the long side is new. Formally, attaching a cell is the pushout of $\\partial\\Delta^2\\hookrightarrow\\Delta^2$ along the loop of three arrows.",
-    hints: ["Glue triangle needs three arrows that close up.", "Draw arrow: $a,b$. $b,c$. $a,c$. Glue triangle: the three arrows."],
-    win: ["You drew $\\partial\\Delta^2$, then glued a 2-cell onto it."],
-    term: "Attaching a cell",
-    math: {
-      say: "Given $\\partial\\Delta^2\\to X$, the pushout $X\\sqcup_{\\partial\\Delta^2}\\Delta^2$ attaches a 2-cell to $X$ along it. Here $X=\\mathrm{sk}_1\\Delta^2=\\partial\\Delta^2$ and the loop is the identity map.",
-      proof: "Pushout along $\\partial\\Delta^2\\hookrightarrow\\Delta^2$ on the loop of the three drawn edges gives $\\Delta^2$."
-    }
-  },
-
-  sphere: {
-    title: "Two cells, one boundary",
-    bullets: ["Given the hollow triangle $f,g,h$.", "Make it carry two triangles."],
-    explain: "Glue a second triangle over the same boundary. The two triangles are different 2-simplices with identical sides, so in a simplicial set a boundary can have more than one filler. The result is hollow like the surface of a ball: a 2-sphere, topologically two discs glued along their common circle. Compare this with a horn, which also had many fillers: a cell is glued along a whole boundary, while a horn filler is attached along all but one of its faces.",
-    hints: ["Glue onto the same three arrows twice.", "Glue triangle: $f,g,h$. Glue triangle: $f,g,h$ again."],
-    win: ["Two 2-cells on one boundary form a 2-sphere."],
-    term: "2-sphere",
-    math: {
-      say: "Attaching two 2-cells along the same map $\\partial\\Delta^2\\to X$ gives $\\Delta^2\\sqcup_{\\partial\\Delta^2}\\Delta^2$, a simplicial model of the 2-sphere: its geometric realisation is homotopy equivalent to $S^2$.",
-      proof: "Two pushouts of $\\partial\\Delta^2\\hookrightarrow\\Delta^2$ along the same loop $(f,g,h)$."
-    }
-  },
-
-  peel: {
-    title: "Skeleta",
-    bullets: ["Given a solid tetrahedron with its faces and six arrows.", "End with the six arrows and exactly one triangle."],
-    explain: "Peel removes the top layer of simplices. The first Peel deletes the 3-simplex and leaves its four faces, which is the 2-skeleton $\\mathrm{sk}_2\\Delta^3=\\partial\\Delta^3$. The second Peel deletes the triangles and leaves the 1-skeleton: six arrows on four vertices. Then glue one triangle back along a closed loop of three arrows. A skeleton forgets everything above a chosen dimension, and a cell puts back one simplex along its boundary.",
-    hints: ["Peel twice, then glue one triangle.", "Peel. Peel. Glue triangle: $f,g,x$."],
-    win: ["Skeleta keep the lower layers; a cell restores one simplex."],
-    term: "Skeleton",
-    math: {
-      say: "$\\mathrm{sk}_n$ forgets simplices of dimension $>n$: $\\mathrm{sk}_2\\Delta^3=\\partial\\Delta^3$, and $\\mathrm{sk}_1\\Delta^3$ is its six edges. Re-attaching one 2-cell along $\\partial\\Delta^2\\hookrightarrow\\Delta^2$ restores one face.",
-      proof: "Take $\\mathrm{sk}_2$, then $\\mathrm{sk}_1$, then glue one $\\Delta^2$ along its boundary."
-    }
-  },
-
-  hollowtet: {
-    title: "Sphere",
-    bullets: ["Given six arrows on four vertices.", "Glue the four faces of a tetrahedron and nothing inside."],
-    explain: "The boundary of a tetrahedron is four triangles glued along their shared edges, with no solid inside. A face needs three arrows that close up: two end to end and one going straight across. Among the twenty ways to choose three of the six arrows, only four close up in this way. The result is $\\partial\\Delta^3$, which is topologically a sphere. The goal checks both that the four faces are present and that there is no tetrahedron.",
-    hints: ["A face is two arrows end to end plus the arrow across.", "Glue triangle: $f,g,x$. $g,h,y$. $x,h,z$. $f,y,z$."],
-    win: ["$\\partial\\Delta^3$: four faces glued along six edges."],
-    term: "Boundary $\\partial\\Delta^3$",
-    math: {
-      say: "$\\partial\\Delta^n$ is the union of the $n+1$ faces of $\\Delta^n$ glued along their pairwise intersections. For $n=3$: four 2-simplices along six edges, and $|\\partial\\Delta^3|\\cong S^2$.",
-      proof: "Attach four 2-cells to $\\mathrm{sk}_1\\Delta^3$ along the four subcomplexes $\\partial\\Delta^2$ spanned by three vertices."
-    }
-  },
-
-  ball: {
-    title: "Ball",
-    bullets: ["Given the six arrows of a hollow tetrahedron.", "Glue its four faces, then glue the solid they bound."],
-    explain: "A tetrahedron's boundary is four triangles glued along their edges, with nothing inside. Glue triangle adds one face whenever three arrows close up, so four moves make $\\partial\\Delta^3$; Glue solid then adds the single 3-simplex whose four faces those are. That is attaching a 3-cell along the boundary, and the result is the ball $\\Delta^3$.",
-    hints: ["Glue triangle takes three arrows that close up.", "Once the four faces exist, Glue solid takes all four at once."],
-    win: ["Four faces and one solid: $\\Delta^3$, a ball."],
-    term: "Cell",
-    math: {
-      say: "$\\Delta^3$ is $\\partial\\Delta^3$ with one 3-cell attached along its boundary; its geometric realisation is the ball $D^3$.",
-      proof: "Glue four 2-cells onto the six edges, then one 3-cell onto the four faces."
-    }
-  },
-
-  fillin: {
-    title: "The coskeleton",
-    bullets: ["A hollow triangle: three arrows and no face.", "Fill it in."],
-    explain: "Peel forgets everything above a dimension and leaves a skeleton. The <b>coskeleton</b> $\\mathrm{cosk}_1$ goes the other way: for every boundary that is present with nothing inside it, it adds exactly one simplex, filling the shape in the only possible way. No choice is involved, which is why this is one click. Here the boundary of a triangle is present, so $\\mathrm{cosk}_1$ adds the triangle $(f,g\\,;\\,h)$.",
-    hints: ["There is only one tool.", "Press Fill in."],
-    win: ["The coskeleton filled the hollow triangle with one 2-simplex."],
-    term: "Coskeleton",
-    math: {
-      say: "$(\\mathrm{cosk}_nX)_m=\\mathrm{Hom}(\\mathrm{sk}_n\\Delta^m,X)$: an $m$-simplex of the coskeleton is a compatible family of its faces of dimension $\\le n$. $\\mathrm{cosk}_n$ is right adjoint to $\\mathrm{sk}_n$.",
-      proof: "$\\mathrm{cosk}_1(\\partial\\Delta^2)$ has a unique 2-simplex with the given boundary, so it is $\\Delta^2$."
-    }
-  },
-
-  rebuild: {
-    title: "Wire frame to shell",
-    bullets: ["Given six arrows on four vertices.", "End with the four faces of a tetrahedron and no solid."],
-    explain: "Gluing the four faces took four careful moves. Fill in does all of them at once, but it does not stop there: once the four faces exist, the boundary of the tetrahedron is itself a hollow shape and the coskeleton fills it. It therefore produces more than the boundary alone. Combine it with the tool that removes the top layer. Skeleton and coskeleton are opposite operations, and a useful shape often lies between them: $\\mathrm{sk}_2\\mathrm{cosk}_1$ applied to the six arrows is the boundary $\\partial\\Delta^3$.",
-    hints: ["Fill in adds too much. Peel removes the top layer.", "Press Fill in. Then Peel."],
-    win: ["Fill in, then Peel once: the boundary of a tetrahedron."],
-    term: "$\\mathrm{sk}_2\\,\\mathrm{cosk}_1$",
-    math: {
-      say: "$\\mathrm{cosk}_1(\\mathrm{sk}_1\\Delta^3)=\\Delta^3$, since nerves of posets are 1-coskeletal, and $\\mathrm{sk}_2\\Delta^3=\\partial\\Delta^3$. So $\\mathrm{sk}_2\\mathrm{cosk}_1\\mathrm{sk}_1\\Delta^3=\\partial\\Delta^3$.",
-      proof: "The coskeleton adds the four 2-simplices and the 3-simplex; the 2-skeleton discards the 3-simplex."
-    }
-  },
-
-  /* ---------------- World 7: Possible or not? ---------------- */
-
-  spine: {
-    title: "Fill the spine",
-    bullets: ["Given arrows $f,g,h$ in a row.", "Build the full tetrahedron on them, or say it can't be done."],
-    explain: "From here on some goals are possible and some are not, and you must decide which. If you decide a goal is impossible, press This can't be done and build a model that shows it. The three arrows $f,g,h$ are the <b>spine</b> of a tetrahedron: its edges $01$, $12$ and $23$. The question is whether inner horn fillings can build the whole solid on them. They can, by the assembly of Two bracketings. Inclusions built from inner horns never change the shape, which is why a spine always extends to a full simplex in a quasi-category.",
-    hints: ["You solved a version of this earlier.", "Compose: $f$, $g$. $g$, $h$. $x$, $h$. Tetrahedron: path $f,g,h$ with $\\sigma_1,\\sigma_2,\\sigma_3$. Fill."],
-    win: ["Possible: inner horns built the whole tetrahedron on its spine."],
-    term: "Inner anodyne",
-    math: {
-      say: "The spine inclusion $\\mathrm{Spine}^3\\hookrightarrow\\Delta^3$ is inner anodyne: it lies in the saturated class generated by inner horn inclusions $\\Lambda^n_i\\hookrightarrow\\Delta^n$. So it has the left lifting property against inner fibrations.",
-      proof: "Fill $\\Lambda^2_1$ three times for the composites; then $\\Lambda^3_2$ gives the 3-simplex on $(a,b,c,d)$."
-    }
-  },
-
-  halfspine: {
-    title: "Half a spine",
-    bullets: ["Given $f,g,h$ end to end, and a triangle $(g,h\\,;\\,y)$.", "Build the composites $x$ of $f,g$ and $z$ of $f,y$, then close the solid."],
-    explain: "A spine is a chain of arrows with none of its faces filled in, and here half of it already is: $(g,h\\,;\\,y)$ says $y$ is the composite of $g$ then $h$. Compose $f$ with $g$ for $x$, and $f$ with $y$ for $z$. The tetrahedron on the path $f,g,h$ then has three faces and forces the fourth, $(x,h\\,;\\,z)$: the composite of the chain does not depend on how you bracket it.",
-    hints: ["Compose $f,g$ and $f,y$ first.", "Tetrahedron: path $f,g,h$; slots $(f,g\\,;\\,x)$, $(g,h\\,;\\,y)$, $(f,y\\,;\\,z)$."],
-    win: ["The fourth face came free: the spine's composite is $z$ either way."],
-    term: "Spine",
-    math: {
-      say: "The spine inclusion $\\mathrm{Spine}^3\\hookrightarrow\\Delta^3$ is inner anodyne. Given $(f,g\\,;\\,x)$, $(g,h\\,;\\,y)$ and $(f,y\\,;\\,z)$, the missing face $(x,h\\,;\\,z)$ is forced.",
-      proof: "Compose $f,g$ and $f,y$, then fill the one missing face of the tetrahedron on $f,g,h$."
-    }
-  },
-
-  nofill: {
-    title: "A closed loop",
-    bullets: ["Given a loop $f,g,h$ with no triangle.", "Prove $(f,g\\,;\\,h)$ exists, or say it can't be done."],
-    explain: "The three arrows form a closed loop: $f$ then $g$, and $h$ straight across. Every tool here fills a <i>horn</i>, a shape with exactly one face missing. The loop is the boundary $\\partial\\Delta^2$, which lacks its whole interior and so is not a horn. Compose on $f,g$ adds a new arrow with a triangle on it and leaves $h$ without one. If you decide that $(f,g\\,;\\,h)$ cannot be built, press the button and show it with a model: a quasi-category that contains the loop but has no such triangle.",
-    hints: ["Check whether a horn with long side $h$ is present.", "Press This can't be done. Build the triangle model."],
-    win: ["Impossible: horn fillings cannot fill a hole."],
-    term: "Not anodyne",
-    math: {
-      say: "$\\partial\\Delta^2\\hookrightarrow\\Delta^2$ is not anodyne: anodyne maps are weak homotopy equivalences, but $|\\partial\\Delta^2|\\simeq S^1$ while $|\\Delta^2|$ is contractible. Horn fillings cannot cap a hollow triangle.",
-      proof: "Every horn move adds a new edge; none attaches a 2-cell to the existing $h$."
-    }
-  },
-
-  squarehole: {
-    title: "Two routes, one composite?",
-    bullets: ["Given routes $f,g$ and $u,v$ from $a$ to $d$.", "Prove one arrow composes both pairs, or say it can't be done."],
-    explain: "Two routes, $f$ then $g$ and $u$ then $v$, both go from $a$ to $d$. Composing each pair gives an arrow, and the goal asks for a single arrow that is a composite of both pairs. Nothing joins the routes: the square is a closed loop with no triangle across it. Horn fillings add faces to rims that exist and never close a hole. So the two composites are different arrows. To prove this impossible, exhibit a model in which the four arrows exist but no arrow is a composite of both pairs.",
-    hints: ["Compose each route and compare the results.", "Press This can't be done. Build the square model."],
-    win: ["Impossible: nothing fills the hole between the two routes."],
-    term: "A hole",
-    math: {
-      say: "With no 2-simplex joining the routes $(f,g)$ and $(u,v)$, composites of the two routes are different edges; no horn $\\Lambda^n_k$ in this simplicial set relates them, since fillers only add simplices over existing boundaries.",
-      proof: "Every filler creates a new edge for each composite; none identifies a composite of $f,g$ with one of $u,v$."
-    }
-  },
-
-  parallel: {
-    title: "Two lone arrows",
-    bullets: ["Given parallel arrows $f,g:a\\to b$ and nothing else.", "Prove $f\\simeq g$, or say it can't be done."],
-    explain: "Two parallel arrows are not homotopic merely because they share endpoints. By definition $f\\simeq g$ needs a triangle $(f,1_b\\,;\\,g)$, and no tool creates one from nothing: every move starts from triangles that already exist, and there are none. To show impossibility, exhibit a quasi-category with two parallel arrows that are not homotopic. Compare with the Homotopy world, where the first triangle was always given.",
-    hints: ["Check whether any triangle exists to start from.", "Press This can't be done. Build the parallel model."],
-    win: ["Impossible: nothing relates arrows that share no triangle."],
-    term: "No free homotopy",
-    math: {
-      say: "Parallel edges $f,g:a\\to b$ need not be homotopic: the simplicial set with just these two edges has no 2-simplex with boundary $(f,1_b;g)$, and horn fillings never create a relation between existing edges.",
-      proof: "Each horn move creates a new edge or a degenerate cell; none joins $f$ and $g$."
-    }
-  },
-
-  almostring: {
-    title: "Almost a loop",
-    bullets: ["Given $\\sigma_1=(f,g\\,;\\,x)$, $x\\simeq m$ and $h\\simeq m$.", "Prove $(f,g\\,;\\,h)$ exists, or say it can't be done."],
-    explain: "This resembles the closed loop of the earlier level: arrows $f,g,h$ with no triangle on $h$. The difference is the two homotopies, $\\sigma_2=(x,1_c\\,;\\,m)$ and $\\sigma_3=(h,1_c\\,;\\,m)$, where $x$ is a composite of $f,g$. The loop is filled up to homotopy. Replace $x$ by $m$ in $\\sigma_1$ with Swap in, reverse $h\\simeq m$ with Flip so that it reads $m\\simeq h$, and replace $m$ by $h$. Each of these is a theorem you already own.",
-    hints: ["Move from $x$ to $m$, then from $m$ to $h$.", "Swap in: $\\sigma_2,\\sigma_1$. Flip: $\\sigma_3$. Swap in: $\\sigma_5,\\sigma_4$."],
-    win: ["Possible: $(f,g\\,;\\,h)$ exists, since $h\\simeq m$ and $x\\simeq m$."],
-    term: "Swapping homotopic arrows",
-    math: {
-      say: "If $x\\simeq m$ and $h\\simeq m$, and $\\sigma$ has $d_1\\sigma=x$, then $h$ replaces $x$ in $\\sigma$: homotopic edges are exchangeable in a 2-simplex, via inner horns $\\Lambda^3_1,\\Lambda^3_2$.",
-      proof: "Swap in $\\sigma_2$ into $\\sigma_1$ for $(f,g;m)$; Flip $\\sigma_3$ for $(m,1_c;h)$; Swap in again for $(f,g;h)$."
-    }
-  },
-
-  wedge: {
-    title: "Two prepared tetrahedra",
-    bullets: ["Given $\\sigma_1,\\sigma_2,\\sigma_3$ on a path $f,g,h,i$.", "Construct composites $y$ of $g,h$ and $w$ of $h,i$; prove $(f,y\\,;\\,z)$ and $(x,w\\,;\\,t)$."],
-    explain: "The given triangles are $\\sigma_1=(f,g\\,;\\,x)$, $\\sigma_2=(x,h\\,;\\,z)$ and $\\sigma_3=(z,i\\,;\\,t)$. They are faces of two tetrahedra, on the paths $f,g,h$ and $x,h,i$. Each tetrahedron lacks one triangle: a composite of $g,h$ for the first and of $h,i$ for the second. With that composite built, three faces of each tetrahedron are present, forming the horn $\\Lambda^3_2$, and the fourth face is the triangle you are asked for. So the goal is possible: two inner horn fillings, each prepared by one composition.",
-    hints: ["Prepare each tetrahedron with one composition.", "Compose: $g$, $h$. Tetrahedron: $f,g,h$ with $\\sigma_1,\\sigma_4,\\sigma_2$. Compose: $h$, $i$. Tetrahedron: $x,h,i$ with $\\sigma_2,\\sigma_6,\\sigma_3$."],
-    win: ["Possible: two inner horns, each filled after one composition."],
-    term: "Inner horn $\\Lambda^3_2$",
-    math: {
-      say: "Two 2-simplices sharing the edge $x$ extend, after composing $g,h$ to $y$, to a horn $\\Lambda^3_2\\to X$; the same holds for $h,i$ and $w$. The inclusion is inner anodyne, so each horn extends over $\\Delta^3$.",
-      proof: "Fill $\\Lambda^2_1$ on $(g,h)$, then $\\Lambda^3_2$ on $(a,b,c,d)$ for $(f,y;z)$; repeat with $(h,i)$ and $(a,c,d,e)$ for $(x,w;t)$."
-    }
-  },
-
-  opensquare: {
-    title: "An open square",
-    bullets: ["Given $f:a\\to b$, $v:b\\to d$ and $u:a\\to c$.", "Construct $(f,v\\,;\\,x)$ and $(u,w\\,;\\,x)$, or say it can't be done."],
-    explain: "This resembles the boss that follows, where the square does close. Here the world allows fewer fillings. Closing the square needs an arrow $w$ from $c$ to $d$ that is the <i>second</i> leg of a triangle $(u,w\\,;\\,x)$, whose first leg $u$ and long side $x$ are known: an outer horn $\\Lambda^2_0$, and a general quasi-category need not fill it. To prove impossibility, find a small quasi-category containing the three given arrows in which no arrow from $c$ to $d$ exists at all.",
-    hints: ["Ask which horn would produce the missing arrow.", "Press This can't be done. Build the open-square model."],
-    win: ["Impossible: the missing arrow comes from an outer horn, which need not fill."],
-    term: "Outer horn $\\Lambda^2_0$",
-    math: {
-      say: "The inclusion $(\\Delta^1\\times\\{0\\})\\cup(\\partial\\Delta^1\\times\\Delta^1)\\hookrightarrow\\Delta^1\\times\\Delta^1$ is left anodyne but not inner anodyne: a quasi-category need not extend it.",
-      proof: "Counter-model: the nerve of the poset $0<1<3$, $0<2$. It contains the three sides and has no edge $2\\to 3$."
-    }
-  },
-
-  square: {
-    title: "A square and a prism",
-    bullets: ["Given $f,v,u,t$ on five vertices; every horn fills.", "Construct and prove the five triangles listed in the goal."],
-    explain: "Every horn fills here, outer horns included. First compose $f$ and $v$ for a diagonal $x$ of the first square. Then use Solve to find its fourth side $y$, with a triangle $(u,y\\,;\\,x)$: an outer horn $\\Lambda^2_0$. The second square lies on top of the first. Compose $y$ with $t$ and $x$ with $t$ to get its two new sides, $z$ and $w$. Finally one tetrahedron on the path $u,y,t$ makes the two new triangles agree, giving $(u,z\\,;\\,w)$. Each step prepares the faces of the next.",
-    hints: ["Build the first square, then extend it by $t$ along both sides.", "Compose: $f$, $v$. Solve $f\\cdot ?=h$: $u$, $x$. Compose: $y$, $t$. $x$, $t$. Tetrahedron: $u,y,t$."],
-    win: ["Possible: horns of both kinds filled the square and the prism above it."],
-    term: "Anodyne map",
-    math: {
-      say: "The square $\\Delta^1\\times\\Delta^1$ is two 2-simplices glued along the diagonal; the prism $\\Delta^1\\times\\Delta^2$ is three tetrahedra. Each is built by an inner horn followed by outer horns, which fill in a Kan complex.",
-      proof: "Fill $\\Lambda^2_1$ on $(f,v)$, $\\Lambda^2_0$ on $(u,x)$, $\\Lambda^2_1$ twice with $t$, then $\\Lambda^3_2$ on $(a,c,d,e)$ for $(u,z;w)$."
-    }
-  },
-
-  /* ---------------- World 9: Lifting ---------------- */
-
-  liftpath: {
-    title: "Lifting a path",
-    bullets: ["One vertex $x$ lies over $\\bar a$ in the shadow $S$.", "Construct a triangle over $S$'s triangle $(\\bar f,\\bar g\\,;\\,\\bar x)$, starting at $x$."],
-    explain: "A <b>map</b> $p:X\\to S$ sends vertices, arrows and triangles of $X$ to those of $S$, compatibly with faces, and the shadow $S$ is fixed. This map is a <b>left fibration</b>: for every arrow of $S$ and every vertex of $X$ over its source, there is an arrow of $X$ over it starting at that vertex. Lift arrow does this. The lift ends at a new vertex, and you do not choose where. Lift $\\bar f$ from $x$, lift $\\bar g$ from the vertex where you landed, and compose the two lifts. That composite lies over the triangle $(\\bar f,\\bar g\\,;\\,\\bar x)$ of $S$.",
-    hints: ["Lift arrow twice, then compose the two lifts.", "Lift arrow: $x$, $\\bar f$. Lift arrow: new vertex, $\\bar g$. Compose: the lifts."],
-    win: ["A path of $S$ lifted to $X$, with a triangle over $S$'s triangle."],
-    term: "Left fibration",
-    math: {
-      say: "$p:X\\to S$ is a left fibration if it has the right lifting property against $\\Lambda^n_i\\hookrightarrow\\Delta^n$ for $0\\le i<n$. The case $n=1$: every edge of $S$ lifts with a prescribed source.",
-      proof: "Lift $\\Lambda^1_0\\hookrightarrow\\Delta^1$ twice, then the inner horn $\\Lambda^2_1$ over the 2-simplex $(\\bar f,\\bar g;\\bar x)$ of $S$."
-    }
-  },
-
-  backfill: {
-    title: "A missing first leg, lifted",
-    bullets: ["$g$ and $k$ lie over $\\bar g$ and $\\bar x$ in $S$.", "Construct $(?,g\\,;\\,k)$ over $(\\bar f,\\bar g\\,;\\,\\bar x)$, or say it can't be done."],
-    explain: "Downstairs the triangle $(\\bar f,\\bar g\\,;\\,\\bar x)$ is complete. Upstairs you have the second leg $g$ and the long side $k$ and want the first leg: that is the horn $\\Lambda^2_2$. A left fibration lifts horns $\\Lambda^n_i$ with $i<n$, so $\\Lambda^2_2$ is not covered. Lifting $\\bar f$ by itself begins at a vertex you choose and lands on a vertex you do not, and that vertex need not be the one you want. Whether the goal is possible depends on the kind of map; the same picture over a different kind of map can have the opposite answer.",
-    hints: ["Lift $\\bar f$ from $x$ and look at where it ends.", "Press This can't be done. The lift lands on a new vertex."],
-    win: ["A left fibration chooses where a lift starts, never where it ends."],
-    term: "No lift of $\\Lambda^2_2$",
-    math: {
-      say: "A left fibration need not lift $\\Lambda^2_2\\hookrightarrow\\Delta^2$. Counter-model: the left fibration over $\\Delta^2$ classified by a functor $F$ with $F(\\bar b)=\\{y,y'\\}$ and $F(\\bar f)(x)=y'$ has no edge $x\\to y$.",
-      proof: "Every move here is a left-anodyne extension, so it maps to the counter-model; there the only lift of $\\bar f$ from $x$ ends at $y'\\ne y$."
-    }
-  },
-
-  prism: {
-    title: "Closing a lifted square",
-    bullets: ["Three sides of a square; all of the square exists in $S$.", "Construct $(f,v\\,;\\,x)$ and $(u,w\\,;\\,x)$ over the two triangles of $S$."],
-    explain: "The shadow is a full commuting square: two triangles sharing a diagonal. Upstairs the bottom side is missing. The first triangle is an inner horn $\\Lambda^2_1$, which lifts over any of these maps. The second has its first leg $u$ and long side $x$ and misses its second leg: the horn $\\Lambda^2_0$, which is exactly what a left fibration adds. There is a tempting wrong move: lifting the bottom arrow by itself lands on a new vertex, and the square never closes.",
-    hints: ["Build the diagonal first. Then solve for the bottom side.", "Compose: $f$, $v$. Solve $f\\cdot ?=h$: $u$, then the diagonal $x$."],
-    win: ["A left fibration lifts horns that know their first leg."],
-    term: "Left horn $\\Lambda^2_0$",
-    math: {
-      say: "The inclusion $(\\Delta^1\\times\\{0\\})\\cup(\\partial\\Delta^1\\times\\Delta^1)\\hookrightarrow\\Delta^1\\times\\Delta^1$ is left anodyne: a pushout of $\\Lambda^2_1$ followed by a pushout of $\\Lambda^2_0$. So it lifts against any left fibration.",
-      proof: "Lift $\\Lambda^2_1$ over $(\\bar f,\\bar v,\\bar x)$ for the diagonal, then $\\Lambda^2_0$ over $(\\bar u,\\bar w,\\bar x)$ for the missing side."
-    }
-  },
-
-  inneronly: {
-    title: "Invertible below only",
-    bullets: ["$\\bar f$ has an inverse in $S$; this map is only an inner fibration.", "Construct $(f,?\\,;\\,1_x)$, or say it can't be done."],
-    explain: "Downstairs $\\bar f$ is an isomorphism: $\\bar g$ undoes it on both sides. Whether $f$ is then an isomorphism upstairs depends on the map. An inner fibration lifts inner horns only, and an inverse of $f$ is the missing side of an <i>outer</i> horn $\\Lambda^2_0$. Compare this level with the next: the board is identical and only the kind of map changes, from inner fibration to left fibration.",
-    hints: ["An inverse is an outer horn. Check what this map lifts.", "Press This can't be done. The reason is the licence of the map."],
-    win: ["Lying over an isomorphism does not make an arrow invertible."],
-    term: "Not conservative",
-    math: {
-      say: "An inner fibration need not be conservative. $\\Delta^1\\to N(J)$, $J$ the walking isomorphism, is an inner fibration (the nerve of a functor) sending the non-invertible edge to an isomorphism.",
-      proof: "$X=\\Delta^1$ is a counter-model: all inner horns lift against $\\Delta^1\\to N(J)$, yet no edge $y\\to x$ exists."
-    }
-  },
-
-  conservative: {
-    title: "Invertible above too",
-    bullets: ["The same board, but now the map is a left fibration.", "Construct a left inverse of $f$ and prove it is also a right inverse."],
-    explain: "Over a left fibration the inverse can be built. Downstairs, $(\\bar f,\\bar g\\,;\\,1)$ is a triangle. Upstairs you know its first leg $f$ and its long side $1_x$: the horn $\\Lambda^2_0$, whose filler gives a new arrow, a left inverse of $f$. For the other side look at the tetrahedron on the path $f$, the new arrow, $f$: its missing face is again the first one, $d_0$, and a left fibration lifts that too. A map is <b>conservative</b> when an arrow over an isomorphism must itself be an isomorphism. Left fibrations are conservative.",
-    hints: ["Solve for a left inverse. Then a tetrahedron on $f$, it, $f$.", "Solve $f\\cdot ?=h$: $f$, $1_x$. Tetrahedron: path $f$, new arrow, $f$; $\\sigma_1,s_0f,s_1f$."],
-    win: ["Left fibrations are conservative."],
-    term: "Conservative",
-    math: {
-      say: "Left fibrations are conservative: if $p(f)$ is an isomorphism in $S$ then $f$ is an isomorphism in $X$. The inverse is the lift of $\\Lambda^2_0$, and it is two-sided by a lift of $\\Lambda^3_0$.",
-      proof: "Lift $\\Lambda^2_0$ over $(\\bar f,\\bar g;1)$ for $g$; lift $\\Lambda^3_0$ on $(x,y,x,y)$ with faces $\\sigma_1$, $s_0f$, $s_1f$: the new face is $(g,f;1_y)$."
-    }
-  },
-
-  twolifts: {
-    title: "Two lifts, one destination",
-    bullets: ["Two routes lift $\\bar x$ from $x$: $f$ then $g$, and $k'$ directly.", "Prove their endpoints $z$ and $z'$ are isomorphic."],
-    explain: "Lifts land on fresh vertices, so two ways of lifting the same arrow can end at different vertices. They should still agree up to isomorphism. Compose $f$ and $g$ for the long route. Both it and $k'$ lie over $\\bar x$ and start at $x$, so a left fibration lets you solve for a new arrow between their ends, lying over an identity. Then prove that this arrow is invertible, as in the last level.",
-    hints: ["Solve for an arrow from $z$ to $z'$, then invert it.", "Compose: $f$, $g$. Solve: the long route, $k'$. Solve: that arrow, $1_z$. Tetrahedron."],
-    win: ["Any two lifts of one arrow end at isomorphic vertices."],
-    term: "Uniqueness of lifts",
-    math: {
-      say: "For a left fibration $p$, lifts of an edge with a fixed source are unique up to isomorphism in the fibre: the fibres are Kan complexes, and $\\Lambda^2_0$, $\\Lambda^3_0$ lift over degenerate simplices.",
-      proof: "Lift $\\Lambda^2_1$; lift $\\Lambda^2_0$ over $s_1(\\bar x)$ for $m$; lift $\\Lambda^2_0$ over $s_0s_0(\\bar c)$ for its inverse; lift $\\Lambda^3_0$ on $(z,z',z,z')$."
-    }
-  },
-
-  /* ---------------- World 10: Isomorphisms ---------------- */
-
-  oneway: {
-    title: "One way only",
-    bullets: ["Given one arrow $f:a\\to b$.", "Construct $(f,?\\,;\\,1_a)$, or say it can't be done."],
-    explain: "Every move here fills an inner horn: a gap in the middle of a trip. Starting from one arrow $a\\to b$ such moves can only produce arrows that follow existing ones forwards: arrows $a\\to a$, $a\\to b$ and $b\\to b$. An arrow from $b$ back to $a$ never appears, so $f$ has no left inverse. To prove the goal impossible, exhibit a quasi-category containing $f$ with no arrow from $b$ to $a$. The smallest one is the nerve of the poset $0<1$. It shows that not every arrow of a quasi-category can be undone.",
-    hints: ["Check which way each new arrow points.", "Press This can't be done. Build the arrow model."],
-    win: ["Impossible: inner moves never make an arrow point backwards."],
-    term: "Not every arrow inverts",
-    math: {
-      say: "Not every edge of a quasi-category is an equivalence. Starting from a single edge $f:a\\to b$, inner horn fillers only produce edges $a\\to a$, $a\\to b$, $b\\to b$; none is a left inverse $b\\to a$.",
-      proof: "The nerve of the poset $0<1$ is a quasi-category with one non-degenerate edge and no edge $b\\to a$."
-    }
-  },
-
-  nocancel: {
-    title: "No cancelling",
-    bullets: ["Given $\\sigma_1=(f,g\\,;\\,x)$ and $\\sigma_2=(k,g\\,;\\,x)$.", "Prove $f\\simeq k$, or say it can't be done."],
-    explain: "The goal is the cancellation of the earlier level, now with the Kan property switched off and no arrow marked reversible. Cancelling $g$ needed an outer face of a tetrahedron, the face that carries a padlock. Without an inverse for $g$, nothing in the rules opens that padlock: $f$ and $k$ could be genuinely different arrows that $g$ cannot tell apart. To prove the goal impossible, build a quasi-category in which two non-homotopic arrows compose with $g$ to the same arrow $x$.",
-    hints: ["Remember the padlock on the outer face.", "Press This can't be done. Build the fork model."],
-    win: ["Impossible: without an inverse for $g$ you cannot cancel it."],
-    term: "No cancellation",
-    math: {
-      say: "Cancellation ($g\\circ f\\simeq g\\circ k\\Rightarrow f\\simeq k$) needs the outer horn $\\Lambda^3_3$, which fills only if $X$ is Kan or $g$ is an equivalence. Neither holds here, and inner horns are not enough.",
-      proof: "The only open face is $d_3$, an outer horn; no tool fills it here."
-    }
-  },
-
-  backpath: {
-    title: "A one-sided inverse",
-    bullets: ["Given $\\sigma_1=(f,g\\,;\\,1_a)$, with $f:a\\to b$ and $g:b\\to a$.", "Prove $(g,f\\,;\\,1_b)$ exists, or say it can't be done."],
-    explain: "Here $g$ undoes $f$ on one side only: $f$ followed by $g$ is the identity at $a$ by $\\sigma_1$. Does $g$ also undo $f$ the other way round? With only this much structure it need not. The smallest example of a one-sided inverse is called a <b>retraction</b>, and it need not be an isomorphism. To prove the goal impossible, build a quasi-category that contains $\\sigma_1$ but has no triangle $(g,f\\,;\\,1_b)$. The next levels show what extra data would settle it.",
-    hints: ["Check what a one-sided inverse gives you.", "Press This can't be done. Build the retraction model."],
-    win: ["Impossible: a one-sided inverse need not be an isomorphism."],
-    term: "Retraction",
-    math: {
-      say: "The simplicial set with $f:a\\to b$, $g:b\\to a$ and a 2-simplex $(f,g;1_a)$ has $g$ as a left inverse of $f$ but no 2-simplex $(g,f;1_b)$; a one-sided inverse need not be an equivalence.",
-      proof: "Inner horns here only compose; none produces a 2-simplex with boundary $(g,f;1_b)$."
-    }
-  },
-
-  idem: {
-    title: "Twice is once",
-    bullets: ["Given $\\sigma_1=(f,g\\,;\\,1_a)$, as in the last level.", "Construct a composite $x$ of $g,f$ and prove $(x,x\\,;\\,x)$."],
-    explain: "You just saw that $g$ followed by $f$ need not be an identity. It is still special: doing it twice is the same as doing it once. Doing $x$ twice means following $g,f,g,f$ in turn, and the middle $f$ then $g$ cancels against $1_a$. Here the cancellation is two tetrahedra. An arrow $x$ with a triangle $(x,x\\,;\\,x)$ is <b>idempotent</b>, and every one-sided inverse produces one. Whether a goal is possible depends on what it asks, and this one is possible.",
-    hints: ["Cancel the middle: first show $(x,g\\,;\\,g)$.", "Compose: $g$, $f$. Tetrahedron: path $g,f,g$ with $\\sigma_2,\\sigma_1,s_1g$. Tetrahedron: path $x,g,f$ with $\\sigma_3,\\sigma_2,\\sigma_2$."],
-    win: ["A one-sided inverse produces an idempotent arrow."],
-    term: "Idempotent",
-    math: {
-      say: "If $(f,g;1_a)$ is a 2-simplex and $x$ is a composite of $(g,f)$, then there is a 2-simplex $(x,x;x)$: $x$ is idempotent, by two inner 3-horns.",
-      proof: "Fill $\\Lambda^3_1$ on $(b,a,b,a)$ with $\\sigma_2,\\sigma_1,s_1g$ for $(x,g;g)$; fill $\\Lambda^3_2$ on $(b,b,a,b)$ with $\\sigma_3,\\sigma_2,\\sigma_2$ for $(x,x;x)$."
-    }
-  },
-
-  detour: {
-    title: "Factoring through an inverse",
-    bullets: ["Given $\\sigma_1=(f,g\\,;\\,1_a)$ with $f$ an isomorphism ($\\cong$), and $h:a\\to c$.", "Prove $h$ is a composite of $f$ with some arrow."],
-    explain: "You can go from $a$ to $c$ along $h$. Since $g$ undoes $f$ on one side, $h$ should factor as $f$ followed by some arrow from $b$ to $c$, and the natural candidate is a composite $x$ of $g$ and $h$. The tetrahedron on the path $f,g,h$ has $d_3=\\sigma_1=(f,g\\,;\\,1_a)$ and $d_0=(g,h\\,;\\,x)$, and the degenerate $d_1=s_0h=(1_a,h\\,;\\,h)$. Its missing face $d_2$ is $(f,x\\,;\\,h)$. Only inner faces are used, so the argument works in every quasi-category.",
-    hints: ["First compose $g$ and $h$.", "Compose: $g$, $h$. Tetrahedron: path $f,g,h$; $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=s_0h$. Fill."],
-    win: ["$(f,x\\,;\\,h)$ exists: $h$ factors through $f$ via $x$."],
-    term: "Factoring through an inverse",
-    math: {
-      say: "Given $f$ and a 2-simplex $(f,g;1_a)$, any $h$ out of $a$ factors through $f$: with $x$ a composite of $(g,h)$ there is a 2-simplex $(f,x;h)$. The proof needs only an inner horn $\\Lambda^3_2$.",
-      proof: "Fill $\\Lambda^2_1$ on $(g,h)$ giving $x$; fill $\\Lambda^3_2$ on $(a,b,a,c)$ with $\\sigma_1,\\sigma_2,s_0h$."
-    }
-  },
-
-  mono: {
-    title: "Cancel, with a licence",
-    bullets: ["Given $g$ an isomorphism ($\\cong$), $\\sigma_1=(f,g\\,;\\,x)$, $\\sigma_2=(k,g\\,;\\,x')$, $x\\simeq m\\simeq x'$.", "Prove $f\\simeq k$."],
-    explain: "The data is as in No cancelling, with two differences. The arrow $g$ is marked as an isomorphism, so the outer face of a tetrahedron that was locked is open there. And the two composites are not literally equal: $x$ and $x'$ are both homotopic to $m$, so you first have to transport $\\sigma_1$ and $\\sigma_2$ to a common long side $m$ with Swap in. After that the tetrahedron on $f,1_b,g$ has two faces on $g$ and cancels it: this is the outer horn $\\Lambda^3_3$, legal because the last edge $g$ is an isomorphism.",
-    hints: ["First give both triangles the same long side.", "Swap in: $\\sigma_3,\\sigma_1$. Swap in: $\\sigma_4,\\sigma_2$. Tetrahedron: path $f,1_b,g$ with $\\sigma_5,\\sigma_6$. Fill."],
-    win: ["Isomorphisms can be cancelled: $f\\simeq k$."],
-    term: "Isomorphisms cancel",
-    math: {
-      say: "Joyal-type cancellation: if $g$ is an equivalence in an $\\infty$-category, the outer horn $\\Lambda^3_3\\to X$ whose last edge is $g$ fills. Hence $g\\circ f\\simeq g\\circ k$ implies $f\\simeq k$.",
-      proof: "Swap in to get $(f,g;m)$, $(k,g;m)$; fill $\\Lambda^3_3$ on $(a,b,b,c)$ with $d_2=\\sigma_5$, $d_1=\\sigma_6$, $d_0=s_0g$; $d_3$ is $f\\simeq k$."
-    }
-  },
-
-  twosided: {
-    title: "One on each side",
-    bullets: ["$g$ undoes $f$ on one side ($\\sigma_1$), $k$ on the other ($\\sigma_2$).", "Prove $g''$ also undoes $f$ on the other side."],
-    explain: "Compare with the one-sided inverse: here there is a second inverse $k$ on the other side. A tetrahedron on the path $k,f,g$ shows $k\\simeq g$. The goal, however, names a different copy $g''$ of the inverse, related to $g$ only through two further homotopies, so you chain homotopies with Link until $k\\simeq g''$ and then substitute with Swap in. The substitution is legitimate because homotopic arrows are interchangeable in a triangle. So $g''$ works on both sides: an arrow with a left and a right inverse is an isomorphism.",
-    hints: ["Compare $k$ and $g$ first. Then chain homotopies.", "Tetrahedron: path $k,f,g$ with $\\sigma_2,\\sigma_1$. Link: $\\sigma_6,\\sigma_3$. Link: $\\sigma_7,\\sigma_4$. Swap in: $\\sigma_8,\\sigma_2$."],
-    win: ["The inverses agree up to homotopy, so $f$ is an isomorphism."],
-    term: "Two-sided inverse",
-    math: {
-      say: "A left inverse $g$ and a right inverse $k$ of $f$ are homotopic, so any arrow homotopic to $g$ is also a right inverse. Only inner horns are used: $f$ is an equivalence in any quasi-category.",
-      proof: "Fill $\\Lambda^3_2$ on $(b,a,b,a)$ for $k\\simeq g$; Link twice to $k\\simeq g''$; Swap in $g''$ for $k$ in $\\sigma_2$."
-    }
-  },
-
-  joyal: {
-    title: "Joyal's theorem",
-    bullets: ["Given $f:a\\to b$ marked $\\cong$, and a second arrow $h:a\\to b$ without the mark.", "Construct inverses $x$ and $y$ on each side; prove $(y,1_a\\,;\\,x)$ and $(x,f\\,;\\,1_b)$."],
-    explain: "Solve on $f$ and $1_a$ fills an outer horn $\\Lambda^2_0$, which in a general quasi-category cannot be filled. <b>Joyal's theorem</b> says it can whenever the edge you start along is an isomorphism, so both Solve tools work on $f$ but not on $h$. That gives a left inverse and a right inverse, and you know how to show the two are homotopic. A final substitution then yields $(x,f\\,;\\,1_b)$. In a quasi-category, outer horns fill exactly when their first (or last) edge is an isomorphism.",
-    hints: ["Solve on both sides of $f$, then compare the two answers.", "Solve $f\\cdot ?=h$: $f$, $1_a$. Solve $?\\cdot g=h$: $f$, $1_b$. Tetrahedron: $y,f,x$. Swap in: $\\sigma_3,\\sigma_2$."],
-    win: ["Outer horns fill when their first edge is an isomorphism."],
-    term: "Joyal's theorem",
-    math: {
-      say: "Joyal: in a quasi-category $X$, a morphism $f$ is an isomorphism iff every $\\Lambda^n_0\\to X$ ($n\\ge2$) with first edge $f$ extends to $\\Delta^n$. Consequently $X$ is a Kan complex iff its homotopy category is a groupoid.",
-      proof: "Fill $\\Lambda^2_0$ and $\\Lambda^2_2$ along $f$ for inverses $x,y$; $\\Lambda^3_2$ gives $y\\simeq x$; transport by Swap in."
-    }
-  },
-
-  /* ---------------- World 11: Squares ---------------- */
-
-  natsq: {
-    title: "A commuting square",
-    bullets: ["Given $\\sigma_1=(f,\\beta\\,;\\,d)$, $\\sigma_2=(\\alpha,f'\\,;\\,d')$ and $d\\simeq d'$ by $\\sigma_3$.", "Prove both triangles can have the same long side."],
-    explain: "From $a$ to $b'$ there are two ways round: along $f$ and then $\\beta$, or along $\\alpha$ and then $f'$. A square is a pair of triangles on these two routes <i>sharing one long side</i>. Here the long sides $d$ and $d'$ are different arrows, related only by the homotopy $\\sigma_3$. So transport one triangle onto the other's long side with Swap in. The result is a map $\\Delta^1\\times\\Delta^1\\to X$, and it can be read as an arrow from $f$ to $f'$: a natural transformation with components $\\alpha$ and $\\beta$.",
-    hints: ["The two long sides are homotopic. Use that.", "Swap in: $\\sigma_3,\\sigma_1$."],
-    win: ["Two triangles now share one long side: a commuting square from $f$ to $f'$."],
-    term: "Commuting square",
-    math: {
-      say: "A square in $C$ is a map $\\Delta^1\\times\\Delta^1\\to C$: two 2-simplices $(f,\\beta;d)$ and $(\\alpha,f';d)$ sharing the diagonal $d$. It is an edge $f\\to f'$ of $\\mathrm{Fun}(\\Delta^1,C)$.",
-      proof: "Transport $(f,\\beta;d)$ along the homotopy $d\\simeq d'$ to get $(f,\\beta;d')$, which shares its diagonal with $\\sigma_2$."
-    }
-  },
-
-  moveacross: {
-    title: "Moving an isomorphism across",
-    bullets: ["Given $\\sigma_2=(\\alpha,p\\,;\\,q)$, with $\\bar\\alpha$ undoing $\\alpha$ by $\\sigma_1$.", "Prove $(\\bar\\alpha,q\\,;\\,p)$ exists."],
-    explain: "In school algebra $\\alpha p=q$ gives $p=\\alpha^{-1}q$: you divide both sides by $\\alpha$. The same holds here, but it is a proof and not a rule. Take the path $\\bar\\alpha,\\alpha,p$, with corners $a',a,a',c$. Its first two steps cancel against $1_{a'}$ by $\\sigma_1$, and the degenerate triangle $s_0p$ fills the face $d_1$. That leaves one face open: $d_2$, which is exactly $(\\bar\\alpha,q\\,;\\,p)$. Afterwards you own <b>Divide</b>, which does this on either side in one click.",
-    hints: ["Use a path that starts by undoing $\\alpha$.", "Tetrahedron: path $\\bar\\alpha,\\alpha,p$; $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=s_0p$. Fill."],
-    win: ["An isomorphism can be moved across, like dividing. New tool: Divide."],
-    term: "Dividing by an isomorphism",
-    math: {
-      say: "If $(\\bar\\alpha,\\alpha;1_{a'})$ is a 2-simplex, so $\\bar\\alpha$ undoes $\\alpha$, and $(\\alpha,p;q)$ is a 2-simplex, there is a 2-simplex $(\\bar\\alpha,q;p)$: left multiplication by an isomorphism is invertible up to homotopy.",
-      proof: "Fill $\\Lambda^3_2$ on $(a',a,a',c)$ with $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=s_0p$; the new face $d_2$ is $(\\bar\\alpha,q;p)$."
-    }
-  },
-
-  acrossagain: {
-    title: "The other side",
-    bullets: ["Given $\\sigma_3=(p,\\beta\\,;\\,q)$, $q'\\simeq q$ by $\\sigma_4$, and $\\bar\\beta$ undoing $\\beta$.", "Prove $(q',\\bar\\beta\\,;\\,p)$ exists."],
-    explain: "Divide also works from the right: if $\\sigma_3=(p,\\beta\\,;\\,q)$ and $\\bar\\beta$ undoes $\\beta$, then $(q,\\bar\\beta\\,;\\,p)$ exists. Here the fact you want is stated for $q'$ and not for $q$, so one more step carries the result along the homotopy $q'\\simeq q$. The two tools combine: Divide gives the triangle for $q$, and a tetrahedron on the path $q',1_{b'},\\bar\\beta$ moves it to $q'$. Tools you proved earlier combine freely with new ones.",
-    hints: ["Divide first. Then carry the result from $q$ to $q'$.", "Divide: $\\sigma_1,\\sigma_3$. Tetrahedron: path $q',1_{b'},\\bar\\beta$; $d_3=\\sigma_4$, $d_0=s_0\\bar\\beta$, $d_1=\\sigma_5$. Fill."],
-    win: ["Dividing works on the right as well."],
-    term: "Right division",
-    math: {
-      say: "Given $(\\beta,\\bar\\beta;1_b)$ and a 2-simplex $(p,\\beta;q)$ there is a 2-simplex $(q,\\bar\\beta;p)$, and 2-simplices transport along homotopies of any edge.",
-      proof: "Fill $\\Lambda^3_1$ on $(a,b,b',b)$ with $(p,\\beta;q)$, $(\\beta,\\bar\\beta;1_b)$, $s_1p$; then $\\Lambda^3_2$ on $(a,b',b',b)$ transports along $q'\\simeq q$."
-    }
-  },
-
-  sqpaste: {
-    title: "Pasting squares",
-    bullets: ["Two commuting squares, one on top of the other.", "Prove the tall outer square commutes."],
-    explain: "Squares are arrows between arrows, so they should compose: a square from $f$ to $f'$ stacked on a square from $f'$ to $f''$ gives one from $f$ to $f''$. Its sides are the composites $A$ and $B$. Pick one way round the tall square and build its diagonal: compose $f$ with $B$. Then walk that diagonal across the picture, one tetrahedron at a time. Each tetrahedron trades a triangle you know for its neighbour, and three trades reach the other side.",
-    hints: ["Build the diagonal $f$ with $B$, then move it left tetrahedron by tetrahedron.", "Compose: $f$, $B$. Tetrahedra, paths: $f,\\beta,\\beta'$; $\\alpha,f',\\beta'$; $\\alpha,\\alpha',f''$."],
-    win: ["Commuting squares paste: arrows between arrows compose."],
-    term: "Pasting squares",
-    math: {
-      say: "$\\mathrm{Fun}(\\Delta^1,C)$ is a quasi-category when $C$ is: two composable squares have a composite. The prism $\\Delta^1\\times\\Delta^2$ is a union of three 3-simplices, each filled by an inner horn.",
-      proof: "With $D$ the composite of $(f,B)$: fill $\\Lambda^3_1$ on $(a,b,b',b'')$, $\\Lambda^3_2$ on $(a,a',b',b'')$, $\\Lambda^3_1$ on $(a,a',a'',b'')$; the last face is $(A,f'';D)$."
-    }
-  },
-
-  isocomp: {
-    title: "Isomorphisms compose",
-    bullets: ["Given isomorphisms $f,g$ with inverses, and $\\sigma_5=(f,g\\,;\\,x)$.", "Construct an arrow undoing $x$ on both sides."],
-    explain: "An <b>isomorphism</b> is an arrow with a left and a right inverse up to homotopy. If $f$ and $g$ are isomorphisms, a composite $x$ of them should be one too, and as with socks and shoes its inverse should be a composite $y$ of $\\bar g$ and $\\bar f$. Build that candidate, then prove both halves. Each half has the same shape: Divide cancels one arrow against its inverse, and a tetrahedron cancels the other. Not every arrow pointing backwards is the inverse you need.",
-    hints: ["The inverse composes $\\bar g$ and $\\bar f$. Each side: Divide, then a tetrahedron.", "Compose: $\\bar g$, $\\bar f$. Divide: $\\sigma_3,\\sigma_5$. Tetrahedron: path $x,\\bar g,\\bar f$. Divide: $\\sigma_2,\\sigma_6$. Tetrahedron: path $y,f,g$."],
-    win: ["A composite of isomorphisms is an isomorphism."],
-    term: "Isomorphisms compose",
-    math: {
-      say: "If the spine of a simplex lands in the equivalences, so does every edge: for isomorphisms $f,g$ with inverses $\\bar f,\\bar g$, any composite $x$ of $(f,g)$ has a two-sided inverse, a composite $y$ of $(\\bar g,\\bar f)$.",
-      proof: "From $(f,g;x)$ get $(x,\\bar g;f)$; fill $\\Lambda^3_2$ on $(a,c,b,a)$ for $(x,y;1_a)$. From $(\\bar g,\\bar f;y)$ get $(y,f;\\bar g)$; fill $\\Lambda^3_2$ on $(c,a,b,c)$."
-    }
-  },
-
-  natiso: {
-    title: "Invertible, piece by piece",
-    bullets: ["A commuting square from $f$ to $f'$ whose sides $\\alpha,\\beta$ are isomorphisms.", "Construct the square going back, with sides $\\bar\\alpha$ and $\\bar\\beta$."],
-    explain: "A <b>natural transformation</b> is a family of arrows making squares commute; here it is a single square with sides $\\alpha$ and $\\beta$. The theorem is that if every side is an isomorphism, the whole transformation is invertible: the inverses $\\bar\\alpha,\\bar\\beta$ fit into a commuting square going back. Pick the diagonal of the return square, then show both ways round reach it. Divide moves $\\alpha$ and $\\beta$ across, and one tetrahedron joins the two halves.",
-    hints: ["Take the diagonal $\\bar\\alpha$ with $f$. Divide twice, with a tetrahedron between.", "Compose: $\\bar\\alpha$, $f$. Divide: $\\sigma_1,\\sigma_4$. Tetrahedron: path $\\bar\\alpha,f,\\beta$. Divide: $\\sigma_2,\\sigma_9$."],
-    win: ["Invertible sides give an invertible square."],
-    term: "Natural isomorphism",
-    math: {
-      say: "Theorem: a natural transformation is an equivalence in $\\mathrm{Fun}(K,C)$ iff each component is an equivalence in $C$, i.e. $\\mathrm{Fun}(K,C)\\to\\mathrm{Fun}(\\mathrm{sk}_0K,C)$ is conservative. This level is the case $K=\\Delta^1$.",
-      proof: "From $(\\alpha,f';d)$ get $(\\bar\\alpha,d;f')$; fill $\\Lambda^3_1$ on $(a',a,b,b')$; dividing by $\\beta$ completes the return square."
-    }
-  },
-
-  /* ---------------- World 12: Sandbox ---------------- */
-
-  sandbox: {
-    title: "Sandbox",
-    bullets: ["Every tool is unlocked.", "There is no goal. Undo is always available."],
-    explain: "Everything you have learnt is available: Compose, Solve, Tetrahedron, the theorem tools, Draw arrow, Glue triangle, Peel and Fill in, with the Kan option on, so that every horn can be filled. Try constructing an inverse, relating two composites, or building a sphere. A construction that does not work out costs nothing, since Undo restores the previous state. The Facts panel lists the degenerate triangles as well, so you can use $s_0f$ and $s_1f$ in a tetrahedron whenever it needs one.",
-    hints: ["Compose two arrows.", "Compose two arrows. Tetrahedron on a path of three."],
-    win: [],
-    term: "Simplicial set",
-    math: {
-      say: "A simplicial set is a functor $\\Delta^{op}\\to\\mathrm{Set}$. Here you build finite ones by hand: add vertices, edges and 2-cells, fill horns, and take skeleta.",
-      proof: ""
+  /* ---------------- First level: the interface ---------------- */
+
+  welcome: {
+    title: "A triangle",
+    bullets: ["Here is your first <b>simplicial set</b>: three vertices, three arrows and one filled triangle. The <b>Goal</b> panel on the right says what to do, and the <b>Facts</b> panel lists everything the board contains, as cards you can tap.", "Tap the card $\sigma_1$."],
+    explain: "The board on the left is a picture, and the Facts list on the right is how you answer, because every tool in the game asks you to tap facts or arrows. Right now there is one fact, the shaded triangle, which the list writes as $\sigma_1=(f,g\,;\,x)$: walk $f$, then $g$, and $x$ is the shortcut. Tap that card and you have finished your first level, which is about as hard as this game will ever be, so enjoy it.",
+    hints: ["The Facts list is on the right, below the goal.", "Tap the card $\sigma_1$."],
+    win: ["Press Enter to continue."],
+    term: "Triangle",
+    math: {
+      say: "A simplicial set is a collection of simplices glued along faces. Here it is the single 2-simplex $\sigma_1$ on three vertices, and the facts are the non-degenerate simplices of dimension two.",
+      proof: "$\sigma_1$ exists."
     }
   },
 
@@ -1043,8 +219,8 @@ HC.Text = {
   faces: {
     title: "Reading a triangle",
     bullets: ["Four triangles are drawn on four vertices.", "Tap the triangle whose long side $d_1$ is $y$."],
-    explain: "A triangle $\\sigma$ has three faces, all of them arrows. The face $d_2\\sigma$ joins corners $0$ and $1$ (the first leg), $d_0\\sigma$ joins corners $1$ and $2$ (the second leg), and $d_1\\sigma$ joins corners $0$ and $2$ (the long side). The index names the corner the face omits: $d_1$ omits the middle corner, so it is the arrow that skips it. The game writes $\\sigma=(d_2\\sigma,\\,d_0\\sigma\\,;\\,d_1\\sigma)$, so $(f,g\\,;\\,x)$ is the triangle with legs $f,g$ and long side $x$. Every triangle in the Facts list is shown in this form.",
-    hints: ["Read the entry after the semicolon.", "Tap $\\sigma_2$, whose boundary ends in $y$."],
+    explain: "Every triangle on the board has corners $0,1,2$ and three sides. The first leg $d_2$ runs from corner $0$ to $1$, the second leg $d_0$ from $1$ to $2$, and the long side $d_1$ goes straight from $0$ to $2$. Each face is named after the corner it skips, so $d_1$ is the side that skips the middle. The Facts list writes a triangle as $(d_2,\\,d_0\\,;\\,d_1)$: legs before the semicolon, long side after it. The four triangles here are $\\sigma_1=(f,g\\,;\\,x)$, $\\sigma_2=(g,h\\,;\\,y)$, $\\sigma_3=(x,h\\,;\\,z)$ and $\\sigma_4=(f,y\\,;\\,z)$, and exactly one of them has $y$ after the semicolon.",
+    hints: ["Look at what comes after the semicolon in each entry.", "Tap $\\sigma_2=(g,h\\,;\\,y)$."],
     win: ["$d_1\\sigma_2=y$: the long side is the entry after the semicolon."],
     term: "Faces of a triangle",
     math: {
@@ -1055,9 +231,9 @@ HC.Text = {
 
   freebies: {
     title: "Degenerate triangles",
-    bullets: ["An arrow $f:a\\to b$ is given.", "Tap the degenerate triangles $(f,1_b\\,;\\,f)$ and $(1_a,f\\,;\\,f)$."],
-    explain: "Every vertex $a$ has a degenerate arrow $1_a$, and every arrow $f:a\\to b$ has two degenerate triangles: $s_0f=(1_a,f\\,;\\,f)$ and $s_1f=(f,1_b\\,;\\,f)$. They exist in every simplicial set without being made, which is why the Facts panel lists them separately as degenerate triangles. The subscript says which corner of $f$ is repeated: $s_0f$ repeats the start of $f$, and $s_1f$ repeats its end. You will use them whenever a proof needs an identity to take part, and from now on every vertex on the board shows its faint loop $1_a$.",
-    hints: ["Read the legs: look for the one that is $1_b$.", "Tap $s_1f$ first, then $s_0f$."],
+    bullets: ["An arrow $f:a\\to b$ is given.", "Tap $(f,1_b\\,;\\,f)$, then $(1_a,f\\,;\\,f)$."],
+    explain: "The board shows one arrow $f:a\\to b$ and no triangles, yet the Facts panel already lists two under Degenerate triangles. Every vertex $a$ carries an identity arrow $1_a$, drawn as a faint loop, and every arrow $f$ carries two flat triangles. $s_0f=(1_a,f\\,;\\,f)$ says: stay at $a$, then take $f$, and you have taken $f$. $s_1f=(f,1_b\\,;\\,f)$ says: take $f$, then stay at $b$. They exist in every simplicial set because they are $f$ itself with one corner repeated, $s_0$ repeating the start and $s_1$ the end. You never build them, and you will use them constantly.",
+    hints: ["Find the degenerate triangle whose second leg is $1_b$.", "Tap $s_1f$, then $s_0f$."],
     win: ["$s_1f=(f,1_b\\,;\\,f)$ and $s_0f=(1_a,f\\,;\\,f)$ exist for every arrow $f$."],
     term: "Degenerate triangles",
     math: {
@@ -1068,14 +244,868 @@ HC.Text = {
 
   whichface: {
     title: "Repeated corners",
-    bullets: ["The tetrahedron has corners $0,1,2,3$ over the vertices $a,b,b,c$.", "Tap its degenerate face $d_3$."],
-    explain: "A tetrahedron has four corners, but they need not lie over four different vertices. Here corners $1$ and $2$ both lie over $b$; they are different corners, joined by the arrow $12=1_b$. The face $d_i$ omits corner $i$. Face $d_3$ omits the corner over $c$ and keeps the corners over $a,b,b$: its legs are $f$ and $1_b$ and its long side is $f$, which is exactly the degenerate triangle $s_1f$. Face $d_0$ is degenerate in the same way, with legs $1_b,g$. The other two faces, $d_1$ and $d_2$, are the real triangle $\\sigma_1$.",
-    hints: ["Face $d_3$ omits the last corner.", "Tap $s_1f$, the degenerate triangle with legs $f$ and $1_b$."],
-    win: ["$d_3=s_1f$: a repeated corner makes a degenerate face."],
+    bullets: ["A tetrahedron has corners $0,1,2,3$ over the vertices $a,b,b,c$.", "Tap its face $d_3$, which is degenerate."],
+    explain: "A tetrahedron has four corners, but two of them may sit on the same vertex. Here corners $1$ and $2$ both sit on $b$, and the edge between them is $1_b$. The face $d_3$ skips corner $3$, so it keeps the corners over $a,b,b$: its first leg is $f$, its second leg is $1_b$, and its long side runs from $a$ to $b$, which is $f$ again. That is the degenerate triangle $s_1f=(f,1_b\\,;\\,f)$. The face $d_0$ is the other free one, $s_0g=(1_b,g\\,;\\,g)$, and the two middle faces $d_1$ and $d_2$ are both the real triangle $\\sigma_1=(f,g\\,;\\,h)$.",
+    hints: ["$d_3$ is the face that skips the corner over $c$.", "Tap $s_1f$."],
+    win: ["$d_3=s_1f$: a repeated corner gives a degenerate face."],
     term: "Degenerate faces",
     math: {
       say: "The tetrahedron $\\tau=s_1\\sigma$ has $d_3\\tau=s_1d_2\\sigma=s_1f$ and $d_0\\tau=s_0d_0\\sigma=s_0g$ degenerate, while $d_1\\tau=d_2\\tau=\\sigma$.",
       proof: "$\\tau=s_1\\sigma_1$, so $d_3\\tau=s_1d_2\\sigma_1=s_1f$."
+    }
+  },
+
+  /* ---------------- World 2: Composition ---------------- */
+
+  compose: {
+    title: "Constructing a composite",
+    bullets: ["Given arrows $f:a\\to b$ and $g:b\\to c$.", "Construct a triangle $(f,g\\,;\\,?)$."],
+    explain: "You can walk from $a$ to $b$ along $f$ and then on to $c$ along $g$. The two arrows meet at $b$ and form the horn $\\Lambda^2_1$: a triangle with its long side missing. Compose fills that horn. It draws a new arrow $x:a\\to c$ and the triangle $\\sigma_1=(f,g\\,;\\,x)$ on all three sides. The triangle is what makes $x$ a composite of $f$ and $g$; the arrow alone would just be some arrow from $a$ to $c$. The question mark in the goal stands for whatever long side you end up with.",
+    hints: ["Compose wants two arrows where the first ends where the second starts.", "Compose: $f$, then $g$."],
+    win: ["$\\sigma_1=(f,g\\,;\\,x)$ fills the horn: $x$ is a composite of $f$ and $g$."],
+    term: "Composite",
+    math: {
+      say: "A 2-simplex $\\sigma$ of $X$ with $d_2\\sigma=f$, $d_0\\sigma=g$, $d_1\\sigma=h$ witnesses $h$ as a composite of $f$ and $g$. In a quasi-category every inner horn $\\Lambda^2_1\\to X$ extends to such a $\\sigma$.",
+      proof: "Fill $\\Lambda^2_1\\to X$ on $(f,g)$: the filler $\\sigma_1$ has $d_1\\sigma_1=x$."
+    }
+  },
+
+  chain: {
+    title: "Composing a composite",
+    bullets: ["Given arrows $f:a\\to b$, $g:b\\to c$, $h:c\\to d$ in a row.", "Construct $(f,g\\,;\\,x)$, then $(x,h\\,;\\,?)$."],
+    explain: "A composite is an ordinary arrow once it exists, so you can compose it again. First fill the horn on $f,g$: you get $x:a\\to c$ and $\\sigma_1=(f,g\\,;\\,x)$. Now $x$ ends at $c$, where $h$ starts, so $x$ and $h$ form a new horn $\\Lambda^2_1$. Filling it gives $y:a\\to d$ with $\\sigma_2=(x,h\\,;\\,y)$. You have reached $d$ by bracketing $(f,g)$ first. The other bracketing, $g$ with $h$ first, would give different arrows, and the next world relates the two.",
+    hints: ["Compose two neighbours, then compose the result with the third arrow.", "Compose: $f$, $g$. Compose: $x$, $h$."],
+    win: ["$\\sigma_2=(x,h\\,;\\,y)$: $y$ is a composite of $x$ and $h$."],
+    term: "Iterated composite",
+    math: {
+      say: "In a quasi-category every inner horn $\\Lambda^n_i\\to X$ ($0<i<n$) has a filler. Composition therefore iterates: composable $f,g,h$ give a composite $x$ of $(f,g)$, then a composite $y$ of $(x,h)$.",
+      proof: "Fill $\\Lambda^2_1$ on $(f,g)$ for $\\sigma_1$, then again on $(x,h)$ for $\\sigma_2$."
+    }
+  },
+
+  twoways: {
+    title: "Two composites of one pair",
+    bullets: ["Given arrows $f:a\\to b$ and $g:b\\to c$.", "Construct two triangles $(f,g\\,;\\,x)$ and $(f,g\\,;\\,y)$."],
+    explain: "Fill the same horn twice. Compose $f$ and $g$ once and you get $x$ with $\\sigma_1=(f,g\\,;\\,x)$; do it again and you get a second arrow $y$ with $\\sigma_2=(f,g\\,;\\,y)$. A filler is a choice, so nothing forces the second answer to equal the first, and the game always draws a new one. Both $x$ and $y$ are composites of $f$ and $g$, with equal standing. For now nothing on the board connects $x$ to $y$; the third level of the next world builds a triangle between them.",
+    hints: ["Use Compose on the pair $f,g$ a second time.", "Compose: $f$, $g$. Compose: $f$, $g$ again."],
+    win: ["$\\sigma_1=(f,g\\,;\\,x)$ and $\\sigma_2=(f,g\\,;\\,y)$: one pair, two composites."],
+    term: "Non-unique composites",
+    math: {
+      say: "A filler of $\\Lambda^2_1\\to X$ need not be unique: a composite of $f$ and $g$ is any edge $h$ carrying a 2-simplex with boundary $(f,g;h)$, and different fillers can have different $d_1$.",
+      proof: "Fill $\\Lambda^2_1$ on $(f,g)$ twice, choosing fillers $\\sigma_1\\ne\\sigma_2$ with $d_1\\sigma_1=x\\ne y=d_1\\sigma_2$."
+    }
+  },
+
+  /* ---------------- World 3: Tetrahedra ---------------- */
+
+  tetra: {
+    title: "A fourth face",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,x)$, $\\sigma_2=(g,h\\,;\\,y)$, $\\sigma_3=(x,h\\,;\\,z)$.", "Prove a triangle $(f,y\\,;\\,z)$ exists."],
+    explain: "Put a tetrahedron on the path $f,g,h$, with corners $0,1,2,3$ over $a,b,c,d$. Its faces are $d_3=(f,g\\,;\\,x)$, $d_0=(g,h\\,;\\,y)$, $d_1=(x,h\\,;\\,z)$ and $d_2=(f,y\\,;\\,z)$, where $d_i$ skips corner $i$. The first three are $\\sigma_1,\\sigma_2,\\sigma_3$, so only $d_2$ is missing. Three faces with $d_2$ missing form the inner horn $\\Lambda^3_2$, and Tetrahedron fills it. The filler is a solid whose fourth face is $(f,y\\,;\\,z)$, so $z$ is a composite of $f$ and $y$ as well as of $x$ and $h$.",
+    hints: ["Tetrahedron takes three triangles that are faces of one solid.", "Tetrahedron: path $f,g,h$; $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=\\sigma_3$. Fill."],
+    win: ["The fourth face is $\\sigma_4=(f,y\\,;\\,z)$."],
+    term: "Inner horn $\\Lambda^3_2$",
+    math: {
+      say: "A 3-simplex has faces $d_0,\\dots,d_3$. Three of them forming an inner horn $\\Lambda^3_1$ or $\\Lambda^3_2$ extend, in a quasi-category, to a 3-simplex $\\Delta^3\\to X$, whose remaining face is a new 2-simplex.",
+      proof: "Fill $\\Lambda^3_2\\to X$ on $(a,b,c,d)$ with faces $d_3=\\sigma_1,d_0=\\sigma_2,d_1=\\sigma_3$; $d_2$ is the target."
+    }
+  },
+
+  assoc: {
+    title: "Two bracketings",
+    bullets: ["Given arrows $f,g,h$ end to end.", "Construct composites $x$ of $f,g$, $y$ of $g,h$, $z$ of $x,h$, and prove $(f,y\\,;\\,z)$."],
+    explain: "Three arrows in a row can be composed in two orders: $f$ with $g$ first, or $g$ with $h$ first. Build both starts: $x$ from $f,g$ with $\\sigma_1$, and $y$ from $g,h$ with $\\sigma_2$. Then finish one bracketing with $z$ from $x,h$ and $\\sigma_3=(x,h\\,;\\,z)$. Now you are in the previous level: $\\sigma_1,\\sigma_2,\\sigma_3$ are the faces $d_3,d_0,d_1$ of the tetrahedron on $f,g,h$, and its missing face $d_2=(f,y\\,;\\,z)$ says that $z$ also finishes the other bracketing. Associativity holds in the form of a triangle.",
+    hints: ["Make three composites, then hand them to one tetrahedron.", "Compose: $f$, $g$. Compose: $g$, $h$. Compose: $x$, $h$. Tetrahedron: path $f,g,h$; $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=\\sigma_3$. Fill."],
+    win: ["$\\sigma_4=(f,y\\,;\\,z)$: $z$ is a composite of $x,h$ and also of $f,y$."],
+    term: "Associativity",
+    math: {
+      say: "Composites $x$ of $(f,g)$, $y$ of $(g,h)$ and $z$ of $(x,h)$ give an inner horn $\\Lambda^3_2$. Its filler yields a 2-simplex $(f,y;z)$: $z$ is also a composite of $f$ and $y$. Associativity holds up to homotopy.",
+      proof: "Fill $\\Lambda^3_2$ on $(a,b,c,d)$ with $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=\\sigma_3$; $d_2=\\sigma_4=(f,y;z)$."
+    }
+  },
+
+  unique: {
+    title: "Comparing two composites",
+    bullets: ["Construct two composites $x$ and $y$ of $f$ and $g$.", "Prove a triangle $(x,1_c\\,;\\,y)$ exists, which says $x\\simeq y$."],
+    explain: "Two arrows $x,y:a\\to c$ are homotopic, $x\\simeq y$, when there is a triangle $(x,1_c\\,;\\,y)$; the note before this level explains the picture behind that. Compose $f,g$ twice to get $\\sigma_1=(f,g\\,;\\,x)$ and $\\sigma_2=(f,g\\,;\\,y)$. Then take the tetrahedron on the path $f,g,1_c$, with corners over $a,b,c,c$. Its face $d_3$ is $\\sigma_1$, its face $d_2$ is $\\sigma_2$, and its face $d_0=(g,1_c\\,;\\,g)$ is the degenerate triangle $s_1g$, which exists because $g$ does. The missing face is $d_1=(x,1_c\\,;\\,y)$, an inner horn $\\Lambda^3_1$.",
+    hints: ["End the path with the identity at $c$.", "Compose: $f$, $g$. Compose: $f$, $g$. Tetrahedron: path $f,g,1_c$; $d_3=\\sigma_1$, $d_2=\\sigma_2$ ($d_0=s_1g$ is degenerate). Fill."],
+    win: ["$\\sigma_3=(x,1_c\\,;\\,y)$, so $x\\simeq y$. New tool: Same, which does this for any two composites of one pair."],
+    term: "Homotopy",
+    math: {
+      say: "Edges $x,y:a\\to c$ are homotopic if some 2-simplex has boundary $(x,1_c;y)$. Any two composites $x,y$ of $(f,g)$ are homotopic: the horn $\\Lambda^3_1$ with faces $\\sigma_1,\\sigma_2,s_1g$ fills.",
+      proof: "Fill $\\Lambda^3_1$ on $(a,b,c,c)$ with $d_3=\\sigma_1$, $d_2=\\sigma_2$, $d_0=s_1g$; $d_1$ is $(x,1_c;y)$."
+    }
+  },
+
+  unit: {
+    title: "Composing with an identity",
+    bullets: ["Given one arrow $f:a\\to b$.", "Construct composites $x$ of $1_a,f$ and $y$ of $f,1_b$; prove $x\\simeq f$ and $y\\simeq f$."],
+    explain: "Standing still at $a$ and then taking $f$ ought to be the same trip as $f$. Compose $1_a$ with $f$ to get $x$ and $\\sigma_1=(1_a,f\\,;\\,x)$. The tetrahedron on the path $1_a,f,1_b$ has corners over $a,a,b,b$, face $d_3=\\sigma_1$, and two free faces: $d_2=s_0f=(1_a,f\\,;\\,f)$ and $d_0=s_1f=(f,1_b\\,;\\,f)$. Its missing face is $d_1=(x,1_b\\,;\\,f)$, which says $x\\simeq f$. On the right, compose $f$ with $1_b$ to get $y$ and $\\sigma_3$, and use the path $f,1_b,1_b$ with free faces $s_1f$ and $s_01_b=(1_b,1_b\\,;\\,1_b)$.",
+    hints: ["Each tetrahedron gets two of its faces for free.", "Compose: $1_a$, $f$. Tetrahedron: path $1_a,f,1_b$; $d_3=\\sigma_1$, $d_0=s_1f$, $d_2=s_0f$. Compose: $f$, $1_b$. Tetrahedron: path $f,1_b,1_b$; $d_3=\\sigma_3$, $d_0=s_01_b$, $d_2=s_1f$."],
+    win: ["$\\sigma_2=(x,1_b\\,;\\,f)$ and $\\sigma_4=(y,1_b\\,;\\,f)$: composing with an identity changes $f$ only up to homotopy."],
+    term: "Unit law",
+    math: {
+      say: "Unit laws up to homotopy: a composite $x$ of $(1_a,f)$ and a composite $y$ of $(f,1_b)$ satisfy $x\\simeq f$ and $y\\simeq f$, by inner horns $\\Lambda^3_1$ with degenerate faces.",
+      proof: "Fill $\\Lambda^3_1$ on $(a,a,b,b)$ with $d_3=\\sigma_1$, $d_0=s_1f$, $d_2=s_0f$; $d_1=(x,1_b;f)$. Fill $\\Lambda^3_1$ on $(a,b,b,b)$ with $d_3=\\sigma_3$, $d_0=s_01_b$, $d_2=s_1f$; $d_1=(y,1_b;f)$."
+    }
+  },
+
+  bracket: {
+    title: "Comparing bracketings",
+    bullets: ["Given $\\sigma_1=(g,h\\,;\\,y)$ and $\\sigma_3=(f,y\\,;\\,w)$.", "Construct $x$ from $f,g$ and $z$ from $x,h$; prove $z\\simeq w$."],
+    explain: "Someone has already composed $f,g,h$ with the right-hand bracket: $y$ from $g,h$ by $\\sigma_1$, then $w$ from $f,y$ by $\\sigma_3$. You go the other way. Compose $f,g$ to get $x$ ($\\sigma_4$) and then $x,h$ to get $z$ ($\\sigma_5$). The tetrahedron on $f,g,h$ with $d_3=\\sigma_4$, $d_0=\\sigma_1$, $d_1=\\sigma_5$ produces $\\sigma_6=(f,y\\,;\\,z)$. Now $z$ and $w$ are two composites of the same pair $f,y$, and Same, which you earned two levels ago, turns that into $z\\simeq w$. The triangle $\\sigma_2$ on $y'$ is there to tempt you; it is a composite of $g,h$ that nothing else uses.",
+    hints: ["Get $z$ and $w$ onto the same pair of legs, then compare them.", "Compose: $f$, $g$. Compose: $x$, $h$. Tetrahedron: path $f,g,h$; $d_3=\\sigma_4$, $d_0=\\sigma_1$, $d_1=\\sigma_5$. Fill. Same: $\\sigma_6$, $\\sigma_3$."],
+    win: ["$\\sigma_7=(z,1_d\\,;\\,w)$: the two bracketings give homotopic arrows."],
+    term: "Coherence of bracketing",
+    math: {
+      say: "Both $z$ and $w$ are composites of $(f,y)$ once the associativity 2-simplex $(f,y;z)$ exists. Any two composites of the same pair are homotopic, so $z\\simeq w$, using two inner horns.",
+      proof: "Fill $\\Lambda^3_2$ on $(a,b,c,d)$ to get $(f,y;z)$; then fill $\\Lambda^3_1$ on $(a,b,d,d)$ with $\\sigma_6,\\sigma_3,s_1y$ to get $(z,1_d;w)$."
+    }
+  },
+
+  /* ---------------- World 4: Homotopy ---------------- */
+
+  symmetric: {
+    title: "Symmetry of homotopy",
+    bullets: ["Given $\\sigma_1=(f,1_b\\,;\\,g)$, so $f\\simeq g$.", "Prove $(g,1_b\\,;\\,f)$, so $g\\simeq f$."],
+    explain: "The triangle $\\sigma_1$ deforms $f$ into $g$, and you want a triangle that deforms $g$ back into $f$. Use the tetrahedron on the path $f,1_b,1_b$. Its corners sit over $a,b,b,b$, so three of them share the vertex $b$; the unfold toggle draws them as separate copies if the picture is too flat. The faces are $d_3=\\sigma_1$, $d_2=s_1f=(f,1_b\\,;\\,f)$, free because $f$ exists, and $d_0=s_01_b=(1_b,1_b\\,;\\,1_b)$, free because $1_b$ exists. The missing face $d_1=(g,1_b\\,;\\,f)$ makes this the inner horn $\\Lambda^3_1$.",
+    hints: ["Two of the three faces you need are degenerate triangles.", "Tetrahedron: path $f,1_b,1_b$; $d_3=\\sigma_1$, $d_2=s_1f$, $d_0=s_01_b$. Fill."],
+    win: ["$\\sigma_2=(g,1_b\\,;\\,f)$, so $g\\simeq f$. New tool: Flip."],
+    term: "Symmetry of $\\simeq$",
+    math: {
+      say: "Homotopy of edges is symmetric: from $\\sigma$ with boundary $(f,1_b;g)$, the inner horn $\\Lambda^3_1$ with faces $\\sigma$, $s_1f$, $s_0(1_b)$ fills, and $d_1$ has boundary $(g,1_b;f)$.",
+      proof: "Fill $\\Lambda^3_1$ on $(a,b,b,b)$ with $d_3=\\sigma_1$, $d_2=s_1f$, $d_0=s_01_b$; $d_1$ is $g\\simeq f$."
+    }
+  },
+
+  transitive: {
+    title: "Transitivity of homotopy",
+    bullets: ["Given $\\sigma_1=(f,1_b\\,;\\,g)$ and $\\sigma_2=(g,1_b\\,;\\,h)$.", "Prove $(f,1_b\\,;\\,h)$, so $f\\simeq h$."],
+    explain: "Deform $f$ into $g$, then $g$ into $h$, and you should be able to deform $f$ into $h$ in one go. The same tetrahedron as before, on the path $f,1_b,1_b$, does it with its faces assigned differently. Put $\\sigma_1=(f,1_b\\,;\\,g)$ as $d_3$ and $\\sigma_2=(g,1_b\\,;\\,h)$ as $d_1$; the face $d_0=s_01_b$ is free. The missing face is $d_2=(f,1_b\\,;\\,h)$, so this is the inner horn $\\Lambda^3_2$. With symmetry from the last level and reflexivity from the degenerate triangle $s_1f=(f,1_b\\,;\\,f)$, homotopy is now an equivalence relation on arrows $a\\to b$.",
+    hints: ["Same path as the last level; put the second homotopy in a different slot.", "Tetrahedron: path $f,1_b,1_b$; $d_3=\\sigma_1$, $d_1=\\sigma_2$ ($d_0=s_01_b$ is degenerate). Fill."],
+    win: ["$\\sigma_3=(f,1_b\\,;\\,h)$, so $f\\simeq h$. New tool: Link."],
+    term: "Transitivity of $\\simeq$",
+    math: {
+      say: "Homotopy is transitive: an inner horn $\\Lambda^3_2$ with faces for $f\\simeq g$, $g\\simeq h$ and $s_0(1_b)$ gives $f\\simeq h$. So homotopy is an equivalence relation, and edges modulo it form the homotopy category $hX$.",
+      proof: "Fill $\\Lambda^3_2$ on $(a,b,b,b)$ with $d_3=\\sigma_1$, $d_1=\\sigma_2$, $d_0=s_01_b$; $d_2$ is $f\\simeq h$."
+    }
+  },
+
+  whisker: {
+    title: "Homotopy and composition",
+    bullets: ["Given $\\sigma_1=(f,1_b\\,;\\,k)$ and $\\sigma_2=(f,g\\,;\\,x)$.", "Prove $(k,g\\,;\\,x)$: $x$ is also a composite of $k$ and $g$."],
+    explain: "If $f$ can be wiggled into $k$, then taking $k$ and then $g$ should still land you on $x$. The tetrahedron on the path $f,1_b,g$ has corners over $a,b,b,c$. Its faces are $d_3=\\sigma_1=(f,1_b\\,;\\,k)$, $d_2=\\sigma_2=(f,g\\,;\\,x)$, and $d_0=s_0g=(1_b,g\\,;\\,g)$, the degenerate triangle that stays at $b$ and then takes $g$. The missing face is $d_1=(k,g\\,;\\,x)$, the inner horn $\\Lambda^3_1$. The tool you earn, Swap in, replaces any arrow of a triangle by a homotopic one in a single click.",
+    hints: ["Put the identity in the middle of the path.", "Tetrahedron: path $f,1_b,g$; $d_3=\\sigma_1$, $d_2=\\sigma_2$ ($d_0=s_0g$ is degenerate). Fill."],
+    win: ["$\\sigma_3=(k,g\\,;\\,x)$. New tool: Swap in."],
+    term: "Compatibility with composition",
+    math: {
+      say: "If $f\\simeq k$ and $\\sigma$ witnesses $x$ as a composite of $(f,g)$, then $x$ is also a composite of $(k,g)$: the inner horn $\\Lambda^3_1$ on $(a,b,b,c)$ fills.",
+      proof: "Fill $\\Lambda^3_1$ on $(a,b,b,c)$ with $d_3=\\sigma_1$, $d_2=\\sigma_2$, $d_0=s_0g$; $d_1$ is $(k,g;x)$."
+    }
+  },
+
+  swap: {
+    title: "The identity on the other side",
+    bullets: ["Given $\\sigma_1=(f,1_b\\,;\\,g)$.", "Prove a triangle $(1_a,f\\,;\\,g)$ exists."],
+    explain: "The definition puts the identity after the arrow: $(f,1_b\\,;\\,g)$, take $f$ and then stand still. You could just as well stand still first, which gives $(1_a,f\\,;\\,g)$, and this level shows the two versions agree. Use the tetrahedron on $1_a,f,1_b$, with corners over $a,a,b,b$. Two of its faces are free: $d_3=s_0f=(1_a,f\\,;\\,f)$ and $d_0=s_1f=(f,1_b\\,;\\,f)$. The third is $d_1=\\sigma_1$. The missing face is $d_2=(1_a,f\\,;\\,g)$, so the horn is $\\Lambda^3_2$.",
+    hints: ["Two of the three faces are degenerate triangles on $f$.", "Tetrahedron: path $1_a,f,1_b$; $d_3=s_0f$, $d_0=s_1f$, $d_1=\\sigma_1$. Fill."],
+    win: ["$\\sigma_2=(1_a,f\\,;\\,g)$: the identity can stand on either side."],
+    term: "Two-sided homotopy",
+    math: {
+      say: "In a quasi-category a 2-simplex with boundary $(f,1_b;g)$ exists if and only if one with boundary $(1_a,f;g)$ does. This direction uses an inner horn $\\Lambda^3_2$.",
+      proof: "Fill $\\Lambda^3_2$ on $(a,a,b,b)$ with $d_3=s_0f$, $d_0=s_1f$, $d_1=\\sigma_1$; $d_2$ has boundary $(1_a,f;g)$."
+    }
+  },
+
+  relay: {
+    title: "Chains of homotopies",
+    bullets: ["Given $\\sigma_3:x_3\\simeq x_2$, $\\sigma_2:x_2\\simeq x_1$, $\\sigma_1:x_1\\simeq x_0$ and $\\sigma_5=(x_0,h\\,;\\,z)$.", "Prove $(x_3,h\\,;\\,z)$."],
+    explain: "This level has no Tetrahedron, only the three tools you earned. The triangle $\\sigma_5$ has first leg $x_0$, and you want $x_3$ there. Swap in needs a homotopy pointing from the arrow you remove to the arrow you insert, that is $x_0\\simeq x_3$. The given homotopies run the other way, from $x_3$ down to $x_0$. So Link $\\sigma_3$ with $\\sigma_2$ to get $x_3\\simeq x_1$, Link that with $\\sigma_1$ to get $x_3\\simeq x_0$, Flip it to $x_0\\simeq x_3$, and Swap it into $\\sigma_5$. The homotopy $\\sigma_4$ to $x_4$ leads nowhere useful.",
+    hints: ["Chain the three homotopies into one, then turn it around.", "Link: $\\sigma_3,\\sigma_2$. Link: $\\sigma_6,\\sigma_1$. Flip: $\\sigma_7$. Swap in: $\\sigma_8,\\sigma_5$."],
+    win: ["$\\sigma_9=(x_3,h\\,;\\,z)$, after a chain of three homotopies and one flip."],
+    term: "Interchangeability",
+    math: {
+      say: "Homotopic edges are interchangeable in 2-simplices: $x_0\\simeq x_3$ and $(x_0,h;z)$ give $(x_3,h;z)$. Obtaining $x_0\\simeq x_3$ uses transitivity twice and symmetry once.",
+      proof: "Link $\\sigma_3,\\sigma_2$ and $\\sigma_6,\\sigma_1$ (each $\\Lambda^3_2$); Flip $\\sigma_7$ ($\\Lambda^3_1$); Swap in $\\sigma_8$ on $\\sigma_5$ ($\\Lambda^3_1$)."
+    }
+  },
+
+  fourway: {
+    title: "Comparing composites of four arrows",
+    bullets: ["Given $\\sigma_1,\\dots,\\sigma_5$ on the path $f,g,h,i$ from $a$ to $e$.", "Construct $z$ from $x,h$ and $w$ from $z,i$; prove $w\\simeq s$."],
+    explain: "Two composites of the whole path $f,g,h,i$ are on offer. The given one, $s$, comes from $\\sigma_4=(f,u\\,;\\,s)$, where $u$ composes $g$ with $y$ by $\\sigma_3$, and $y$ composes $h,i$ by $\\sigma_2$. You build the other from the left: $z$ from $x,h$ ($\\sigma_6$), then $w$ from $z,i$ ($\\sigma_7$). The tetrahedron on $x,h,i$ with faces $\\sigma_6,\\sigma_2,\\sigma_7$ gives $\\sigma_8=(x,y\\,;\\,w)$. The tetrahedron on $f,g,y$ with $\\sigma_1,\\sigma_3,\\sigma_8$ gives $\\sigma_9=(f,u\\,;\\,w)$. Then $w$ and $s$ are composites of the same pair $f,u$, and Same finishes. The triangle $\\sigma_5$ on $u'$ is a decoy.",
+    hints: ["Two tetrahedra move $w$ onto the legs $f,u$.", "Compose: $x$, $h$. Compose: $z$, $i$. Tetrahedron: path $x,h,i$; $d_3=\\sigma_6$, $d_0=\\sigma_2$, $d_1=\\sigma_7$. Tetrahedron: path $f,g,y$; $d_3=\\sigma_1$, $d_0=\\sigma_3$, $d_1=\\sigma_8$. Same: $\\sigma_9$, $\\sigma_4$."],
+    win: ["$\\sigma_{10}=(w,1_e\\,;\\,s)$: the two composites of four arrows are homotopic."],
+    term: "Higher associativity",
+    math: {
+      say: "Two composites of a chain of four edges are homotopic: two inner horns $\\Lambda^3_2$ produce $(f,u;w)$, and any two composites of $(f,u)$ are homotopic, so $w\\simeq s$.",
+      proof: "Fill $\\Lambda^3_2$ on $(a,c,d,e)$ for $(x,y;w)$, then $\\Lambda^3_2$ on $(a,b,c,e)$ for $(f,u;w)$; apply Same to $\\sigma_9,\\sigma_4$."
+    }
+  },
+
+  /* ---------------- World 5: Undo everything ---------------- */
+
+  undo: {
+    title: "A left inverse",
+    bullets: ["Given an arrow $f:a\\to b$.", "Construct a triangle $(f,?\\,;\\,1_a)$."],
+    explain: "Walk out along $f$ and ask for a way home: an arrow back to $a$ such that the round trip is the same as staying put. In triangle form that is $(f,?\\,;\\,1_a)$, with first leg $f$, long side $1_a$, and the second leg unknown. Two arrows leaving the same vertex form the horn $\\Lambda^2_0$, which is outer because the missing face $d_0$ is at the end of the path. In a Kan complex outer horns fill too. Solve fills it, giving $x:b\\to a$ and $\\sigma_1=(f,x\\,;\\,1_a)$, so $x$ is a left inverse of $f$.",
+    hints: ["Both arrows you need leave the vertex $a$.", "Solve $f\\cdot ?$: pick $f$, then $1_a$ (tap the vertex $a$)."],
+    win: ["$\\sigma_1=(f,x\\,;\\,1_a)$: $x$ is a left inverse of $f$."],
+    term: "Outer horn $\\Lambda^2_0$",
+    math: {
+      say: "A horn $\\Lambda^2_0\\to X$ with edges $f$ and $1_a$ has a filler $\\sigma$ with $d_2\\sigma=f$, $d_1\\sigma=1_a$ in a Kan complex; then $x=d_0\\sigma$ is a left inverse of $f$.",
+      proof: "Fill $\\Lambda^2_0$ on $(f,1_a)$: the filler $\\sigma_1$ has $d_0\\sigma_1=x$."
+    }
+  },
+
+  divide: {
+    title: "A missing first leg",
+    bullets: ["Given $g:b\\to c$ and $h:a\\to c$.", "Construct a triangle $(?,g\\,;\\,h)$."],
+    explain: "This time you know the second leg $g$ and the long side $h$, and you need the first leg: an arrow $a\\to b$ that, followed by $g$, gives $h$. It is like solving $?\\cdot g=h$ for the unknown factor. The arrows $g$ and $h$ both arrive at $c$, and they form the other outer horn, $\\Lambda^2_2$, whose missing face $d_2$ is at the start of the path. In a Kan complex it fills. The second Solve tool gives $x:a\\to b$ and $\\sigma_1=(x,g\\,;\\,h)$.",
+    hints: ["Both arrows end at $c$.", "Solve $?\\cdot g$: pick $g$, then $h$."],
+    win: ["$\\sigma_1=(x,g\\,;\\,h)$: $h$ is a composite of $x$ and $g$."],
+    term: "Outer horn $\\Lambda^2_2$",
+    math: {
+      say: "A horn $\\Lambda^2_2\\to X$ with edges $g:b\\to c$ and $h:a\\to c$ has a filler $\\sigma$ with $d_0\\sigma=g$, $d_1\\sigma=h$ in a Kan complex; $x=d_2\\sigma$ solves $x$ then $g$ gives $h$.",
+      proof: "Fill $\\Lambda^2_2$ on $(g,h)$; the filler $\\sigma_1$ has $d_2\\sigma_1=x$."
+    }
+  },
+
+  inverses: {
+    title: "Inverses on both sides",
+    bullets: ["Given an arrow $f:a\\to b$.", "Construct a left inverse $x$ and a right inverse $y$, and prove $y\\simeq x$."],
+    explain: "Build both inverses: Solve $f\\cdot ?$ on $f,1_a$ gives $x$ with $\\sigma_1=(f,x\\,;\\,1_a)$, and Solve $?\\cdot g$ on $f,1_b$ gives $y$ with $\\sigma_2=(y,f\\,;\\,1_b)$. Two different horns made them, so they are different arrows, and the question is whether they are homotopic. Take the tetrahedron on the path $y,f,x$, with corners over $b,a,b,a$. Its faces are $d_3=\\sigma_2$, $d_0=\\sigma_1$ and $d_1=s_0x=(1_b,x\\,;\\,x)$, which is free. The missing face is $d_2=(y,1_a\\,;\\,x)$. An arrow with a left and a right inverse is an <b>isomorphism</b>.",
+    hints: ["One Solve for each side, then one tetrahedron through all three arrows.", "Solve $f\\cdot ?$: $f$, $1_a$. Solve $?\\cdot g$: $f$, $1_b$. Tetrahedron: path $y,f,x$; $d_3=\\sigma_2$, $d_0=\\sigma_1$ ($d_1=s_0x$ is degenerate). Fill."],
+    win: ["$\\sigma_3=(y,1_a\\,;\\,x)$: the right and left inverses are homotopic, and $f$ is an isomorphism."],
+    term: "Isomorphism",
+    math: {
+      say: "In a Kan complex an edge $f$ has a left inverse $x$ ($\\Lambda^2_0$) and a right inverse $y$ ($\\Lambda^2_2$), and $y\\simeq x$ by an inner horn $\\Lambda^3_2$. So every edge is an equivalence and $X$ is an $\\infty$-groupoid.",
+      proof: "Fill $\\Lambda^3_2$ on $(b,a,b,a)$ with $d_3=\\sigma_2$, $d_0=\\sigma_1$, $d_1=s_0x$; $d_2$ is $y\\simeq x$."
+    }
+  },
+
+  cancel: {
+    title: "Cancelling an arrow",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,p)$, $\\sigma_2=(k,g\\,;\\,q)$, $\\sigma_3=(p,h\\,;\\,x)$, $\\sigma_4=(q,h\\,;\\,x)$.", "Prove $f\\simeq k$."],
+    explain: "Two journeys from $a$ to $d$: $f,g,h$ and $k,g,h$, and both end at the same composite $x$. Peel off the last steps one at a time. The tetrahedron on $p,1_c,h$ has faces $d_1=\\sigma_4$, $d_2=\\sigma_3$ and the degenerate $d_0=s_0h=(1_c,h\\,;\\,h)$; its missing face is $d_3=(p,1_c\\,;\\,q)$. That is the outer horn $\\Lambda^3_3$, allowed because this world is Kan. Swap $q$ for $p$ in $\\sigma_1$ to get $\\sigma_6=(f,g\\,;\\,q)$. The tetrahedron on $f,1_b,g$ with $d_1=\\sigma_2$, $d_2=\\sigma_6$ and degenerate $d_0=s_0g$ is again $\\Lambda^3_3$, and its last face is $(f,1_b\\,;\\,k)$.",
+    hints: ["Cancel $h$ first, then $g$. In both tetrahedra the missing face is $d_3$.", "Tetrahedron: path $p,1_c,h$; $d_1=\\sigma_4$, $d_2=\\sigma_3$. Swap in: $\\sigma_5$, $\\sigma_1$. Tetrahedron: path $f,1_b,g$; $d_1=\\sigma_2$, $d_2=\\sigma_6$."],
+    win: ["$\\sigma_5=(p,1_c\\,;\\,q)$ cancelled $h$ and $\\sigma_7=(f,1_b\\,;\\,k)$ cancelled $g$: $f\\simeq k$."],
+    term: "Cancellation",
+    math: {
+      say: "In a Kan complex, if $x$ is a composite of $(p,h)$ and of $(q,h)$ then $p\\simeq q$: right cancellation by $h$, via the outer horn $\\Lambda^3_3\\to X$. Applied again it cancels $g$.",
+      proof: "Fill $\\Lambda^3_3$ on $(a,c,c,d)$ with $d_1=\\sigma_4$, $d_2=\\sigma_3$, $d_0=s_0h$; Swap in; fill $\\Lambda^3_3$ on $(a,b,b,c)$ with $d_1=\\sigma_2$, $d_2=\\sigma_6$, $d_0=s_0g$."
+    }
+  },
+
+  socks: {
+    title: "The inverse of a composite",
+    bullets: ["Given left inverses: $\\sigma_1=(f,\\bar f\\,;\\,1_a)$, $\\sigma_2=(g,\\bar g'\\,;\\,1_b)$ with $\\bar g'\\simeq\\bar g$ by $\\sigma_5$; and $\\sigma_4=(\\bar g,\\bar f\\,;\\,w)$.", "Construct $x$ from $f,g$ and prove $(x,w\\,;\\,1_a)$."],
+    explain: "You put on socks, then shoes; to undo it you take off shoes first. Here $x$ is $f$ then $g$, and $w$ is $\\bar g$ then $\\bar f$. The world is Kan, but this boss needs only inner horns. Compose $f,g$ for $\\sigma_6=(f,g\\,;\\,x)$. The undo triangle for $g$ uses $\\bar g'$, so Swap in $\\sigma_5$ to get $\\sigma_7=(g,\\bar g\\,;\\,1_b)$. The tetrahedron on $f,g,\\bar g$ with $d_3=\\sigma_6$, $d_0=\\sigma_7$ and degenerate $d_2=s_1f$ gives $\\sigma_8=(x,\\bar g\\,;\\,f)$: after $x$, undoing $g$ leaves $f$. The tetrahedron on $x,\\bar g,\\bar f$ with $\\sigma_8,\\sigma_4,\\sigma_1$ gives $(x,w\\,;\\,1_a)$.",
+    hints: ["Undo $g$ first, then $f$. Make the triangle for $\\bar g$ match first.", "Compose: $f$, $g$. Swap in: $\\sigma_5$, $\\sigma_2$. Tetrahedron: path $f,g,\\bar g$; $d_3=\\sigma_6$, $d_0=\\sigma_7$. Tetrahedron: path $x,\\bar g,\\bar f$; $d_3=\\sigma_8$, $d_0=\\sigma_4$, $d_1=\\sigma_1$."],
+    win: ["$\\sigma_9=(x,w\\,;\\,1_a)$: $w$ undoes $x$, in reverse order."],
+    term: "Inverse of a composite",
+    math: {
+      say: "If $f,g$ have left inverses $\\bar f,\\bar g$, then a composite $w$ of $(\\bar g,\\bar f)$ is a left inverse of a composite $x$ of $(f,g)$. Only inner horns are used, so this holds in every quasi-category.",
+      proof: "Swap $\\bar g$ in for $\\bar g'$; fill $\\Lambda^3_1$ on $(a,b,c,b)$ for $(x,\\bar g;f)$, then $\\Lambda^3_2$ on $(a,c,b,a)$ for $(x,w;1_a)$."
+    }
+  },
+
+  /* ---------------- World 6: Nerves of categories ---------------- */
+
+  nerve: {
+    title: "The composition table",
+    bullets: ["The composition table says the composite of $f$ then $g$ is $h$.", "Construct a triangle $(f,g\\,;\\,?)$."],
+    explain: "This picture comes from an ordinary category, and its composition table is shown in a panel: for the pair $f,g$ it lists $h$. Compose obeys the table here. It draws no new arrow; it puts the triangle $\\sigma_1=(f,g\\,;\\,h)$ on the arrows that are already there. The simplicial set you get from a category this way is its <b>nerve</b>: objects as vertices, morphisms as arrows, and a triangle for each composable pair, with the listed composite as its long side.",
+    hints: ["Check the composition table entry for $f,g$.", "Compose: $f$, then $g$."],
+    win: ["$\\sigma_1=(f,g\\,;\\,h)$, exactly as the composition table lists."],
+    term: "Nerve of a category",
+    math: {
+      say: "The nerve $N(\\mathcal C)$ of a category has $n$-simplices the chains of $n$ composable morphisms. Every inner horn $\\Lambda^n_i\\to N(\\mathcal C)$ has a unique filler; for $n=2$ it is the composite $g\\circ f$.",
+      proof: "The 2-simplex $(f,g;h)$ with $h=g\\circ f$ is the unique filler of $\\Lambda^2_1$."
+    }
+  },
+
+  onlyone: {
+    title: "Only one filler",
+    bullets: ["The same composition table, with $h$ as the composite of $f,g$.", "Compose $f,g$, then try to compose them a second time."],
+    explain: "In the Composition world you composed one pair twice and got two arrows. Try it here. The first Compose gives $\\sigma_1=(f,g\\,;\\,h)$. The second attempt is refused, because the composition table has one entry for $f,g$ and that triangle already exists. In a nerve, the horn $\\Lambda^2_1$ on $f,g$ has exactly one filler. The refusal counts as reaching the goal.",
+    hints: ["Do the same Compose twice.", "Compose: $f$, $g$. Compose: $f$, $g$ again."],
+    win: ["The second Compose was refused: $\\Lambda^2_1$ has exactly one filler here."],
+    term: "Unique fillers",
+    math: {
+      say: "Unique inner horn fillers characterise nerves: $X\\cong N(\\mathcal C)$ for some $\\mathcal C$ iff each inner horn $\\Lambda^n_i\\to X$ has exactly one extension to $\\Delta^n$.",
+      proof: "A second filler of $\\Lambda^2_1$ on $(f,g)$ is refused: it would equal $\\sigma_1$."
+    }
+  },
+
+  nerve3: {
+    title: "A blank entry",
+    bullets: ["The composition table lists $f,g\\mapsto gf$, $g,h\\mapsto hg$, $gf,h\\mapsto hgf$; the entry for $f,hg$ is blank.", "Prove a triangle $(f,hg\\,;\\,hgf)$ exists."],
+    explain: "The table is missing one entry, the composite of $f$ with $hg$, and in a category associativity says it must be $hgf$. A tetrahedron can supply it. Compose the three listed pairs to get $\\sigma_1=(f,g\\,;\\,gf)$, $\\sigma_2=(g,h\\,;\\,hg)$ and $\\sigma_3=(gf,h\\,;\\,hgf)$. These are the faces $d_3$, $d_0$ and $d_1$ of the tetrahedron on $f,g,h$, and its fourth face is $(f,hg\\,;\\,hgf)$. The extra arrow $s$ from $a$ to $d$ is a decoy that the table never mentions.",
+    hints: ["Compose everything the composition table allows, then use a tetrahedron.", "Compose: $f$, $g$. Compose: $g$, $h$. Compose: $gf$, $h$. Tetrahedron: path $f,g,h$; $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=\\sigma_3$. Fill."],
+    win: ["$\\sigma_4=(f,hg\\,;\\,hgf)$ fills in the blank entry."],
+    term: "Associativity in a nerve",
+    math: {
+      say: "A 3-simplex of $N(\\mathcal C)$ is a chain $a\\to b\\to c\\to d$ with all its composites; associativity $h\\circ(g\\circ f)=(h\\circ g)\\circ f$ says its faces are consistent. Inner horns $\\Lambda^3_k$ fill uniquely.",
+      proof: "Fill $\\Lambda^3_2$ on $(a,b,c,d)$ with $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=\\sigma_3$; $d_2$ fills the blank."
+    }
+  },
+
+  segalno: {
+    title: "Deciding whether a picture is a nerve",
+    bullets: ["A nerve has exactly one triangle on every pair of arrows that meet.", "Decide whether this picture is a nerve; for No, name a pair that breaks the rule."],
+    explain: "From now on you judge pictures. A simplicial set is a nerve when every pair of arrows that meet end to start, identities included, has exactly one triangle with those two legs. Identities are never the problem in a pair like $1_a,f$, since the degenerate triangle $s_0f$ is always there. This picture has $f:a\\to b$ and $g:b\\to c$ and no triangle at all, so the pair $f,g$ has none. Press Not a nerve and pick that pair.",
+    hints: ["Is there any triangle with legs $f$ and $g$?", "Not a nerve: show a bad pair: $f$, then $g$."],
+    win: ["The pair $f,g$ has no triangle, so this is not a nerve."],
+    term: "Spine",
+    math: {
+      say: "$X\\cong N(\\mathcal C)$ for a category $\\mathcal C$ iff every inner horn has a unique filler; equivalently every spine $I^n\\to X$ extends uniquely to $\\Delta^n$ (the Segal condition).",
+      proof: "The horn $\\Lambda^2_1\\to X$ given by $(f,g)$ has no filler."
+    }
+  },
+
+  segalyes: {
+    title: "A picture that is a nerve",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,h)$ on $a\\to b\\to c$.", "Decide whether this picture is a nerve."],
+    explain: "Go through the pairs that meet. Any pair containing an identity, such as $1_a,f$ or $g,1_c$, has its degenerate triangle, $s_0f$ or $s_1g$, and no other. The pair $f,g$ has exactly one triangle, $\\sigma_1$. The arrow $h$ starts at $a$ and ends at $c$, and nothing but an identity meets it at either end. So every pair has exactly one triangle, and the picture is the nerve of the category with objects $a,b,c$ and one arrow between each pair in order.",
+    hints: ["List the pairs that meet. There are not many.", "Press It is a nerve."],
+    win: ["Every pair has exactly one triangle: this is the nerve of $a\\to b\\to c$."],
+    term: "Segal condition",
+    math: {
+      say: "This simplicial set is $\\Delta^2=N([2])$: every horn $\\Lambda^2_1\\to\\Delta^2$ has exactly one filler, as composition in the poset $[2]$ is unique.",
+      proof: "The only non-degenerate horn is $(f,g)$, filled uniquely by $\\sigma_1$ with long side $h$."
+    }
+  },
+
+  twofill: {
+    title: "Two fillers of one horn",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,x)$ and $\\sigma_2=(f,g\\,;\\,x')$.", "Decide whether this picture is a nerve."],
+    explain: "Here nothing is missing; something is doubled. The pair $f,g$ has two triangles, with different long sides $x$ and $x'$. In the Composition world that was normal, and this picture could well sit inside a quasi-category where $x\\simeq x'$. A category, though, has one composite per pair, so this is not a nerve, and the pair $f,g$ is the evidence.",
+    hints: ["Count the triangles whose legs are $f$ and $g$.", "Not a nerve: show a bad pair: $f$, then $g$."],
+    win: ["The pair $f,g$ has two triangles: not a nerve."],
+    term: "Unique fillers",
+    math: {
+      say: "A quasi-category is the nerve of a category iff inner horns fill uniquely. Here $\\Lambda^2_1\\to X$ given by $(f,g)$ has two distinct fillers.",
+      proof: "The 2-simplices $\\sigma_1,\\sigma_2$ both fill the horn $(f,g)$."
+    }
+  },
+
+  hiddenhole: {
+    title: "A missing triangle among six arrows",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,x)$, $\\sigma_2=(g,h\\,;\\,y)$, $\\sigma_3=(x,h\\,;\\,z)$ on four vertices.", "Decide whether this picture is a nerve."],
+    explain: "Six arrows make more pairs, and composites count as arrows: $x$ and $y$ start and end at vertices like everything else. Go through each vertex and pair what arrives with what leaves. At $b$: $f$ arrives, $g$ and $y$ leave, so check $f,g$ and $f,y$. At $c$: $g$ and $x$ arrive, $h$ leaves, so check $g,h$ and $x,h$. Three of these pairs have their triangle in the list. One does not, and a single pair is enough for a No.",
+    hints: ["Look at the pairs that pass through $b$.", "Not a nerve: show a bad pair: $f$, then $y$."],
+    win: ["The pair $f,y$ has no triangle, so this is not a nerve."],
+    term: "Inner horn",
+    math: {
+      say: "In a nerve $(f,g;x)$, $(g,h;y)$, $(x,h;z)$ force a 2-simplex $(f,y;z)$. Here the horn $\\Lambda^2_1$ on $(f,y)$ has no filler.",
+      proof: "No 2-simplex has legs $(f,y)$: the horn $\\Lambda^2_1\\to X$ they define does not extend."
+    }
+  },
+
+  quotient: {
+    title: "A collapsed triangle",
+    bullets: ["Given $\\sigma_1=(1_p,e\\,;\\,e')$, with $e,e':p\\to c$.", "Decide whether this picture is a nerve."],
+    explain: "Every arrow $e:p\\to c$ comes with the degenerate triangle $s_0e=(1_p,e\\,;\\,e)$, so the pair $1_p,e$ always has one triangle. Here it has a second, $\\sigma_1=(1_p,e\\,;\\,e')$, with long side $e'$. Two triangles on one pair means this is not a nerve. You can picture $\\sigma_1$ as an honest triangle whose first side was squashed to the single vertex $p$. Pairs that start with an identity are easy to skip, and this one is the culprit.",
+    hints: ["Remember the degenerate triangle on $1_p,e$.", "Not a nerve: show a bad pair: tap the vertex $p$ (its identity), then $e$."],
+    win: ["The pair $1_p,e$ has two triangles: $s_0e$ and $\\sigma_1$."],
+    term: "Collapsed triangle",
+    math: {
+      say: "$\\Delta^2/\\Delta^{\\{0,1\\}}$ is not a nerve: the horn $(1_p,e)$ has two fillers, the degenerate $s_0(e)$ and the image $\\sigma$ of the top simplex, with $d_1\\sigma=e'\\neq e$.",
+      proof: "$s_0e$ has boundary $(1_p,e;e)$ and $\\sigma_1$ has boundary $(1_p,e;e')$: two fillers of one inner horn."
+    }
+  },
+
+  /* ---------------- World 7: Bones ---------------- */
+
+  disc: {
+    title: "Attaching a cell",
+    bullets: ["Given three vertices $a,b,c$ and no arrows.", "Draw three arrows that close up and glue a triangle onto them."],
+    explain: "Start from bare vertices. Draw arrow three times to get $f:a\\to b$, $g:b\\to c$ and $h:a\\to c$. These three form a closed loop with nothing inside, the boundary $\\partial\\Delta^2$, which as a shape is a circle. Glue triangle now attaches a 2-cell along that loop: the triangle $\\sigma_1=(f,g\\,;\\,h)$, with all three sides already on the board. Compare Compose, which adds a new long side along with the triangle; gluing adds only the inside. The circle becomes a disc.",
+    hints: ["Glue triangle needs a loop of three arrows: two end to end and one across.", "Draw arrow: $a,b$. Draw arrow: $b,c$. Draw arrow: $a,c$. Glue triangle: $f,g,h$."],
+    win: ["You drew $\\partial\\Delta^2$ and glued a 2-cell onto it: $\\sigma_1=(f,g\\,;\\,h)$."],
+    term: "Attaching a cell",
+    math: {
+      say: "Given $\\partial\\Delta^2\\to X$, the pushout $X\\sqcup_{\\partial\\Delta^2}\\Delta^2$ attaches a 2-cell to $X$ along it. Here $X=\\partial\\Delta^2$ and the map is the identity.",
+      proof: "Pushout along $\\partial\\Delta^2\\hookrightarrow\\Delta^2$ on the loop of the three drawn edges gives $\\Delta^2$."
+    }
+  },
+
+  sphere: {
+    title: "Two cells on one boundary",
+    bullets: ["Given the loop $f,g,h$ with no triangle.", "Glue two triangles onto it."],
+    explain: "Glue a triangle onto $f,g,h$, then glue another onto the same three arrows. You get $\\sigma_1$ and $\\sigma_2$, both with boundary $(f,g\\,;\\,h)$, and they are different triangles. A simplicial set allows that. As a shape, two discs sewn along their common rim make a hollow ball, a 2-sphere; imagine one triangle as the northern hemisphere and the other as the southern. The note before this level counts it: $3-3+2=2$, the Euler characteristic of a sphere. The last level of this world fills such a sphere in.",
+    hints: ["Glue onto the same loop twice.", "Glue triangle: $f,g,h$. Glue triangle: $f,g,h$ again."],
+    win: ["Two 2-cells on one boundary form a 2-sphere."],
+    term: "2-sphere",
+    math: {
+      say: "Attaching two 2-cells along the same map $\\partial\\Delta^2\\to X$ gives $\\Delta^2\\sqcup_{\\partial\\Delta^2}\\Delta^2$, whose geometric realisation is homeomorphic to $S^2$.",
+      proof: "Two pushouts of $\\partial\\Delta^2\\hookrightarrow\\Delta^2$ along the same loop $(f,g,h)$."
+    }
+  },
+
+  peel: {
+    title: "Skeleta",
+    bullets: ["Given a solid tetrahedron with its four faces and six arrows.", "End with the six arrows and exactly one triangle."],
+    explain: "Peel removes everything of the highest dimension present. The first Peel takes away the solid and leaves its four faces: that is the 2-skeleton, the hollow shell $\\partial\\Delta^3$. The second Peel takes away the four triangles and leaves the 1-skeleton, six arrows on four vertices. Now Glue triangle puts back one face along a loop of three arrows, for example $f,g,x$. A skeleton keeps everything up to a dimension; a cell puts back one simplex at a time.",
+    hints: ["Peel twice, then glue one triangle.", "Peel. Peel. Glue triangle: $f,g,x$."],
+    win: ["Two layers peeled and one triangle restored: $\\sigma_5=(f,g\\,;\\,x)$."],
+    term: "Skeleton",
+    math: {
+      say: "$\\mathrm{sk}_n$ keeps simplices of dimension $\\le n$: $\\mathrm{sk}_2\\Delta^3=\\partial\\Delta^3$, and $\\mathrm{sk}_1\\Delta^3$ is its six edges. Attaching one 2-cell along $\\partial\\Delta^2\\hookrightarrow\\Delta^2$ restores one face.",
+      proof: "Take $\\mathrm{sk}_2$, then $\\mathrm{sk}_1$, then glue one $\\Delta^2$ along its boundary."
+    }
+  },
+
+  hollowtet: {
+    title: "Sphere",
+    bullets: ["Given six arrows on four vertices: the wire frame of a tetrahedron.", "Glue its four faces, with nothing inside."],
+    explain: "The six arrows $f,g,h,x,y,z$ are the edges of a tetrahedron on $a,b,c,d$. Each face needs three arrows that close up: two end to end and one straight across. Of the twenty ways to pick three of the six arrows, only four close up, one for each face: $(f,g\\,;\\,x)$, $(g,h\\,;\\,y)$, $(x,h\\,;\\,z)$ and $(f,y\\,;\\,z)$. Glue all four and you have $\\partial\\Delta^3$, a closed shell. The goal checks that the four faces are there and the inside is empty; the next level fills it.",
+    hints: ["A face is two arrows end to end plus the arrow across.", "Glue triangle: $f,g,x$. Glue triangle: $g,h,y$. Glue triangle: $x,h,z$. Glue triangle: $f,y,z$."],
+    win: ["$\\partial\\Delta^3$: four faces glued along six edges, hollow inside."],
+    term: "Boundary $\\partial\\Delta^3$",
+    math: {
+      say: "$\\partial\\Delta^n$ is the union of the $n+1$ faces of $\\Delta^n$ glued along their pairwise intersections. For $n=3$: four 2-simplices along six edges, and $|\\partial\\Delta^3|\\cong S^2$.",
+      proof: "Attach four 2-cells to $\\mathrm{sk}_1\\Delta^3$ along the four copies of $\\partial\\Delta^2$ spanned by three vertices."
+    }
+  },
+
+  ball: {
+    title: "Ball",
+    bullets: ["Given the wire frame of a tetrahedron: six arrows $f,g,h,x,y,z$.", "Glue the four faces, then glue a solid inside them."],
+    explain: "First build the shell from the last level: glue $(f,g\\,;\\,x)$, $(g,h\\,;\\,y)$, $(x,h\\,;\\,z)$ and $(f,y\\,;\\,z)$. The shell is a sphere, with Euler characteristic $4-6+4=2$. Glue solid takes four triangles that close up, meaning they are exactly the four faces $d_0,\\dots,d_3$ of one tetrahedron, and attaches a 3-cell along them. That is the pushout along $\\partial\\Delta^3\\hookrightarrow\\Delta^3$, one dimension up from gluing a triangle into a loop. Count again: $4-6+4-1=1$, the same as a single point. The ball can be shrunk to a point; the empty shell cannot.",
+    hints: ["Glue solid needs all four faces first.", "Glue triangle: $f,g,x$. Glue triangle: $g,h,y$. Glue triangle: $x,h,z$. Glue triangle: $f,y,z$. Glue solid: the four triangles."],
+    win: ["A 3-cell fills the sphere $\\partial\\Delta^3$: the result is $\\Delta^3$, a solid ball."],
+    term: "3-cell",
+    math: {
+      say: "Attaching a 3-cell to $\\partial\\Delta^3$ along the identity gives $\\partial\\Delta^3\\sqcup_{\\partial\\Delta^3}\\Delta^3=\\Delta^3$, which is contractible; $\\chi$ goes from $2$ to $1$.",
+      proof: "Attach four 2-cells to $\\mathrm{sk}_1\\Delta^3$ to get $\\partial\\Delta^3$, then one 3-cell along $\\partial\\Delta^3\\hookrightarrow\\Delta^3$."
+    }
+  },
+
+  fillin: {
+    title: "The coskeleton",
+    bullets: ["Given the loop $f,g,h$ with no triangle.", "Fill it in."],
+    explain: "Peel removes the top layer. Fill in goes the other way: wherever the board has a complete boundary with nothing inside, it adds exactly one simplex there. This is the coskeleton $\\mathrm{cosk}_1$, which adds a triangle for every closed loop of three arrows and a solid for every closed shell of four triangles, keeping one of each. Here the only boundary is the loop $f,g,h$, so one click adds $\\sigma_1=(f,g\\,;\\,h)$, with no choices to make.",
+    hints: ["There is one tool.", "Press Fill in."],
+    win: ["The coskeleton filled the loop with $\\sigma_1=(f,g\\,;\\,h)$."],
+    term: "Coskeleton",
+    math: {
+      say: "$(\\mathrm{cosk}_nX)_m=\\mathrm{Hom}(\\mathrm{sk}_n\\Delta^m,X)$: an $m$-simplex of the coskeleton is a compatible family of faces of dimension $\\le n$. $\\mathrm{cosk}_n$ is right adjoint to $\\mathrm{sk}_n$.",
+      proof: "$\\mathrm{cosk}_1(\\partial\\Delta^2)$ has a unique 2-simplex with the given boundary, so it is $\\Delta^2$."
+    }
+  },
+
+  rebuild: {
+    title: "Skeleton of a coskeleton",
+    bullets: ["Given six arrows on four vertices.", "End with the four faces of a tetrahedron and no solid."],
+    explain: "In the level Sphere this took four Glue triangle moves. Fill in is faster but greedy. It adds the four faces, and then those four faces form a closed shell, so it adds the solid inside too. One Peel removes the solid and leaves the shell. In symbols, applied to the six arrows, $\\mathrm{sk}_2\\,\\mathrm{cosk}_1$ is the boundary $\\partial\\Delta^3$: fill everything, then keep dimensions up to two.",
+    hints: ["Fill in overshoots by one dimension.", "Press Fill in. Then Peel."],
+    win: ["Fill in, then Peel: the boundary of a tetrahedron."],
+    term: "$\\mathrm{sk}_2\\,\\mathrm{cosk}_1$",
+    math: {
+      say: "$\\mathrm{cosk}_1(\\mathrm{sk}_1\\Delta^3)=\\Delta^3$, since nerves of posets are 1-coskeletal, and $\\mathrm{sk}_2\\Delta^3=\\partial\\Delta^3$. So $\\mathrm{sk}_2\\mathrm{cosk}_1\\mathrm{sk}_1\\Delta^3=\\partial\\Delta^3$.",
+      proof: "The coskeleton adds the four 2-simplices and the 3-simplex; the 2-skeleton discards the 3-simplex."
+    }
+  },
+
+  /* ---------------- World 8: Possible or not? ---------------- */
+
+  spine: {
+    title: "Fill the spine",
+    bullets: ["Given arrows $f,g,h$ end to end.", "Build a solid tetrahedron on them, or press This can't be done."],
+    explain: "From here on, every goal might be impossible, and part of the puzzle is deciding. The path $f,g,h$ is the <b>spine</b> of a tetrahedron: its edges $01$, $12$ and $23$. Can horn fillings grow a whole solid from it? You already know they can, from Two bracketings. Compose $f,g$, then $g,h$, then $x,h$, and the three triangles are three faces of the tetrahedron on $f,g,h$. Filling that inner horn adds the solid along with its fourth face, and the goal counts the solid.",
+    hints: ["You have built this before.", "Compose: $f$, $g$. Compose: $g$, $h$. Compose: $x$, $h$. Tetrahedron: path $f,g,h$; $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=\\sigma_3$. Fill."],
+    win: ["Possible: inner horns grew the whole tetrahedron from its spine."],
+    term: "Inner anodyne",
+    math: {
+      say: "The spine inclusion $\\mathrm{Spine}^3\\hookrightarrow\\Delta^3$ is inner anodyne: it is a composite of pushouts of inner horn inclusions. So it has the left lifting property against inner fibrations.",
+      proof: "Fill $\\Lambda^2_1$ three times for the composites; then $\\Lambda^3_2$ gives the 3-simplex on $(a,b,c,d)$."
+    }
+  },
+
+  nofill: {
+    title: "A closed loop",
+    bullets: ["Given $f:a\\to b$, $g:b\\to c$, $h:a\\to c$ and no triangle.", "Construct $(f,g\\,;\\,h)$, or press This can't be done."],
+    explain: "This loop is a hollow triangle, the shape the Bones world capped with Glue triangle, and that tool is not in this world. Every tool here fills a horn: a shape missing exactly one face. Compose on $f,g$ adds a new arrow with a triangle on it and leaves $h$ alone. To prove the goal impossible, pick the counter-model Hollow triangle, a category with objects $0,1,2$ in which $f$ then $g$ composes to its own arrow $k$, different from $h$. Your picture fits inside it, the triangle $(f,g\\,;\\,h)$ is false there, and horn fillings cannot change that.",
+    hints: ["Is any horn here missing exactly the face you want?", "Press This can't be done. Choose Hollow triangle and send $f,g,h$ to $f,g,h$."],
+    win: ["Impossible: in the hollow-triangle category, $f$ then $g$ is $k$, never $h$."],
+    term: "Not anodyne",
+    math: {
+      say: "$\\partial\\Delta^2\\hookrightarrow\\Delta^2$ is not anodyne: anodyne maps are weak homotopy equivalences, but $|\\partial\\Delta^2|\\simeq S^1$ while $|\\Delta^2|$ is contractible.",
+      proof: "Map the loop into the nerve of the category with $f,g,h,k$ and $g\\circ f=k\\ne h$; every inner horn filling extends there, and $(f,g;h)$ does not exist."
+    }
+  },
+
+  squarehole: {
+    title: "A square with no diagonal",
+    bullets: ["Given $f:a\\to b$, $g:b\\to d$, $u:a\\to c$, $v:c\\to d$.", "Construct one arrow that is a composite of both $f,g$ and $u,v$, or press This can't be done."],
+    explain: "You can get from $a$ to $d$ by $f$ then $g$, or by $u$ then $v$. Composing each pair gives an arrow from $a$ to $d$, and the goal asks for a single arrow that composes both. Nothing on the board joins the two routes: the square is a closed loop of four arrows with a hole in the middle. In the counter-model Square that does not commute, $f$ then $g$ is an arrow $x$ and $u$ then $v$ is a different arrow $y$. Your four arrows fit inside it, and no arrow composes both pairs there.",
+    hints: ["Compose each route. What could join the two results?", "Press This can't be done. Choose Square that does not commute and send each arrow to the arrow of the same name."],
+    win: ["Impossible: the two routes have different composites in the non-commuting square."],
+    term: "A hole",
+    math: {
+      say: "With no 2-simplex joining the routes $(f,g)$ and $(u,v)$, nothing forces a common composite: the nerve of the category with $g\\circ f=x\\ne y=v\\circ u$ receives the square and has no common composite.",
+      proof: "Counter-model: the category on $0,1,2,3$ with two distinct arrows $0\\to3$, $x=g\\circ f$ and $y=v\\circ u$."
+    }
+  },
+
+  parallel: {
+    title: "Two parallel arrows",
+    bullets: ["Given $f,g:a\\to b$ and nothing else.", "Prove $f\\simeq g$, or press This can't be done."],
+    explain: "Sharing endpoints does not make two arrows homotopic. You need a triangle $(f,1_b\\,;\\,g)$, and every tool here builds triangles out of triangles that already exist. The only triangles on this board are the free ones, $s_0f$, $s_1f$, $s_0g$, $s_1g$ and those on identities, and none of them relates $f$ to $g$. For the proof, choose Two parallel arrows: a category with objects $0,1$ and two different arrows $p,q:0\\to1$. In a category $f\\simeq g$ means $f=g$, and $p\\ne q$.",
+    hints: ["Which triangles exist to start from?", "Press This can't be done. Choose Two parallel arrows; send $f$ to $p$ and $g$ to $q$."],
+    win: ["Impossible: two distinct parallel arrows in a category are not homotopic."],
+    term: "No free homotopy",
+    math: {
+      say: "Parallel edges $f,g:a\\to b$ need not be homotopic: in the nerve of the category with two distinct morphisms $p,q:0\\to1$ there is no 2-simplex $(p,1;q)$.",
+      proof: "Map $f\\mapsto p$, $g\\mapsto q$ into that nerve; a homotopy would force $p=q$."
+    }
+  },
+
+  almostring: {
+    title: "A loop filled up to homotopy",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,x)$, $\\sigma_2=(x,1_c\\,;\\,m)$ and $\\sigma_3=(h,1_c\\,;\\,m)$.", "Construct $(f,g\\,;\\,h)$, or press This can't be done."],
+    explain: "Again a loop $f,g,h$ with no triangle on $h$, and this time it closes. You have $x$ from $f,g$, with $x\\simeq m$ and $h\\simeq m$. So $h$ is homotopic to a composite of $f,g$ by way of $m$, and homotopic arrows can be swapped into triangles. Swap in $\\sigma_2$ into $\\sigma_1$ to get $\\sigma_4=(f,g\\,;\\,m)$. Flip $\\sigma_3$ to get $\\sigma_5=(m,1_c\\,;\\,h)$, and Swap in once more. The two homotopies did the work a hole cannot do.",
+    hints: ["Move the long side from $x$ to $m$, then from $m$ to $h$.", "Swap in: $\\sigma_2$, $\\sigma_1$. Flip: $\\sigma_3$. Swap in: $\\sigma_5$, $\\sigma_4$."],
+    win: ["Possible: $\\sigma_6=(f,g\\,;\\,h)$, carried over by two homotopies."],
+    term: "Swapping homotopic arrows",
+    math: {
+      say: "If $x\\simeq m$ and $h\\simeq m$, and $\\sigma$ has $d_1\\sigma=x$, then there is a 2-simplex with the same legs and long side $h$, via inner horns $\\Lambda^3_1,\\Lambda^3_2$.",
+      proof: "Swap in $\\sigma_2$ into $\\sigma_1$ for $(f,g;m)$; Flip $\\sigma_3$ for $(m,1_c;h)$; Swap in again for $(f,g;h)$."
+    }
+  },
+
+  wedge: {
+    title: "Two prepared tetrahedra",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,x)$, $\\sigma_2=(x,h\\,;\\,z)$, $\\sigma_3=(z,i\\,;\\,t)$ on the path $f,g,h,i$.", "Construct $y$ from $g,h$ and $w$ from $h,i$; prove $(f,y\\,;\\,z)$ and $(x,w\\,;\\,t)$."],
+    explain: "Look for tetrahedra. The path $f,g,h$ has faces $\\sigma_1$ as $d_3$ and $\\sigma_2$ as $d_1$ already, and it lacks $d_0$, a composite of $g,h$. The path $x,h,i$ has $\\sigma_2$ as $d_3$ and $\\sigma_3$ as $d_1$, and lacks a composite of $h,i$. Compose supplies each missing face, and then each tetrahedron is an inner horn $\\Lambda^3_2$ whose missing face $d_2$ is the triangle the goal asks for. Possible, in four moves.",
+    hints: ["Each tetrahedron is one composite short.", "Compose: $g$, $h$. Tetrahedron: path $f,g,h$; $d_3=\\sigma_1$, $d_0=\\sigma_4$, $d_1=\\sigma_2$. Compose: $h$, $i$. Tetrahedron: path $x,h,i$; $d_3=\\sigma_2$, $d_0=\\sigma_6$, $d_1=\\sigma_3$."],
+    win: ["Possible: $\\sigma_5=(f,y\\,;\\,z)$ and $\\sigma_7=(x,w\\,;\\,t)$."],
+    term: "Inner horn $\\Lambda^3_2$",
+    math: {
+      say: "After composing $g,h$ to $y$, the 2-simplices $(f,g;x)$, $(g,h;y)$, $(x,h;z)$ form a horn $\\Lambda^3_2\\to X$; likewise for $h,i$ and $w$. Each extends over $\\Delta^3$.",
+      proof: "Fill $\\Lambda^2_1$ on $(g,h)$, then $\\Lambda^3_2$ on $(a,b,c,d)$ for $(f,y;z)$; repeat with $(h,i)$ and $(a,c,d,e)$ for $(x,w;t)$."
+    }
+  },
+
+  halfspine: {
+    title: "Half a spine",
+    bullets: ["Given $f:a\\to b$ and the triangle $\\sigma_1=(g,h\\,;\\,y)$ on $b,c,d$.", "Construct $(f,g\\,;\\,x)$ and $(f,y\\,;\\,z)$, then prove $(x,h\\,;\\,z)$ with a solid tetrahedron, or press This can't be done."],
+    explain: "This time the starting shape is a triangle with an arrow hanging off its first corner, $\\Delta^{01}\\cup\\Delta^{123}$ in the notation of the note before this level. You need a tetrahedron on the path $f,g,h$. Count its faces: $d_0=(g,h\\,;\\,y)$ is $\\sigma_1$, and Compose can make $d_3=(f,g\\,;\\,x)$ and $d_2=(f,y\\,;\\,z)$. That leaves $d_1=(x,h\\,;\\,z)$ missing, and a tetrahedron missing $d_1$ is the inner horn $\\Lambda^3_1$. So two compositions and one tetrahedron do it.",
+    hints: ["Which face of the tetrahedron on $f,g,h$ is $\\sigma_1$, and which two can Compose make?", "Compose: $f$, $g$. Compose: $f$, $y$. Tetrahedron: path $f,g,h$; $d_3=\\sigma_2$, $d_0=\\sigma_1$, $d_2=\\sigma_3$. Fill."],
+    win: ["Possible: $\\sigma_4=(x,h\\,;\\,z)$ and the solid on $f,g,h$, from the inner horn $\\Lambda^3_1$."],
+    term: "Inner horn $\\Lambda^3_1$",
+    math: {
+      say: "The inclusion $\\Delta^{\\{0,1\\}}\\cup\\Delta^{\\{1,2,3\\}}\\hookrightarrow\\Delta^3$ is inner anodyne: fill $\\Lambda^2_1$ twice to add the faces $d_3$ and $d_2$, then $\\Lambda^3_1$.",
+      proof: "Fill $\\Lambda^2_1$ on $(f,g)$ and on $(f,y)$; fill $\\Lambda^3_1$ on $(a,b,c,d)$ with $d_3=\\sigma_2$, $d_0=\\sigma_1$, $d_2=\\sigma_3$; $d_1=(x,h;z)$."
+    }
+  },
+
+  opensquare: {
+    title: "An open square",
+    bullets: ["Given $f:a\\to b$, $v:b\\to d$ and $u:a\\to c$.", "Construct $(f,v\\,;\\,x)$ and $(u,w\\,;\\,x)$, or press This can't be done."],
+    explain: "Three sides of a square, and the fourth side $w:c\\to d$ is missing. The first triangle is easy: Compose $f,v$ gives a diagonal $x$. The second triangle $(u,w\\,;\\,x)$ knows its first leg $u$ and its long side $x$ and wants its second leg: two arrows leaving $a$, the outer horn $\\Lambda^2_0$. No tool here fills outer horns. The counter-model Open square is a category with objects $0,1,2,3$, arrows $f,v,u$, the composite $x$, and nothing at all from $2$ to $3$, so $w$ has nowhere to go.",
+    hints: ["Which horn would produce the missing side?", "Press This can't be done. Choose Open square and send $f,v,u$ to $f,v,u$."],
+    win: ["Impossible: the missing side comes from an outer horn, and the open square has no arrow from $2$ to $3$."],
+    term: "Outer horn $\\Lambda^2_0$",
+    math: {
+      say: "The inclusion $(\\Delta^1\\times\\{0\\})\\cup(\\partial\\Delta^1\\times\\Delta^1)\\hookrightarrow\\Delta^1\\times\\Delta^1$ is left anodyne but not inner anodyne: a quasi-category need not extend it.",
+      proof: "Counter-model: the nerve of the poset $0<1<3$, $0<2$. It contains the three sides and has no edge $2\\to 3$."
+    }
+  },
+
+  square: {
+    title: "A square and a prism",
+    bullets: ["Given $f,v,u$ and $t$ on five vertices; every horn fills in this level.", "Construct and prove the five triangles in the goal."],
+    explain: "This is the open square again, with the outer horns switched on. Compose $f,v$ for the diagonal $x$ ($\\sigma_1$). Solve $f\\cdot ?$ on $u$ and $x$ fills the outer horn $\\Lambda^2_0$ and gives the missing side $y:c\\to d$ with $\\sigma_2=(u,y\\,;\\,x)$. Now extend everything by $t:d\\to e$. Compose $y,t$ for $z$ ($\\sigma_3$) and $x,t$ for $w$ ($\\sigma_4$). The tetrahedron on $u,y,t$ has faces $\\sigma_2,\\sigma_3,\\sigma_4$ as $d_3,d_0,d_1$, and its missing face is $(u,z\\,;\\,w)$. The arrows $t'$ and $w_0$ are spares you can ignore.",
+    hints: ["Close the square first, then push both sides along $t$.", "Compose: $f$, $v$. Solve $f\\cdot ?$: $u$, $x$. Compose: $y$, $t$. Compose: $x$, $t$. Tetrahedron: path $u,y,t$; $d_3=\\sigma_2$, $d_0=\\sigma_3$, $d_1=\\sigma_4$."],
+    win: ["Possible: one outer horn closed the square and four more fillings built the prism on it."],
+    term: "Anodyne map",
+    math: {
+      say: "The square $\\Delta^1\\times\\Delta^1$ is two 2-simplices glued along the diagonal. Closing an open square needs an outer horn $\\Lambda^2_0$, which fills in a Kan complex; the rest uses inner horns.",
+      proof: "Fill $\\Lambda^2_1$ on $(f,v)$, $\\Lambda^2_0$ on $(u,x)$, $\\Lambda^2_1$ on $(y,t)$ and $(x,t)$, then $\\Lambda^3_2$ on $(a,c,d,e)$ for $(u,z;w)$."
+    }
+  },
+
+  /* ---------------- World 9: Lifting ---------------- */
+
+  liftpath: {
+    title: "Lifting a path",
+    bullets: ["Upstairs there is one vertex $x$, over $\\bar a$. The shadow $S$ has the triangle $(\\bar f,\\bar g\\,;\\,\\bar x)$.", "Construct a triangle upstairs that lies over $(\\bar f,\\bar g\\,;\\,\\bar x)$."],
+    explain: "Downstairs, $S$ has a path $\\bar a\\to\\bar b\\to\\bar c$ with a triangle on it. Upstairs you have a single vertex $x$ over $\\bar a$. The map is a left fibration, so any arrow of $S$ can be lifted from any vertex over its start: Lift arrow from $x$ along $\\bar f$ gives an arrow $f$ that ends at a new vertex over $\\bar b$. You choose where a lift starts; the map chooses where it ends. Lift $\\bar g$ from that new vertex to get $g$. Now $f,g$ is an inner horn over the triangle of $S$, and Compose fills it with a triangle lying over $(\\bar f,\\bar g\\,;\\,\\bar x)$.",
+    hints: ["Lift twice, then compose the two lifts.", "Lift arrow: from $x$ (along $\\bar f$). Lift arrow: from the new vertex (along $\\bar g$). Compose: $f$, $g$."],
+    win: ["A path of $S$ lifted to $X$, with a triangle over the triangle of $S$."],
+    term: "Left fibration",
+    math: {
+      say: "$p:X\\to S$ is a left fibration if it has the right lifting property against $\\Lambda^n_i\\hookrightarrow\\Delta^n$ for $0\\le i<n$. For $n=1$: every edge of $S$ lifts with a prescribed source.",
+      proof: "Lift $\\Lambda^1_0\\hookrightarrow\\Delta^1$ twice, then the inner horn $\\Lambda^2_1$ over the 2-simplex $(\\bar f,\\bar g;\\bar x)$ of $S$."
+    }
+  },
+
+  backfill: {
+    title: "A missing first leg, lifted",
+    bullets: ["Upstairs: $g:y\\to z$ over $\\bar g$ and $k:x\\to z$ over $\\bar x$.", "Construct $(?,g\\,;\\,k)$ over $(\\bar f,\\bar g\\,;\\,\\bar x)$, or press This can't be done."],
+    explain: "You need an arrow from $x$ to $y$ over $\\bar f$ that fits into a triangle with $g$ and $k$. The horn is $g$ and $k$, two arrows arriving at $z$: that is $\\Lambda^2_2$, and a left fibration lifts $\\Lambda^n_k$ only for $k<n$. The tempting move is Lift arrow from $x$ along $\\bar f$, and it lands on a fresh vertex over $\\bar b$, which is not $y$. There are left fibrations over this $S$ where the lift of $\\bar f$ from $x$ never reaches $y$, so the goal can fail. Press This can't be done and give the reason.",
+    hints: ["Lift $\\bar f$ from $x$ and see where it ends.", "Press This can't be done; the reason is that a left lift picks its start, never its end."],
+    win: ["Impossible: a left fibration chooses where a lift starts, never where it ends."],
+    term: "No lift of $\\Lambda^2_2$",
+    math: {
+      say: "A left fibration need not lift $\\Lambda^2_2\\hookrightarrow\\Delta^2$. Counter-model: the left fibration over $\\Delta^2$ classified by a functor $F$ with $F(\\bar b)=\\{y,y'\\}$ and $F(\\bar f)(x)=y'$ has no edge $x\\to y$.",
+      proof: "Every move here is a left-anodyne extension, so it maps to the counter-model; there the only lift of $\\bar f$ from $x$ ends at $y'\\ne y$."
+    }
+  },
+
+  prism: {
+    title: "Closing a lifted square",
+    bullets: ["Upstairs: $f:a\\to b$, $v:b\\to d$, $u:a\\to c$. Downstairs the whole square exists, with triangles $(\\bar f,\\bar v\\,;\\,\\bar x)$ and $(\\bar u,\\bar w\\,;\\,\\bar x)$.", "Construct $(f,v\\,;\\,x)$ and $(u,w\\,;\\,x)$ over those two triangles."],
+    explain: "This is the open square from the last world, now sitting over a shadow in which the square is complete. Compose $f,v$: an inner horn, giving the diagonal $x$ and $\\sigma_1$ over $(\\bar f,\\bar v\\,;\\,\\bar x)$. The second triangle knows its first leg $u$ and its long side $x$, which is the outer horn $\\Lambda^2_0$, and a left fibration lifts it: Solve $f\\cdot ?$ on $u,x$ gives $y:c\\to d$ and $\\sigma_2=(u,y\\,;\\,x)$ over the second triangle. Lift arrow along $\\bar w$ from $c$ would also give an arrow, ending at a new vertex instead of $d$.",
+    hints: ["Diagonal first, then the bottom side.", "Compose: $f$, $v$. Solve $f\\cdot ?$: $u$, $x$."],
+    win: ["The square closes upstairs: a left fibration lifts horns that know their first leg."],
+    term: "Left horn $\\Lambda^2_0$",
+    math: {
+      say: "The inclusion $(\\Delta^1\\times\\{0\\})\\cup(\\partial\\Delta^1\\times\\Delta^1)\\hookrightarrow\\Delta^1\\times\\Delta^1$ is left anodyne: a pushout of $\\Lambda^2_1$ followed by a pushout of $\\Lambda^2_0$. So it lifts against any left fibration.",
+      proof: "Lift $\\Lambda^2_1$ over $(\\bar f,\\bar v,\\bar x)$ for the diagonal, then $\\Lambda^2_0$ over $(\\bar u,\\bar w,\\bar x)$ for the missing side."
+    }
+  },
+
+  inneronly: {
+    title: "An inner fibration over an isomorphism",
+    bullets: ["Downstairs $\\bar f$ has an inverse $\\bar g$; the map is only an inner fibration.", "Construct $(f,?\\,;\\,1_x)$, or press This can't be done."],
+    explain: "In $S$, $\\bar f:\\bar x\\to\\bar y$ is an isomorphism, with triangles $(\\bar f,\\bar g\\,;\\,1)$ and $(\\bar g,\\bar f\\,;\\,1)$. Upstairs you have only $f:x\\to y$, and you want an arrow back. That arrow would be the second leg of $(f,?\\,;\\,1_x)$, which is the outer horn $\\Lambda^2_0$. An inner fibration lifts inner horns only. For example, the single arrow $x\\to y$ mapping onto $\\bar f$ is an inner fibration with no arrow from $y$ to $x$ at all. Press This can't be done and name the reason. The next level uses the same board with a left fibration.",
+    hints: ["An inverse is the missing side of an outer horn. Which horns does this map lift?", "Press This can't be done; the reason is that this map lifts inner horns only."],
+    win: ["Impossible: lying over an isomorphism does not make $f$ invertible when only inner horns lift."],
+    term: "Not conservative",
+    math: {
+      say: "An inner fibration need not be conservative. $\\Delta^1\\to N(J)$, $J$ the walking isomorphism, is an inner fibration (the nerve of a functor) sending the non-invertible edge to an isomorphism.",
+      proof: "$X=\\Delta^1$ is a counter-model: all inner horns lift against $\\Delta^1\\to N(J)$, yet no edge $y\\to x$ exists."
+    }
+  },
+
+  conservative: {
+    title: "A left fibration over an isomorphism",
+    bullets: ["The same board, but now the map is a left fibration.", "Construct a left inverse of $f$ and prove it is a right inverse too."],
+    explain: "A left fibration lifts $\\Lambda^2_0$, so Solve $f\\cdot ?$ on $f$ and $1_x$ works over the triangle $(\\bar f,\\bar g\\,;\\,1)$: it gives an arrow from $y$ to $x$ and $\\sigma_1=(f,\\cdot\\,;\\,1_x)$. The board names that arrow $x$, the next free letter, so mind the clash with the vertex $x$. For the other side take the tetrahedron on the path $f$, new arrow, $f$, with corners over $x,y,x,y$: $d_3=\\sigma_1$, $d_1=s_0f=(1_x,f\\,;\\,f)$ and $d_2=s_1f=(f,1_y\\,;\\,f)$, both degenerate. Its missing face is $d_0$, an outer horn $\\Lambda^3_0$, which a left fibration lifts too. A map with this property is <b>conservative</b>.",
+    hints: ["Solve for a left inverse. Then a tetrahedron on $f$, the new arrow, $f$.", "Solve $f\\cdot ?$: $f$, $1_x$. Tetrahedron: path $f$, new arrow, $f$; $d_3=\\sigma_1$, $d_1=s_0f$, $d_2=s_1f$."],
+    win: ["$\\sigma_2$ makes the new arrow a two-sided inverse: left fibrations are conservative."],
+    term: "Conservative",
+    math: {
+      say: "Left fibrations are conservative: if $p(f)$ is an isomorphism in $S$ then $f$ is an isomorphism in $X$. The inverse is the lift of $\\Lambda^2_0$, and it is two-sided by a lift of $\\Lambda^3_0$.",
+      proof: "Lift $\\Lambda^2_0$ over $(\\bar f,\\bar g;1)$ for $g$; lift $\\Lambda^3_0$ on $(x,y,x,y)$ with faces $\\sigma_1$, $s_0f$, $s_1f$: the new face is $(g,f;1_y)$."
+    }
+  },
+
+  twolifts: {
+    title: "Two lifts of one arrow",
+    bullets: ["From $x$, two routes lie over $\\bar x$: $f$ then $g$ ending at $z$, and $k'$ ending at $z'$.", "Prove $z$ and $z'$ are joined by mutually inverse arrows."],
+    explain: "Two lifts of the same arrow $\\bar x$ from $x$ end at $z$ and $z'$, and the claim is that these ends are isomorphic. Compose $f,g$ to get an arrow $x\\to z$ over $\\bar x$ (the board calls it $x$). It and $k'$ both leave $x$, forming $\\Lambda^2_0$ over the degenerate triangle $s_1\\bar x$, so Solve gives an arrow $y:z\\to z'$ over $1_{\\bar c}$. Solve again on $y$ and $1_z$ for $z:z'\\to z$ (letters run out fast here). The tetrahedron on $y,z,y$ with $d_3=\\sigma_3$ and the degenerate $d_1=s_0y$, $d_2=s_1y$ is an outer horn $\\Lambda^3_0$, as in the last level, and gives the other side.",
+    hints: ["Solve for an arrow from $z$ to $z'$, then invert it as in the last level.", "Compose: $f$, $g$. Solve $f\\cdot ?$: $x$, $k'$. Solve $f\\cdot ?$: $y$, $1_z$. Tetrahedron: path $y,z,y$; $d_3=\\sigma_3$, $d_1=s_0y$, $d_2=s_1y$."],
+    win: ["$\\sigma_3$ and $\\sigma_4$ make $y:z\\to z'$ an isomorphism: the two lifts end at isomorphic vertices."],
+    term: "Uniqueness of lifts",
+    math: {
+      say: "For a left fibration $p$, lifts of an edge with a fixed source are unique up to isomorphism in the fibre: $\\Lambda^2_0$ and $\\Lambda^3_0$ lift over degenerate simplices.",
+      proof: "Lift $\\Lambda^2_1$; lift $\\Lambda^2_0$ over $s_1(\\bar x)$ for $y$; lift $\\Lambda^2_0$ over $s_0s_0(\\bar c)$ for its inverse $z$; lift $\\Lambda^3_0$ on $(z,z',z,z')$."
+    }
+  },
+
+  /* ---------------- World 10: Isomorphisms ---------------- */
+
+  oneway: {
+    title: "An arrow with no inverse",
+    bullets: ["Given one arrow $f:a\\to b$; only inner horns fill.", "Construct $(f,?\\,;\\,1_a)$, or press This can't be done."],
+    explain: "In the Kan world this was one Solve. Here the missing second leg would come from the outer horn $\\Lambda^2_0$, and only inner horns fill. Starting from one arrow $a\\to b$, inner fillings only ever produce arrows $a\\to a$, $a\\to b$ and $b\\to b$, so nothing will ever point from $b$ back to $a$. The counter-model One arrow is the category $0\\to1$ with a single arrow $u$: it contains $f$ as $u$, satisfies every inner horn, and has no arrow $1\\to0$ at all.",
+    hints: ["Which way do arrows made by inner fillings point?", "Press This can't be done. Choose One arrow and send $f$ to $u$."],
+    win: ["Impossible: in the category $0\\to1$ nothing goes back."],
+    term: "Not every arrow inverts",
+    math: {
+      say: "Not every edge of a quasi-category is an equivalence: $\\Delta^1=N(\\{0<1\\})$ is a quasi-category with no edge $1\\to0$.",
+      proof: "Map $f$ to the non-degenerate edge of $N(\\{0<1\\})$; a left inverse would be an edge $1\\to0$."
+    }
+  },
+
+  nocancel: {
+    title: "Cancelling without an inverse",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,x)$ and $\\sigma_2=(k,g\\,;\\,x)$.", "Prove $f\\simeq k$, or press This can't be done."],
+    explain: "This is Cancelling an arrow from the Kan world. There, the tetrahedron on $f,1_b,g$ had its missing face at $d_3$, an outer horn $\\Lambda^3_3$, and Kan let you fill it. Here that face carries a padlock. The counter-model Fork shows it stays locked for good: a category with $p,q:0\\to1$, $g:1\\to2$, and $p$ then $g$ equal to $q$ then $g$, both $x$, while $p\\ne q$. Send $f$ to $p$ and $k$ to $q$; both triangles hold and the goal fails.",
+    hints: ["Remember which face of the tetrahedron was missing in the Kan version.", "Press This can't be done. Choose Fork; send $f\\mapsto p$, $k\\mapsto q$, $g\\mapsto g$, $x\\mapsto x$."],
+    win: ["Impossible: without an inverse for $g$, different arrows can compose with $g$ to the same thing."],
+    term: "No cancellation",
+    math: {
+      say: "Cancellation ($g\\circ f\\simeq g\\circ k\\Rightarrow f\\simeq k$) needs the outer horn $\\Lambda^3_3$, which fills only if $X$ is Kan or $g$ is an equivalence. In the nerve of the fork category it fails.",
+      proof: "Counter-model: $p\\ne q:0\\to1$ with $g\\circ p=g\\circ q=x$."
+    }
+  },
+
+  backpath: {
+    title: "A one-sided inverse",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,1_a)$ with $f:a\\to b$ and $g:b\\to a$.", "Prove $(g,f\\,;\\,1_b)$, or press This can't be done."],
+    explain: "Going out along $f$ and back along $g$ gets you home, by $\\sigma_1$. Does going $g$ then $f$ get you home at $b$? Not necessarily. The counter-model One-sided inverse is a category with arrows $i:0\\to1$ and $r:1\\to0$ where $i$ then $r$ is the identity of $0$ while $r$ then $i$ is an arrow $\\varepsilon:1\\to1$ different from the identity. Think of $i$ as including a small set into a bigger one and $r$ as squashing it back down. Send $f\\mapsto i$ and $g\\mapsto r$.",
+    hints: ["Look for a category where undoing works in one order only.", "Press This can't be done. Choose One-sided inverse; send $f\\mapsto i$, $g\\mapsto r$."],
+    win: ["Impossible: $r$ then $i$ is $\\varepsilon$, which is not the identity."],
+    term: "Retraction",
+    math: {
+      say: "A one-sided inverse need not be an equivalence: in the category with $r\\circ i=1_0$ and $i\\circ r=\\varepsilon\\ne1_1$, the nerve has $(i,r;1_0)$ and no $(r,i;1_1)$.",
+      proof: "Map $f\\mapsto i$, $g\\mapsto r$; the goal would force $i\\circ r=1_1$."
+    }
+  },
+
+  idem: {
+    title: "An idempotent from a one-sided inverse",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,1_a)$, as in the last level.", "Construct $x$ from $g,f$ and prove $(x,x\\,;\\,x)$."],
+    explain: "In the last counter-model, $r$ then $i$ was the arrow $\\varepsilon$, and $\\varepsilon$ then $\\varepsilon$ was $\\varepsilon$ again. That holds here in general. Compose $g,f$ to get $x:b\\to b$ with $\\sigma_2=(g,f\\,;\\,x)$. Doing $x$ twice means $g,f,g,f$, and the middle $f,g$ is a round trip home. First the tetrahedron on $g,f,g$, with $d_3=\\sigma_2$, $d_0=\\sigma_1$ and degenerate $d_2=s_1g=(g,1_a\\,;\\,g)$, gives $\\sigma_3=(x,g\\,;\\,g)$. Then the tetrahedron on $x,g,f$ with $\\sigma_3,\\sigma_2,\\sigma_2$ gives $(x,x\\,;\\,x)$. An arrow like that is <b>idempotent</b>.",
+    hints: ["Cancel the middle $f,g$ first: show $(x,g\\,;\\,g)$.", "Compose: $g$, $f$. Tetrahedron: path $g,f,g$; $d_3=\\sigma_2$, $d_0=\\sigma_1$, $d_2=s_1g$. Tetrahedron: path $x,g,f$; $d_3=\\sigma_3$, $d_0=\\sigma_2$, $d_1=\\sigma_2$."],
+    win: ["$\\sigma_4=(x,x\\,;\\,x)$: a one-sided inverse produces an idempotent."],
+    term: "Idempotent",
+    math: {
+      say: "If $(f,g;1_a)$ is a 2-simplex and $x$ is a composite of $(g,f)$, then there is a 2-simplex $(x,x;x)$: $x$ is idempotent, by two inner 3-horns.",
+      proof: "Fill $\\Lambda^3_1$ on $(b,a,b,a)$ with $\\sigma_2,\\sigma_1,s_1g$ for $(x,g;g)$; fill $\\Lambda^3_2$ on $(b,b,a,b)$ with $\\sigma_3,\\sigma_2,\\sigma_2$ for $(x,x;x)$."
+    }
+  },
+
+  detour: {
+    title: "Factoring through an inverse",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,1_a)$, with $f$ marked $\\cong$, and $h:a\\to c$.", "Prove $h$ is a composite of $f$ and some arrow."],
+    explain: "You want to reach $c$ from $a$ by going through $b$ first. The detour: take $f$ to $b$, take $g$ back to $a$, then take $h$. So compose $g,h$ to get $x:b\\to c$ with $\\sigma_2=(g,h\\,;\\,x)$. The tetrahedron on the path $f,g,h$ has corners over $a,b,a,c$, faces $d_3=\\sigma_1$, $d_0=\\sigma_2$, and the free face $d_1=s_0h=(1_a,h\\,;\\,h)$, which is there because $h$ is. The missing face is $d_2=(f,x\\,;\\,h)$, an inner horn. The mark $\\cong$ on $f$ is never used, so this works with any left inverse.",
+    hints: ["First compose $g$ with $h$.", "Compose: $g$, $h$. Tetrahedron: path $f,g,h$; $d_3=\\sigma_1$, $d_0=\\sigma_2$ ($d_1=s_0h$ is degenerate). Fill."],
+    win: ["$\\sigma_3=(f,x\\,;\\,h)$: $h$ factors through $f$."],
+    term: "Factoring through an inverse",
+    math: {
+      say: "Given a 2-simplex $(f,g;1_a)$, any $h$ out of $a$ factors through $f$: with $x$ a composite of $(g,h)$ there is a 2-simplex $(f,x;h)$, by an inner horn $\\Lambda^3_2$.",
+      proof: "Fill $\\Lambda^2_1$ on $(g,h)$ giving $x$; fill $\\Lambda^3_2$ on $(a,b,a,c)$ with $\\sigma_1,\\sigma_2,s_0h$."
+    }
+  },
+
+  mono: {
+    title: "Cancelling an isomorphism",
+    bullets: ["Given $g$ marked $\\cong$, $\\sigma_1=(f,g\\,;\\,x)$, $\\sigma_2=(k,g\\,;\\,x')$, $\\sigma_3:x\\simeq m$, $\\sigma_4:x'\\simeq m$.", "Prove $f\\simeq k$."],
+    explain: "This is Cancelling without an inverse, with two changes. The arrow $g$ is an isomorphism, so by Joyal's theorem the padlock on an outer face opens when the edge next to the missing corner is $g$. And the two triangles end at different long sides $x$ and $x'$, so first Swap in $\\sigma_3$ and $\\sigma_4$ to bring both to $m$: $\\sigma_5=(f,g\\,;\\,m)$ and $\\sigma_6=(k,g\\,;\\,m)$. The tetrahedron on $f,1_b,g$ then has $d_2=\\sigma_5$, $d_1=\\sigma_6$, degenerate $d_0=s_0g$, and missing $d_3$: the horn $\\Lambda^3_3$ with last edge $g$.",
+    hints: ["Give both triangles the same long side, then cancel $g$.", "Swap in: $\\sigma_3$, $\\sigma_1$. Swap in: $\\sigma_4$, $\\sigma_2$. Tetrahedron: path $f,1_b,g$; $d_1=\\sigma_6$, $d_2=\\sigma_5$. Fill."],
+    win: ["$\\sigma_7=(f,1_b\\,;\\,k)$: an isomorphism can be cancelled."],
+    term: "Isomorphisms cancel",
+    math: {
+      say: "If $g$ is an equivalence in a quasi-category, the outer horn $\\Lambda^3_3\\to X$ whose last edge is $g$ fills. Hence $g\\circ f\\simeq g\\circ k$ implies $f\\simeq k$.",
+      proof: "Swap in to get $(f,g;m)$, $(k,g;m)$; fill $\\Lambda^3_3$ on $(a,b,b,c)$ with $d_2=\\sigma_5$, $d_1=\\sigma_6$, $d_0=s_0g$; $d_3$ is $f\\simeq k$."
+    }
+  },
+
+  twosided: {
+    title: "Left and right inverses agree",
+    bullets: ["Given $\\sigma_1=(f,g\\,;\\,1_a)$, $\\sigma_2=(k,f\\,;\\,1_b)$, $\\sigma_3:g\\simeq g'$, $\\sigma_4:g'\\simeq g''$.", "Prove $(g'',f\\,;\\,1_b)$."],
+    explain: "The arrow $g$ undoes $f$ from one side and $k$ from the other. One tetrahedron shows they agree: the path $k,f,g$ with corners over $b,a,b,a$, faces $d_3=\\sigma_2$, $d_0=\\sigma_1$ and degenerate $d_1=s_0g$, gives $\\sigma_6=(k,1_a\\,;\\,g)$, so $k\\simeq g$. The goal names $g''$, two homotopies further along, so Link $\\sigma_6$ with $\\sigma_3$ and then with $\\sigma_4$ to reach $k\\simeq g''$. Swap that into $\\sigma_2$ and $k$ becomes $g''$. No outer horn was used, so this works in every quasi-category. The triangle $\\sigma_5$ with $k'$ is a decoy.",
+    hints: ["Compare $k$ with $g$ first, then walk along the homotopies.", "Tetrahedron: path $k,f,g$; $d_3=\\sigma_2$, $d_0=\\sigma_1$. Link: $\\sigma_6$, $\\sigma_3$. Link: $\\sigma_7$, $\\sigma_4$. Swap in: $\\sigma_8$, $\\sigma_2$."],
+    win: ["$\\sigma_9=(g'',f\\,;\\,1_b)$: $g''$ undoes $f$ from both sides."],
+    term: "Two-sided inverse",
+    math: {
+      say: "A left inverse $g$ and a right inverse $k$ of $f$ are homotopic, so any arrow homotopic to $g$ is also a right inverse. Only inner horns are used: $f$ is an equivalence in any quasi-category.",
+      proof: "Fill $\\Lambda^3_2$ on $(b,a,b,a)$ for $k\\simeq g$; Link twice to $k\\simeq g''$; Swap in $g''$ for $k$ in $\\sigma_2$."
+    }
+  },
+
+  joyal: {
+    title: "Joyal's theorem",
+    bullets: ["Given $f:a\\to b$ marked $\\cong$, and $h:a\\to b$ without the mark.", "Construct $x$ and $y$ with $(f,x\\,;\\,1_a)$, $(y,f\\,;\\,1_b)$; prove $(y,1_a\\,;\\,x)$ and $(x,f\\,;\\,1_b)$."],
+    explain: "Both Solve tools fill outer horns, and in this world they work only along an arrow marked $\\cong$. That is Joyal's theorem in dimension two. Try them on $h$ and they refuse. On $f$: Solve $f\\cdot ?$ on $f,1_a$ gives $x$ with $\\sigma_1$, and Solve $?\\cdot g$ on $f,1_b$ gives $y$ with $\\sigma_2$. The tetrahedron on $y,f,x$ from Inverses on both sides, with $d_3=\\sigma_2$, $d_0=\\sigma_1$ and degenerate $d_1=s_0x$, gives $\\sigma_3=(y,1_a\\,;\\,x)$. Swap $\\sigma_3$ into $\\sigma_2$ and $x$ undoes $f$ on both sides.",
+    hints: ["Solve on both sides of $f$, compare the answers, then substitute.", "Solve $f\\cdot ?$: $f$, $1_a$. Solve $?\\cdot g$: $f$, $1_b$. Tetrahedron: path $y,f,x$; $d_3=\\sigma_2$, $d_0=\\sigma_1$. Swap in: $\\sigma_3$, $\\sigma_2$."],
+    win: ["$\\sigma_4=(x,f\\,;\\,1_b)$: outer horns along an isomorphism fill, and $x$ is a two-sided inverse."],
+    term: "Joyal's theorem",
+    math: {
+      say: "Joyal: in a quasi-category $X$, an edge $f$ is an isomorphism iff every $\\Lambda^n_0\\to X$ ($n\\ge2$) with first edge $f$ extends to $\\Delta^n$. Consequently $X$ is a Kan complex iff its homotopy category is a groupoid.",
+      proof: "Fill $\\Lambda^2_0$ and $\\Lambda^2_2$ along $f$ for inverses $x,y$; $\\Lambda^3_2$ gives $y\\simeq x$; transport by Swap in."
+    }
+  },
+
+  /* ---------------- World 11: Squares ---------------- */
+
+  natsq: {
+    title: "A commuting square",
+    bullets: ["Given $\\sigma_1=(f,\\beta\\,;\\,d)$, $\\sigma_2=(\\alpha,f'\\,;\\,d')$ and $\\sigma_3=(d,1_{b'}\\,;\\,d')$.", "Construct triangles $(f,\\beta\\,;\\,?)$ and $(\\alpha,f'\\,;\\,?)$ with the same long side."],
+    explain: "From $a$ to $b'$ there are two roads: along $f$ then $\\beta$, or along $\\alpha$ then $f'$. A commuting square needs one diagonal that serves both roads. Right now the roads have different diagonals, $d$ in $\\sigma_1$ and $d'$ in $\\sigma_2$, related by the homotopy $\\sigma_3:d\\simeq d'$. Swap $\\sigma_3$ into $\\sigma_1$ and you get $\\sigma_4=(f,\\beta\\,;\\,d')$, which shares $d'$ with $\\sigma_2$. The pair $\\sigma_4,\\sigma_2$ is a commuting square from $f$ to $f'$, which you can read as an arrow from $f$ to $f'$ with components $\\alpha$ and $\\beta$.",
+    hints: ["The two diagonals are homotopic.", "Swap in: $\\sigma_3$, $\\sigma_1$."],
+    win: ["$\\sigma_4$ and $\\sigma_2$ share the diagonal $d'$: a commuting square from $f$ to $f'$."],
+    term: "Commuting square",
+    math: {
+      say: "A square in $C$ is a map $\\Delta^1\\times\\Delta^1\\to C$: two 2-simplices $(f,\\beta;d)$ and $(\\alpha,f';d)$ sharing the diagonal $d$. It is an edge $f\\to f'$ of $\\mathrm{Fun}(\\Delta^1,C)$.",
+      proof: "Transport $(f,\\beta;d)$ along the homotopy $d\\simeq d'$ to get $(f,\\beta;d')$, which shares its diagonal with $\\sigma_2$."
+    }
+  },
+
+  moveacross: {
+    title: "Moving an isomorphism across",
+    bullets: ["Given $\\sigma_1=(\\bar\\alpha,\\alpha\\,;\\,1_{a'})$ and $\\sigma_2=(\\alpha,p\\,;\\,q)$.", "Prove $(\\bar\\alpha,q\\,;\\,p)$."],
+    explain: "In school algebra, $\\alpha p=q$ becomes $p=\\alpha^{-1}q$ by dividing by $\\alpha$. Here the division is a tetrahedron. Take the path $\\bar\\alpha,\\alpha,p$, with corners over $a',a,a',c$. Its first two steps are a round trip, recorded by $\\sigma_1$ as face $d_3$. Its last two steps are $\\sigma_2$, face $d_0$. Its face $d_1$ skips the middle corner and reads stay at $a'$, then take $p$: the degenerate triangle $s_0p=(1_{a'},p\\,;\\,p)$. The missing face is $d_2=(\\bar\\alpha,q\\,;\\,p)$, an inner horn. The tool you earn, Divide, does this on either side.",
+    hints: ["Start the path by undoing $\\alpha$.", "Tetrahedron: path $\\bar\\alpha,\\alpha,p$; $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=s_0p$. Fill."],
+    win: ["$\\sigma_4=(\\bar\\alpha,q\\,;\\,p)$: $\\alpha$ moved to the other side. New tool: Divide."],
+    term: "Dividing by an isomorphism",
+    math: {
+      say: "If $(\\bar\\alpha,\\alpha;1_{a'})$ and $(\\alpha,p;q)$ are 2-simplices, there is a 2-simplex $(\\bar\\alpha,q;p)$: left composition with an isomorphism is invertible up to homotopy.",
+      proof: "Fill $\\Lambda^3_2$ on $(a',a,a',c)$ with $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=s_0p$; the new face $d_2$ is $(\\bar\\alpha,q;p)$."
+    }
+  },
+
+  acrossagain: {
+    title: "Dividing on the right",
+    bullets: ["Given $\\sigma_1=(\\beta,\\bar\\beta\\,;\\,1_b)$, $\\sigma_3=(p,\\beta\\,;\\,q)$ and $\\sigma_4=(q',1_{b'}\\,;\\,q)$.", "Prove $(q',\\bar\\beta\\,;\\,p)$."],
+    explain: "Now $\\beta$ sits at the end of $\\sigma_3=(p,\\beta\\,;\\,q)$. Divide with $\\sigma_1$ moves it across to the right: $\\sigma_5=(q,\\bar\\beta\\,;\\,p)$. The goal starts with $q'$ instead of $q$, and $\\sigma_4$ says $q'\\simeq q$. Swap in would want the homotopy pointing from $q$ to $q'$, so use a tetrahedron directly: the path $q',1_{b'},\\bar\\beta$ with $d_3=\\sigma_4$, $d_1=\\sigma_5$, and the degenerate $d_0=s_0\\bar\\beta=(1_{b'},\\bar\\beta\\,;\\,\\bar\\beta)$. The missing face is $d_2=(q',\\bar\\beta\\,;\\,p)$.",
+    hints: ["Divide first, then carry the result from $q$ to $q'$.", "Divide: $\\sigma_1$, $\\sigma_3$. Tetrahedron: path $q',1_{b'},\\bar\\beta$; $d_3=\\sigma_4$, $d_0=s_0\\bar\\beta$, $d_1=\\sigma_5$. Fill."],
+    win: ["$\\sigma_6=(q',\\bar\\beta\\,;\\,p)$: division works on the right too."],
+    term: "Right division",
+    math: {
+      say: "Given $(\\beta,\\bar\\beta;1_b)$ and a 2-simplex $(p,\\beta;q)$ there is a 2-simplex $(q,\\bar\\beta;p)$, and 2-simplices transport along homotopies of any edge.",
+      proof: "Divide gives $(q,\\bar\\beta;p)$; then $\\Lambda^3_2$ on $(a,b',b',b)$ with $\\sigma_4$, $s_0\\bar\\beta$, $\\sigma_5$ transports along $q'\\simeq q$."
+    }
+  },
+
+  sqpaste: {
+    title: "Pasting squares",
+    bullets: ["Two commuting squares stacked: $f$ to $f'$ (by $\\sigma_1,\\sigma_2$) and $f'$ to $f''$ (by $\\sigma_3,\\sigma_4$). $A$ composes $\\alpha,\\alpha'$ and $B$ composes $\\beta,\\beta'$.", "Prove the tall square with sides $A,B$ commutes."],
+    explain: "Squares are arrows between arrows, so two of them should compose. The tall square goes from $f$ to $f''$ with sides $A$ and $B$, and it needs one diagonal shared by $(f,B\\,;\\,?)$ and $(A,f''\\,;\\,?)$. Compose $f,B$ for a diagonal $x$ ($\\sigma_7$). Then walk $x$ across the picture with three tetrahedra. Path $f,\\beta,\\beta'$ with $\\sigma_1,\\sigma_6,\\sigma_7$ gives $(d,\\beta'\\,;\\,x)$. Path $\\alpha,f',\\beta'$ with $\\sigma_2,\\sigma_3$ and that gives $(\\alpha,d'\\,;\\,x)$. Path $\\alpha,\\alpha',f''$ with $\\sigma_5,\\sigma_4$ and that gives $(A,f''\\,;\\,x)$.",
+    hints: ["Make the diagonal $x$ from $f$ and $B$, then move it left one tetrahedron at a time.", "Compose: $f$, $B$. Tetrahedron: path $f,\\beta,\\beta'$; $d_3=\\sigma_1$, $d_0=\\sigma_6$, $d_2=\\sigma_7$. Tetrahedron: path $\\alpha,f',\\beta'$; $d_3=\\sigma_2$, $d_0=\\sigma_3$, $d_1=\\sigma_8$. Tetrahedron: path $\\alpha,\\alpha',f''$; $d_3=\\sigma_5$, $d_0=\\sigma_4$, $d_2=\\sigma_9$."],
+    win: ["$\\sigma_7$ and $\\sigma_{10}$ share $x$: the pasted square commutes."],
+    term: "Pasting squares",
+    math: {
+      say: "$\\mathrm{Fun}(\\Delta^1,C)$ is a quasi-category when $C$ is: two composable squares have a composite. The prism $\\Delta^1\\times\\Delta^2$ is a union of three 3-simplices, each filled by an inner horn.",
+      proof: "With $x$ a composite of $(f,B)$: fill $\\Lambda^3_1$ on $(a,b,b',b'')$, $\\Lambda^3_2$ on $(a,a',b',b'')$, $\\Lambda^3_1$ on $(a,a',a'',b'')$; the last face is $(A,f'';x)$."
+    }
+  },
+
+  isocomp: {
+    title: "A composite of isomorphisms",
+    bullets: ["Given $f,g$ with inverses $\\bar f,\\bar g$ ($\\sigma_1,\\dots,\\sigma_4$) and $\\sigma_5=(f,g\\,;\\,x)$.", "Construct $y$ with $(x,y\\,;\\,1_a)$ and $(y,x\\,;\\,1_c)$."],
+    explain: "As with socks and shoes, the inverse of $f$ then $g$ should be $\\bar g$ then $\\bar f$. Compose $\\bar g,\\bar f$ for $y$ ($\\sigma_6$). For $(x,y\\,;\\,1_a)$: Divide $\\sigma_3$ into $\\sigma_5$ to move $g$ across, $\\sigma_7=(x,\\bar g\\,;\\,f)$; then the tetrahedron on $x,\\bar g,\\bar f$ with $\\sigma_7,\\sigma_6,\\sigma_1$ gives it. For $(y,x\\,;\\,1_c)$: Divide $\\sigma_2$ into $\\sigma_6$, $\\sigma_9=(y,f\\,;\\,\\bar g)$; then the tetrahedron on $y,f,g$ with $\\sigma_9,\\sigma_5,\\sigma_4$. The arrow $h:c\\to a$ points the right way and is not an inverse of anything.",
+    hints: ["The inverse composes $\\bar g$ and $\\bar f$. Each side is one Divide and one tetrahedron.", "Compose: $\\bar g$, $\\bar f$. Divide: $\\sigma_3$, $\\sigma_5$. Tetrahedron: path $x,\\bar g,\\bar f$; $d_3=\\sigma_7$, $d_0=\\sigma_6$, $d_1=\\sigma_1$. Divide: $\\sigma_2$, $\\sigma_6$. Tetrahedron: path $y,f,g$; $d_3=\\sigma_9$, $d_0=\\sigma_5$, $d_1=\\sigma_4$."],
+    win: ["$\\sigma_8=(x,y\\,;\\,1_a)$ and $\\sigma_{10}=(y,x\\,;\\,1_c)$: a composite of isomorphisms is an isomorphism."],
+    term: "Isomorphisms compose",
+    math: {
+      say: "For isomorphisms $f,g$ with inverses $\\bar f,\\bar g$, any composite $x$ of $(f,g)$ has a two-sided inverse, a composite $y$ of $(\\bar g,\\bar f)$.",
+      proof: "From $(f,g;x)$ get $(x,\\bar g;f)$; fill $\\Lambda^3_2$ on $(a,c,b,a)$ for $(x,y;1_a)$. From $(\\bar g,\\bar f;y)$ get $(y,f;\\bar g)$; fill $\\Lambda^3_2$ on $(c,a,b,c)$ for $(y,x;1_c)$."
+    }
+  },
+
+  natiso: {
+    title: "Inverting a square",
+    bullets: ["A commuting square from $f$ to $f'$ with diagonal $d$ and sides $\\alpha,\\beta$, both isomorphisms with inverses $\\bar\\alpha,\\bar\\beta$.", "Construct a commuting square from $f'$ back to $f$ with sides $\\bar\\alpha,\\bar\\beta$."],
+    explain: "The return square needs a diagonal $x:a'\\to b$ shared by $(\\bar\\alpha,f\\,;\\,x)$ and $(f',\\bar\\beta\\,;\\,x)$. Take the first road as the definition: compose $\\bar\\alpha,f$ for $x$ ($\\sigma_7$). Now show the second road reaches $x$ too. Divide $\\sigma_1$ into $\\sigma_4=(\\alpha,f'\\,;\\,d)$ to get $\\sigma_8=(\\bar\\alpha,d\\,;\\,f')$. The tetrahedron on $\\bar\\alpha,f,\\beta$, corners over $a',a,b,b'$, with $d_3=\\sigma_7$, $d_0=\\sigma_3$, $d_2=\\sigma_8$, gives $\\sigma_9=(x,\\beta\\,;\\,f')$. Divide $\\sigma_2$ into $\\sigma_9$ and $\\beta$ crosses over: $(f',\\bar\\beta\\,;\\,x)$.",
+    hints: ["Use $\\bar\\alpha$ then $f$ as the new diagonal. Divide, tetrahedron, Divide.", "Compose: $\\bar\\alpha$, $f$. Divide: $\\sigma_1$, $\\sigma_4$. Tetrahedron: path $\\bar\\alpha,f,\\beta$; $d_3=\\sigma_7$, $d_0=\\sigma_3$, $d_2=\\sigma_8$. Divide: $\\sigma_2$, $\\sigma_9$."],
+    win: ["$\\sigma_7$ and $\\sigma_{10}$ share $x$: the square with invertible sides has an inverse square."],
+    term: "Natural isomorphism",
+    math: {
+      say: "A natural transformation is an equivalence in $\\mathrm{Fun}(K,C)$ iff each component is an equivalence in $C$. This level is the case $K=\\Delta^1$: the return square is built from the inverses of the components.",
+      proof: "From $(\\alpha,f';d)$ get $(\\bar\\alpha,d;f')$; fill $\\Lambda^3_1$ on $(a',a,b,b')$ for $(x,\\beta;f')$; dividing by $\\beta$ gives $(f',\\bar\\beta;x)$."
+    }
+  },
+
+  /* ---------------- World 12: Playground ---------------- */
+
+  sandbox: {
+    title: "Sandbox",
+    bullets: ["Every tool is unlocked and every horn fills.", "There is no goal. Undo is always available."],
+    explain: "This board has four vertices and five arrows, and every tool you have earned: Compose, both Solve tools, Tetrahedron, Same, Flip, Link, Swap in, Divide, Add vertex, Draw arrow, Glue triangle and Peel. Every horn fills here, outer ones included. Some things to try: build an inverse and check it is two-sided, compose $f,g,h$ in both bracketings and compare, or glue two triangles on one loop and see what Compose then does with it. The degenerate triangles $s_0f$ and $s_1f$ are in the Facts panel whenever a tetrahedron needs one.",
+    hints: ["Compose two arrows that meet.", "Compose $f$, $g$, then put a tetrahedron on $f,g,h$."],
+    win: [],
+    term: "Simplicial set",
+    math: {
+      say: "A simplicial set is a functor $\\Delta^{op}\\to\\mathrm{Set}$. Here you build finite ones by hand: add vertices, edges and 2-cells, fill horns, and take skeleta.",
+      proof: ""
     }
   }
 };
@@ -1099,201 +1129,214 @@ HC.Reasons = {
                 whyNot: "The shadow allows this, so a lift exists." }
 };
 
-/* Notes: optional theory pages. Blocks: {p}, {diagram}, {demo}.
-   diagram = {dots:[{id,label,x,y}], arrows:[{from,to,label,dashed}], fills:[[a,b,c]], ghost:[[a,b,c]]}, coordinates 0..100 by 0..60. */
+
+/* Notes: optional theory pages, each offered before the level named in `before` (one note per level).
+   Blocks: {p}, {h}, {diagram}, {demo}. aside: true marks an optional aside on the map.
+   diagram = {dots:[{id,label,x,y}], arrows:[{from,to,label,dashed,bend}], fills:[[a,b,c]], ghost:[[a,b,c]]}, coordinates 0..100 by 0..60. */
 HC.Notes = [
 
   { id: "simplicial", before: "faces", title: "Vertices, arrows, triangles", body: [
-    { p: "Define a $n$-<b>simplex</b> as a directed (filled) triangle of dimension $n$: vertices, arrows, triangles with interior, solid tetrahedra, and so on. (In this game, we'll only work with $n \\le 3$, for obvious reasons.)" },
-    { p: "A <b>simplicial set</b> is composed of many simplices, possibly glued together along their directed components." },
-    { diagram: { caption: "One simplicial set.", glow: { pts: ["y3","y4","y5"], cx: 72, cy: 38, r: 27, op: 0.26 }, dots: [{id:"y0",label:"0",x:4,y:30},{id:"y1",label:"1",x:26,y:2},{id:"y2",label:"2",x:48,y:30},{id:"y3",label:"3",x:72,y:16},{id:"y4",label:"4",x:52,y:56},{id:"y5",label:"5",x:92,y:56},{id:"y6",label:"6",x:72,y:43},{id:"y7",label:"7",x:26,y:50},{id:"y8",label:"8",x:100,y:6},{id:"y9",label:"9",x:108,y:20}],
+    { p: "A <b>simplicial set</b> is a shape built from pieces of a few standard kinds: vertices, arrows between vertices, filled triangles, solid tetrahedra, and higher versions you will not need. Pieces are glued along their sides, and every arrow has a direction." },
+    { diagram: { caption: "One simplicial set: a filled triangle, a solid tetrahedron, a hollow loop and a stray arrow.", glow: { pts: ["y3","y4","y5"], cx: 72, cy: 38, r: 27, op: 0.26 }, dots: [{id:"y0",label:"0",x:4,y:30},{id:"y1",label:"1",x:26,y:2},{id:"y2",label:"2",x:48,y:30},{id:"y3",label:"3",x:72,y:16},{id:"y4",label:"4",x:52,y:56},{id:"y5",label:"5",x:92,y:56},{id:"y6",label:"6",x:72,y:43},{id:"y7",label:"7",x:26,y:50},{id:"y8",label:"8",x:100,y:6},{id:"y9",label:"9",x:108,y:20}],
       arrows: [{from:"y0",to:"y1"},{from:"y1",to:"y2"},{from:"y0",to:"y2"},{from:"y2",to:"y3"},{from:"y1",to:"y3"},{from:"y0",to:"y7"},{from:"y7",to:"y2"},{from:"y4",to:"y5"},{from:"y3",to:"y4"},{from:"y3",to:"y5"},{from:"y6",to:"y4"},{from:"y6",to:"y5"},{from:"y6",to:"y3"},{from:"y8",to:"y9"}],
       fills: [["y0","y1","y2"],
               { pts: ["y3","y4","y5"], grad: { a: 0.02, b: 0.08, x1: 0, y1: 0, x2: 1, y2: 0.6 } },
               { pts: ["y3","y4","y6"], grad: { a: 0.05, b: 0.20, x1: 0, y1: 0, x2: 0.8, y2: 1 } },
               { pts: ["y3","y5","y6"], grad: { a: 0.10, b: 0.42, x1: 1, y1: 0, x2: 0, y2: 1 } },
               { pts: ["y4","y5","y6"], grad: { a: 0.16, b: 0.62, x1: 0, y1: 0, x2: 0, y2: 1 } }] } },
-    { p: "Note the hollow triangle with vertices $\\{0,7,2\\}$ in the above picture is not actually a $2$-simplex, but in fact just three $1$-simplices glued together." },
-
-		{p: "The <b>boundary</b> $\\delta S$ of each $n$-simplex $S$ consists of simplices of dimension $n-1$: here's a triangle with arrows as boundaries."},
+    { p: "Look at the corners $0,7,2$. There are three arrows going round, but nobody filled in the middle, so they are just three arrows. A triangle counts only if it is actually there as a piece." },
+    { p: "Each triangle has corners numbered $0,1,2$, and its three sides are arrows that run from the lower number to the higher one. The side from $0$ to $1$ is called $d_2$, the side from $1$ to $2$ is $d_0$, and the long side from $0$ to $2$ is $d_1$. The rule behind the names: $d_i$ is the side that skips corner $i$." },
     { diagram: { dots: [{id:"a",label:"0",x:15,y:44},{id:"b",label:"1",x:50,y:10},{id:"c",label:"2",x:85,y:44}],
                  arrows: [{from:"a",to:"b",label:"d₂"},{from:"b",to:"c",label:"d₀"},{from:"a",to:"c",label:"d₁"}], fills: [["a","b","c"]] } },
-    { p: "For example, an arrow ($1$-simplex) has a source and a target, which are both $0$-simplices. A triangle has three corners numbered $0,1,2$ and three faces, each an arrow: $d_2$ joins corners $0$ and $1$, $d_0$ joins $1$ and $2$, and $d_1$ joins $0$ and $2$." },
-		{p:"Each face is named numerically for the corner it omits. We'll denote a triangle as the triple $(d_2,d_0\\,;\\,d_1)$, in the order of \"first leg, second leg, long side.\""},
+    { p: "The game writes a triangle as $(d_2,\\,d_0\\,;\\,d_1)$: first leg, second leg, semicolon, long side. So $(f,g\\,;\\,x)$ is the triangle you get by walking $f$, then $g$, with $x$ as the shortcut." },
     { demo: "tetra-3d" },
-    { p: "Similarly, a tetrahedron has four corners and four triangular faces $d_0,\\dots,d_3$, with $d_i$ omitting corner $i$. Every arrow runs from a lower corner to a higher one, and every face of the tetrahedron is oriented either clockwise or counterclockwise by following increasing order of the vertices." },
-    { p: "Let's look at some simple examples of simplicial sets." }
+    { p: "A tetrahedron works the same way with one more corner. It has corners $0,1,2,3$ and four triangular faces $d_0,\\dots,d_3$, and $d_i$ is again the face that skips corner $i$. Tap a face in the picture above to see its name." }
   ]},
 
   { id: "degenerate", before: "freebies", title: "Identities and degenerate simplices", body: [
-    { p: "Every vertex $a$ comes with an <b>identity</b> arrow $1_a:a\\to a$. It needs no construction, because the vertex itself, regarded as a simplex of dimension one, is a <i>degenerate</i> arrow. The board shows it as a faint loop at each vertex, and any tool that asks for an arrow will accept a vertex: clicking one means choosing its identity." },
-    { p: "The same happens one dimension up. An arrow $f:a\\to b$ has two degenerate triangles, $s_0f=(1_a,f\\,;\\,f)$ and $s_1f=(f,1_b\\,;\\,f)$. The names come from the <i>degeneracy maps</i> $s_0,s_1$, which repeat a corner: $s_0f$ is the triangle with corners over $a,a,b$, and $s_1f$ the one over $a,b,b$." },
+    { p: "Every vertex $a$ comes with an arrow $1_a:a\\to a$ that goes nowhere. You can think of it as the vertex itself, stretched into an arrow of length zero. The board draws it as a faint loop, and any tool that asks for an arrow accepts a tap on a vertex as meaning its identity." },
+    { p: "One dimension up the same trick gives triangles. An arrow $f:a\\to b$ has two flat triangles: $s_0f=(1_a,f\\,;\\,f)$, which waits at $a$ and then takes $f$, and $s_1f=(f,1_b\\,;\\,f)$, which takes $f$ and then waits at $b$. The $s_0$ repeats the first corner of $f$, and $s_1$ repeats the last." },
     { diagram: { caption: "The two degenerate triangles on $f$: $s_0f$ repeats $a$, $s_1f$ repeats $b$.", dots: [{id:"a",label:"0 = a",x:10,y:44},{id:"b",label:"1 = a",x:30,y:10},{id:"c",label:"2 = b",x:50,y:44},{id:"d",label:"0 = a",x:60,y:44},{id:"e",label:"1 = b",x:80,y:10},{id:"f",label:"2 = b",x:98,y:44}],
       arrows: [{from:"a",to:"b",label:"1_a",kind:"identity"},{from:"b",to:"c",label:"f"},{from:"a",to:"c",label:"f"},{from:"d",to:"e",label:"f"},{from:"e",to:"f",label:"1_b",kind:"identity"},{from:"d",to:"f",label:"f"}], fills: [["a","b","c"],["d","e","f"]] } },
-    { p: "A degenerate triangle is a real triangle, not a broken one: it is <i>flat</i>, because two of its corners are the same vertex and the side between them is the identity. On the board the two copies sit exactly on top of each other, so you see a line where there should be a sheet. That is the only thing 'degenerate' means here: nothing is missing, two corners coincide." },
-    { p: "These triangles always exist, so you never build them. $(f,1_b\\,;\\,f)$ can go into a proof without appearing among the triangles you have made, and the Facts panel lists it under <b>Degenerate triangles</b>. In <i>Degenerate triangles</i> you pick these out of that list; in <i>Repeated corners</i> you have to say which corner is the doubled one." },
-    { h: "Splitting a vertex along its identity" },
-    { p: "A flat triangle is hard to read, so the game can pull the two copies of the vertex apart. That is what <b>splitting a vertex along its identity</b> means: one vertex $b$ becomes two vertices $b$ and $b'$, joined by a copy of the identity arrow $1_b$. Nothing is added and nothing is proved — it is the same triangle with room to breathe, and the identity arrow is the record that $b'$ <i>is</i> $b$." },
-    { demo: "split-vertex" },
-    { p: "That is the whole gesture, and the picture above does it: drag $c'$ away from $c$ and the squashed triangle $(x,1_c\\,;\\,y)$ opens into a sheet, with $1_c$ appearing between the copies; let go and it springs back. The <b>unfold</b> toggle (key U) does the same thing for every triangle on the board that uses an identity, all at once. The copies are ghosts: dragging them changes nothing, and no fact changes either way." },
-    { p: "Read as a rule about shapes, splitting is ordinary bookkeeping. The degeneracy map $s_1$ takes an arrow $f:a\\to b$ and repeats its target corner, giving the triangle $s_1f$ over $a,b,b$. Splitting runs that backwards: taking the squashed simplex and drawing the repeated corner as a separate point. Both pictures denote the same simplex of the same shape, which is why you may split one whenever it helps you see what is going on." },
-    { diagram: { caption: "The flat triangle $(f,1_b\\,;\\,g)$ says $f\\simeq g$. Split $b$ and it is an honest triangle with corners $a,b,b'$, the copy $1_b$ joining $b$ to $b'$.", dots: [{id:"a",label:"a",x:10,y:44},{id:"b",label:"b",x:50,y:10},{id:"c",label:"b′",x:88,y:44}],
+    { p: "These are called <b>degenerate</b>. They are genuine triangles; they just have two corners on the same vertex, so on the board they are squashed into a line. They exist in every simplicial set without anyone building them, which is why the Facts panel lists them in their own section, <b>Degenerate triangles</b>." },
+    { h: "Unfolding a flat triangle" },
+    { p: "A squashed triangle is hard to look at, so the board can draw the repeated vertex twice. Press the <b>unfold</b> toggle (key U) and each vertex that a triangle uses twice is drawn as two copies, $b$ and $b'$, joined by the identity arrow. Nothing changes in the Facts; it is only a way of drawing." },
+    { diagram: { caption: "A triangle $(f,1_b\\,;\\,g)$ with its corner $b$ drawn twice.", dots: [{id:"a",label:"a",x:10,y:44},{id:"b",label:"b",x:50,y:10},{id:"c",label:"b′",x:88,y:44}],
       arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"1_b",kind:"identity"},{from:"a",to:"c",label:"g"}], fills: [["a","b","c"]] } },
-    { h: "Where you use it" },
-    { p: "<b>Homotopy.</b> A triangle $(f,1_b\\,;\\,g)$ with an identity in the middle says that two parallel arrows $f,g:a\\to b$ are homotopic. Flat, it reads 'follow $f$, then do nothing, and end at $g$'. Split, its corners are $a,b,b'$: $f$ runs from $a$ to $b$, $g$ from $a$ to $b'$, and $1_b$ joins the two copies — a sheet between two paths that only differ by a deformation." },
-    { p: "<b>Unit laws.</b> <i>Composing with an identity</i> asks you to fill triangles $(1_a,f\\,;\\,f)$ and $(f,1_b\\,;\\,f)$: one repeats $a$, the other repeats $b$. Splitting turns 'do nothing, then $f$' into an ordinary triangle you can point at." },
-    { p: "<b>Solids.</b> A tetrahedron may have repeated corners, over $a,b,b,c$ or over $a,b,b,b$. It still has four corners: the repeats are joined by identities, and unfolding draws them as $b,b',b''$ so that its four faces separate. <i>Symmetry is a theorem</i> is exactly this, with the path $f,1_b,1_b$." },
-    { p: "The rule of thumb while playing: when something looks flat, a corner is doubled. Split it to see the shape — and remember that the copies are a way of drawing, so splitting never changes what you can prove." }
+    { p: "Tetrahedra can have repeated corners too, say over $a,b,b,c$. Then some of their faces are degenerate triangles. The level <i>Repeated corners</i> asks you to find one." }
   ]},
 
+  { id: "horns", before: "compose", title: "Horns, fillers and composites", body: [
+    { p: "Take a simplex, remove its inside, and remove one of its faces as well. What is left is a <b>horn</b>, written $\\Lambda^n_k$: $n$ is the dimension, and $k$ is the corner opposite the missing face, so the missing face is $d_k$. A triangle with its long side gone is $\\Lambda^2_1$." },
+    { diagram: { dots: [{id:"a",label:"0",x:12,y:42},{id:"b",label:"1",x:50,y:12},{id:"c",label:"2",x:88,y:42}],
+                 arrows: [{from:"a",to:"b",label:"d₂"},{from:"b",to:"c",label:"d₀"},{from:"a",to:"c",label:"d₁ missing",dashed:true}] } },
+    { p: "The other two triangle horns: $\\Lambda^2_0$ is two arrows leaving corner $0$, missing the side between their ends, and $\\Lambda^2_2$ is two arrows arriving at corner $2$. A horn is <b>inner</b> if the missing face is in the middle, $0<k<n$, and <b>outer</b> if $k=0$ or $k=n$." },
+    { p: "To <b>fill</b> a horn in a simplicial set $X$ means to find a simplex of $X$ that has the horn's faces as its faces. Formally, a horn in $X$ is a map $\\Lambda^n_k\\to X$ and a filler extends it to $\\Delta^n\\to X$. Try it:" },
+    { demo: "horn-fill" },
+    { p: "For arrows $f:a\\to b$ and $g:b\\to c$, a filler of their horn $\\Lambda^2_1$ is a triangle $(f,g\\,;\\,x)$. The game calls $x$ a <b>composite</b> of $f$ and $g$, and the triangle is the evidence. The tool Compose fills $\\Lambda^2_1$ by drawing a new arrow and the triangle on it." },
+    { p: "Fillers need not exist. If a simplicial set has $f,g$ end to end and no triangle, the horn on them is simply unfilled. Much of the game is about which horns can be filled where." }
+  ]},
 
-  { id: "arrows", before: "compose", title: "Arrows and composition", body: [
-    { p: "Two arrows $f:a\\to b$ and $g:b\\to c$ <i>meet</i> when the target of the first is the source of the second. In an ordinary category they have a composite $g\\circ f$, written right to left like function application. The game writes diagrams in the order you travel, so a composite of $f$ then $g$ is a triangle $(f,g\\,;\\,x)$." },
-    { diagram: { dots: [{id:"a",label:"a",x:15,y:42},{id:"b",label:"b",x:50,y:12},{id:"c",label:"c",x:85,y:42}],
-                 arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"a",to:"c",label:"x",dashed:true}], ghost: [["a","b","c"]] } },
-    { p: "In this game a <b>composite</b> of $f$ then $g$ is an arrow $x$ together with a triangle $(f,g\\,;\\,x)$ that witnesses it, and a pair of arrows may have several composites. The new arrow gets a fresh letter, and its tooltip says that it is a composite of $f$ then $g$." },
-    { p: "Paths in a space show why. Following $f$ and then $g$ gives a path, and so does any path obtained from it by a small deformation, with nothing to single one out. A theory that remembers the witnesses can express this, and an ordinary category is the case in which the witness is unique." }
+  { id: "quasicat", before: "chain", title: "Quasi-categories", body: [
+    { p: "A <b>quasi-category</b>, also called an <b>$\\infty$-category</b>, is a simplicial set in which every inner horn has a filler: $\\Lambda^n_k\\to X$ extends to $\\Delta^n\\to X$ whenever $0<k<n$. For $n=2$ that says every two arrows that meet have a composite. For $n=3$ it says three faces of a tetrahedron with the middle face $d_1$ or $d_2$ missing can always be completed." },
+    { p: "The worlds Composition, Tetrahedra and Homotopy take place in a quasi-category, so Compose and Tetrahedron always work there. Two small simplicial sets that are not quasi-categories:" },
+    { diagram: { dots: [{id:"a",label:"a",x:12,y:42},{id:"b",label:"b",x:30,y:15},{id:"c",label:"c",x:48,y:42},{id:"d",label:"a",x:60,y:42},{id:"e",label:"b",x:78,y:15},{id:"f",label:"c",x:96,y:42}],
+                 arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"d",to:"e",label:"f"},{from:"e",to:"f",label:"g"},{from:"d",to:"f",label:"h"}]} },
+    { p: "On the left, the horn $\\Lambda^2_1$ itself: $f$ and $g$ meet and have no triangle. On the right, the hollow triangle $\\partial\\Delta^2$: the arrow $h$ is there, but there is still no triangle, so the horn on $f,g$ is still unfilled." },
+    { p: "If you know ordinary categories: there every pair has exactly one composite. A quasi-category asks only that some composite exists, which leaves room for several." }
   ]},
 
   { id: "triangle", before: "twoways", title: "What a triangle witnesses", body: [
-    { p: "A triangle with legs $f,g$ and long side $x$ is a <b>proof</b> that $x$ is a composite of $f$ then $g$. It is written $(f,g\\,;\\,x)$." },
+    { p: "A triangle $(f,g\\,;\\,x)$ is a certificate: it says that $x$ is a composite of $f$ then $g$. It says <i>a</i> composite. Another triangle $(f,g\\,;\\,y)$ may certify a different arrow $y$, and then both are composites with equal rights." },
     { diagram: { dots: [{id:"a",label:"a",x:15,y:42},{id:"b",label:"b",x:50,y:12},{id:"c",label:"c",x:85,y:42}],
-                 arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"a",to:"c",label:"x"}], fills: [["a","b","c"]] } },
-    { p: "The triangle states that $x$ is <i>a</i> composite of $f$ then $g$ and does not select it. Another triangle on the same $f$ and $g$ may have a different long side $y$, and then both $x$ and $y$ are composites of $f$ then $g$, with neither preferred." },
-    { p: "Composition is therefore a relation, “$x$ is a composite of $f$ then $g$”, and each triangle witnesses one instance of it. It is no longer a function with a single value." },
-    { p: "The next levels show that two composites of the same pair are always <i>homotopic</i>, which is the appropriate notion of being interchangeable, and that associativity and the unit laws hold in the same sense. Until then, read every triangle as saying that its long side is a composite." }
+                 arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"a",to:"c",label:"x",bend:0.12},{from:"a",to:"c",label:"y",bend:-0.12}], fills: [["a","b","c"]] } },
+    { p: "Paths in a space are a good picture to keep in mind. Walk along $f$, then along $g$: that is one path from $a$ to $c$. Shift it slightly and you have another path that is just as good a record of the trip, with no reason to prefer either. In a space you never get the composite, you get many, all deformable into each other." },
+    { p: "So composition here is a relation, $x$ is a composite of $f$ and $g$, and each triangle is one instance of it. In the Tetrahedra world you will compare two composites of the same pair and find a triangle between them." }
   ]},
 
-  { id: "simplices", before: "tetra", title: "Simplices and order-preserving maps", body: [
-    { p: "The <b>$n$-simplex</b> $\\Delta^n$ is the shape with corners $0<1<\\dots<n$, one arrow $i\\to j$ for every $i<j$, and everything filled in. So $\\Delta^0$ is a vertex, $\\Delta^1$ an arrow, $\\Delta^2$ a filled triangle and $\\Delta^3$ a solid tetrahedron." },
+  { id: "simplices", before: "tetra", title: "Tetrahedra and their horns", body: [
+    { p: "The <b>$n$-simplex</b> $\\Delta^n$ has corners $0<1<\\dots<n$, an arrow $i\\to j$ for every $i<j$, and everything filled. So $\\Delta^0$ is a vertex, $\\Delta^1$ an arrow, $\\Delta^2$ a filled triangle and $\\Delta^3$ a solid tetrahedron. A simplex of a simplicial set $X$ is a map $\\Delta^n\\to X$." },
     { demo: "tetra-3d" },
-    { p: "Its faces come from deleting one corner: $d_i$ is the face that omits corner $i$. A triangle has three edges, and a tetrahedron has four triangular faces." },
+    { p: "A tetrahedron on a path $f,g,h$ from $a$ to $d$ has six edges: the path, the three-step composites $02$ and $13$, and the long edge $03$. Its four faces are $d_3$ (corners $0,1,2$), $d_0$ (corners $1,2,3$), $d_1$ (corners $0,2,3$) and $d_2$ (corners $0,1,3$). Three faces with $d_1$ missing form $\\Lambda^3_1$; with $d_2$ missing, $\\Lambda^3_2$. Both are inner. The Tetrahedron tool fills them: give it three faces and it returns the fourth." },
     { demo: "order-maps" },
-    { p: "A simplex of a simplicial set $X$ is a map $\\Delta^n\\to X$. Order-preserving maps between the shapes act on simplices: the inclusion $[1]\\to[2]$ omitting corner $i$ takes a triangle to its face $d_i$, and a map $[2]\\to[1]$ that sends two corners to one takes an arrow to a degenerate triangle. Here $[n]=\\{0<\\dots<n\\}$." },
-    { p: "A tetrahedron may therefore have a repeated corner: it is a map from $\\Delta^3$ whose corners land on the same vertex. Its faces then include degenerate triangles, such as $s_1f$." }
+    { p: "Maps between the shapes act on simplices. The inclusion $[1]\\to[2]$ that skips corner $i$ sends a triangle to its face $d_i$. A map $[2]\\to[1]$ that sends two corners to one turns an arrow into a degenerate triangle. Here $[n]=\\{0<\\dots<n\\}$. That is why a tetrahedron may sit with two corners on one vertex: it is a map from $\\Delta^3$ that happens to send two corners to the same place, and then some of its faces are degenerate triangles." }
   ]},
 
-  { id: "horns", before: "assoc", title: "Horns and the notation $\\Lambda^n_k$", body: [
-    { p: "Take the simplex $\\Delta^n$ and remove its interior together with one face. What remains is a <b>horn</b> $\\Lambda^n_k$: $n$ is the dimension, and $k$ names the missing face, the one opposite corner $k$ (so the missing face is $d_k$)." },
-    { diagram: { dots: [{id:"a",label:"0",x:12,y:42},{id:"b",label:"1",x:50,y:12},{id:"c",label:"2",x:88,y:42}],
-                 arrows: [{from:"a",to:"b",label:"d₂"},{from:"b",to:"c",label:"d₀"},{from:"a",to:"c",label:"d₁ missing",dashed:true}] } },
-    { p: "This is $\\Lambda^2_1$: two arrows end to end, missing the long side. $\\Lambda^2_0$ is two arrows leaving the same vertex, missing the side between their ends. $\\Lambda^2_2$ is two arrows arriving at the same vertex. A horn is <b>inner</b> if $0<k<n$ and <b>outer</b> if $k=0$ or $k=n$." },
-    { p: "To <b>fill</b> a horn in a simplicial set $X$ means: given the faces of the horn in $X$, find an $n$-simplex of $X$ having them as faces. Equivalently, extend a map $\\Lambda^n_k\\to X$ to a map $\\Delta^n\\to X$." },
-    { demo: "horn-fill" },
-    { p: "<b>Fillers need not exist.</b> In a simplicial set with two arrows $f,g$ end to end and no triangles, $\\Lambda^2_1$ has no filler. In the simplicial set consisting of one arrow $a\\to b$, the outer horn $\\Lambda^2_0$ on $f$ and $1_a$ would need an arrow from $b$ to $a$, and there is none. In a hollow triangle, the horn on $f,g$ has no filler because there is no triangle at all. Much of the game is deciding which horns fill in which simplicial sets." }
+  { id: "diagrams", before: "assoc", aside: true, title: "Commutative diagrams", body: [
+    { p: "In an ordinary category, a square of arrows <b>commutes</b> if the two ways round give the same arrow: $f$ then $\\beta$ equals $\\alpha$ then $f'$. Pictures like this are how category theorists write equations, and a whole page of algebra can be one square." },
+    { diagram: { caption: "A commuting square: $\\beta\\circ f=f'\\circ\\alpha$ in an ordinary category.", dots: [{id:"a",label:"a",x:25,y:10},{id:"b",label:"b",x:75,y:10},{id:"c",label:"a′",x:25,y:50},{id:"d",label:"b′",x:75,y:50}],
+                 arrows: [{from:"a",to:"b",label:"f"},{from:"a",to:"c",label:"α"},{from:"b",to:"d",label:"β"},{from:"c",to:"d",label:"f′"}] } },
+    { p: "In a quasi-category there is no equals sign to put between arrows, because a pair of arrows has many composites. So commuting has to be witnessed. A commuting triangle is just a triangle $(f,g\\,;\\,x)$ on the board. A commuting square is two triangles, $(f,\\beta\\,;\\,d)$ and $(\\alpha,f'\\,;\\,d)$, sharing their long side $d$, so that both ways round have the same composite." },
+    { diagram: { caption: "The same square in a quasi-category: two triangles glued along the diagonal $d$.", dots: [{id:"a",label:"a",x:25,y:10},{id:"b",label:"b",x:75,y:10},{id:"c",label:"a′",x:25,y:50},{id:"d",label:"b′",x:75,y:50}],
+                 arrows: [{from:"a",to:"b",label:"f"},{from:"a",to:"c",label:"α"},{from:"b",to:"d",label:"β"},{from:"c",to:"d",label:"f′"},{from:"a",to:"d",label:"d"}], fills: [["a","b","d"],["a","c","d"]] } },
+    { p: "A tetrahedron is a commuting diagram one dimension up: four triangles that fit together, so that every route through it agrees with every other in a way the solid records. The next level uses one to compare the two bracketings of $f,g,h$, and the Squares world at the end of the game is built entirely on squares like the one above." }
   ]},
 
-  { id: "equivalence", before: "unique", title: "Homotopy, equality and isomorphism", body: [
-    { p: "Two things can be <b>equal</b>, literally the same, or merely <b>equivalent</b>: interchangeable for the purposes at hand. In topology two paths from $p$ to $q$ are <b>homotopic</b> if one can be deformed continuously into the other with the ends fixed." },
-    { p: "In this game parallel arrows $x,y:a\\to b$ are <b>homotopic</b>, written $x\\simeq y$, if a triangle $(x,1_b\\,;\\,y)$ exists. This is the definition. It does not assert that $y\\simeq x$ or that $\\simeq$ chains; these are theorems, which you prove in the next world." },
-    { diagram: { dots: [{id:"a",label:"a",x:15,y:42},{id:"b",label:"b",x:50,y:12},{id:"c",label:"b",x:85,y:42}],
+  { id: "homotopy", before: "unique", title: "Homotopy: wiggling one path into another", body: [
+    { p: "Picture a space, say a sheet of rubber, with two points $a$ and $b$ on it. A <b>path</b> from $a$ to $b$ is a way of walking from one to the other, written as a continuous map $\\gamma:[0,1]\\to X$ with $\\gamma(0)=a$ and $\\gamma(1)=b$. Here are two of them, $x$ and $y$." },
+    { diagram: { caption: "Two paths from $a$ to $b$, and some of the paths in between.", dots: [{id:"a",label:"a",x:10,y:30},{id:"b",label:"b",x:90,y:30}],
+                 arrows: [{from:"a",to:"b",label:"x",bend:0.32},{from:"a",to:"b",label:"",bend:0.16,kind:"identity"},{from:"a",to:"b",label:"",bend:0,kind:"identity"},{from:"a",to:"b",label:"",bend:-0.16,kind:"identity"},{from:"a",to:"b",label:"y",bend:-0.32}] } },
+    { p: "Now wiggle. Start with $x$, nudge it a little toward $y$, then a little more, keeping both ends pinned at $a$ and $b$, until it lies exactly on $y$. The dashed curves are snapshots along the way. If you can do that without tearing the path or jumping over a hole, $x$ and $y$ are <b>homotopic</b>. Formally, a homotopy is a continuous $H:[0,1]\\times[0,1]\\to X$ with $H(s,0)=x(s)$, $H(s,1)=y(s)$, $H(0,t)=a$ and $H(1,t)=b$. The snapshot at time $t$ is the path $s\\mapsto H(s,t)$." },
+    { p: "The domain of $H$ is a square. Its bottom edge traces $x$, its top edge traces $y$, and its left and right edges are sent to the single points $a$ and $b$. Since the whole left edge goes to $a$, you lose nothing by pinching that edge to one corner. A square with one edge pinched to a point is a triangle." },
+    { diagram: { caption: "The sweep drawn as a triangle: corner $0$ at $a$, legs $x$ and the do-nothing path at $b$, long side $y$.", dots: [{id:"a",label:"a",x:12,y:44},{id:"b",label:"b",x:58,y:10},{id:"c",label:"b",x:88,y:44}],
                  arrows: [{from:"a",to:"b",label:"x"},{from:"b",to:"c",label:"1_b",kind:"identity"},{from:"a",to:"c",label:"y"}], fills: [["a","b","c"]] } },
-    { p: "The word “equal” is avoided because a space may contain many different witnesses that two arrows agree, and the choice of witness can matter later. Equivalence keeps the witness, and equality would discard it. Homotopic arrows can replace one another inside triangles, but they remain different arrows." },
-    { p: "An arrow $f:a\\to b$ is an <b>isomorphism</b>, also called an <b>equivalence</b>, if there are arrows $g,k:b\\to a$ with triangles $(f,g\\,;\\,1_a)$ and $(k,f\\,;\\,1_b)$. Vertices joined by an isomorphism are equivalent: weaker than equal, stronger than merely similar, since the comparison is explicit and invertible." },
-    { demo: "split-vertex" }
-  ]},
-
-  { id: "quasicat", before: "symmetric", title: "Quasi-categories", body: [
-    { p: "A <b>quasi-category</b> (also called an <b>$\\infty$-category</b>) is a simplicial set in which every inner horn $\\Lambda^n_k\\to X$ with $0<k<n$ has a filler. We've proved so far that this implies any path of arrows can be composed, though not uniquely." },
-    { p: "Everything you've built so far has been applying the filler property to prove small theorems about quasi-categories. We'll meet other special types of simplicial sets later." },
-    { p: "Below are some non-quasi-categorical simplicial sets, called $\\Lambda^2_1$ and $\\partial\\Delta^2$." },
-    { diagram: { dots: [{id:"a",label:"a",x:12,y:42},{id:"b",label:"b",x:30,y:15},{id:"c",label:"c",x:48,y:42},{id:"d",label:"a",x:60,y:42},{id:"e",label:"b",x:78,y:15},{id:"f",label:"c",x:96,y:42}],
-                 arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"d",to:"e",label:"f"},{from:"e",to:"f",label:"g"},{from:"d",to:"f",label:"h"}]} },
-    { p: "(If you've done category theory before, contrast this with a standard category, where inner horn filling is unique.)" }
+    { p: "Read the triangle's sides. From corner $0$ to corner $1$ is the bottom edge, the path $x$. From $0$ to $2$ is the top edge, the path $y$. From $1$ to $2$ is the right edge of the square, where the homotopy stays at $b$ the whole time: the constant path at $b$, which is the identity $1_b$. So a homotopy with fixed ends is exactly a triangle $(x,1_b\\,;\\,y)$. On the board the two corners over $b$ coincide and the triangle looks flat. Drag the copy apart here to see the sheet in between." },
+    { demo: "split-vertex" },
+    { p: "That picture becomes the definition for any simplicial set. Parallel arrows $x,y:a\\to b$ are <b>homotopic</b>, written $x\\simeq y$, if there is a triangle $(x,1_b\\,;\\,y)$. Such a triangle is a homotopy from $x$ to $y$, and there may be several different ones." },
+    { p: "A few things come for free. The triangle $s_1x=(x,1_b\\,;\\,x)$ always exists, so $x\\simeq x$. Other properties you would expect take work, because the definition is lopsided: $x$ comes first and $1_b$ sits after it. In a quasi-category the coming levels prove that any two composites of the same pair are homotopic (the next level), that $\\simeq$ is symmetric and transitive, that a homotopic arrow can replace another inside a triangle, and that $(1_a,x\\,;\\,y)$ would serve as the definition equally well. Each proof is one tetrahedron." }
   ]},
 
   { id: "kan", before: "undo", title: "Kan complexes", body: [
-    { p: "A simplicial set is a <b>Kan complex</b> if every horn fills, inner and outer: a space, described combinatorially by points, paths, homotopies between paths, and so on." },
-    { p: "For any topological space, the simplicial set of its singular simplices is a Kan complex. Every path can be reversed, because you can walk it backwards; that is what the outer horns encode." },
+    { p: "A simplicial set is a <b>Kan complex</b> if every horn fills, the outer ones included. Here is why that is the right condition for spaces. Given any space, take every way of mapping a triangle, a tetrahedron and so on into it; together they form a simplicial set, the <b>singular complex</b>, and its arrows are paths. Any path can be walked backwards, and that is what outer horns encode, so the singular complex is always a Kan complex." },
     { diagram: { dots: [{id:"a",label:"a",x:20,y:32},{id:"b",label:"b",x:50,y:10},{id:"c",label:"a",x:80,y:32}],
                  arrows: [{from:"a",to:"b",label:"f"},{from:"a",to:"c",label:"1_a"},{from:"b",to:"c",label:"?",dashed:true}] } },
-    { p: "In a Kan complex, filling the outer horn $\\Lambda^2_0$ on $f$ and $1_a$ constructs a left inverse $f^{-1}$. Hence every arrow in a Kan complex is invertible (an isomorphism), giving intuition for the name <b>$\\infty$-groupoid</b>." },
-    { p: "Not every quasi-category is Kan. The shape $a\\to b$ with a single arrow, the nerve of the two-element order, is a quasi-category, since every inner horn fills there. But the outer horn on $f$ and $1_a$ asks for an arrow $b\\to a$, and none exists." },
-    { p: "So: in a Kan complex every arrow is an isomorphism. The converse is a corollary of <b>Joyal's theorem</b>, which we will prove near the end of the game." }
+    { p: "The outer horn $\\Lambda^2_0$ on $f:a\\to b$ and $1_a$ asks for an arrow $g:b\\to a$ with a triangle $(f,g\\,;\\,1_a)$: going out along $f$ and back along $g$ is homotopic to staying put. That $g$ is a <b>left inverse</b> of $f$. The other outer horn, $\\Lambda^2_2$ on $f$ and $1_b$, gives a <b>right inverse</b> $k$ with $(k,f\\,;\\,1_b)$. An arrow with both is an <b>isomorphism</b>." },
+    { p: "So in a Kan complex every arrow is an isomorphism, which is why Kan complexes are also called <b>$\\infty$-groupoids</b>. Not every quasi-category is Kan: the single arrow $a\\to b$, the nerve of the order $0<1$, fills every inner horn but has no arrow back from $b$ to $a$. Joyal's theorem, near the end of the game, says a quasi-category whose arrows are all isomorphisms is a Kan complex." }
+  ]},
+
+  { id: "paths", before: "cancel", title: "Loops and the fundamental group", body: [
+    { p: "Keep reading arrows as paths. A path from a point back to itself is a <b>loop</b>. Loops at a point can be composed (walk one, then the other) and inverted (walk it backwards), and up to homotopy this is a group, the <b>fundamental group</b>." },
+    { diagram: { dots: [{id:"a",label:"p",x:30,y:30}],
+                 arrows: [{from:"a",to:"a",label:"ℓ"}] } },
+    { p: "Around a circle the fundamental group is the integers: a loop is classified by how many times it winds round, counted with sign. A loop that winds once cannot be shrunk to a point without leaving the circle. A Kan complex records all of this, together with homotopies between homotopies and so on up, which is the sense in which it is a space described by triangles." },
+    { p: "The next level uses outer tetrahedra $\\Lambda^3_3$ to cancel arrows. In a space that is unsurprising, since every path can be undone. The Isomorphisms world shows how much of it fails without that." }
   ]},
 
   { id: "nerve", before: "nerve", title: "The nerve of a category", body: [
-    { p: "Take an ordinary category: objects, arrows, composition, identities, associativity. Its <b>nerve</b> $N(\\mathcal C)$ is a simplicial set. The vertices are objects, the arrows are arrows, and an $n$-simplex is a chain of $n$ composable arrows." },
+    { p: "Take an ordinary category: objects, arrows, a composition rule with exactly one answer for each composable pair, identities, associativity. Its <b>nerve</b> $N(\\mathcal C)$ is a simplicial set. The vertices are the objects, the arrows are the arrows, a triangle is a composable pair together with its composite, and a tetrahedron is a composable triple together with all its composites." },
     { diagram: { dots: [{id:"a",label:"a",x:8,y:38},{id:"b",label:"b",x:34,y:20},{id:"c",label:"c",x:62,y:38},{id:"d",label:"d",x:90,y:20}],
                  arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"c",to:"d",label:"h"}] } },
-    { p: "Each pair of composable arrows gets a filled triangle whose third side is their composite. Each chain of three gets a solid tetrahedron, whose faces are the composites in every bracketing." },
-    { p: "Every inner horn in a nerve has <i>exactly one</i> filler: the composite is forced. A category is therefore a quasi-category with unique fillers. In the next levels a composition table lists the entries; ask for a second answer and you are refused." },
+    { p: "In a nerve every inner horn has <i>exactly one</i> filler, because the composite is determined. Conversely, a simplicial set in which every inner horn has exactly one filler is the nerve of a category. The next levels show you the composition table, the composition table, and refuse a second composite when you ask for one." },
     { demo: "tetra-3d" },
-    { p: "Associativity becomes a solid: the tetrahedron on the path $f,g,h$ has faces $(f,g\\,;\\,x)$, $(g,h\\,;\\,y)$, $(x,h\\,;\\,z)$ and $(f,y\\,;\\,z)$. In a nerve $x,y,z$ are composites in the category, so the fourth face says $h\\circ(g\\circ f)=(h\\circ g)\\circ f$. In a general quasi-category the two bracketings are only related by a triangle, which is why the earlier worlds needed tetrahedra at all." },
-    { p: "Nerves can be recognised by a condition on spines. A chain of arrows end to end is called a <b>spine</b>. In a nerve, every spine extends to a full simplex in exactly one way: a spine of two arrows has one triangle, a spine of three has one tetrahedron, and so on. This is called the <b>Segal condition</b>. If a spine has no extension, composition is undefined there, and if it has two, composition involves a choice. The later levels of this world ask you to judge pictures by this rule." }
+    { p: "Associativity becomes a solid. The tetrahedron on $f,g,h$ has faces $(f,g\\,;\\,gf)$, $(g,h\\,;\\,hg)$, $(gf,h\\,;\\,hgf)$ and $(f,hg\\,;\\,hgf)$, and the last face says $h(gf)=(hg)f$." },
+    { p: "A path of arrows end to end inside a simplex is its <b>spine</b>. In a nerve every spine extends to a full simplex in exactly one way; this is the <b>Segal condition</b>. The later levels of this world ask you to check it on pictures: a spine of two arrows with no triangle, or with two, means the picture is not a nerve." }
   ]},
 
   { id: "skeleta", before: "disc", title: "Skeleta and cells", body: [
-    { p: "The <b>$n$-skeleton</b> $\\mathrm{sk}_n X$ keeps only the simplices of dimension at most $n$. So $\\mathrm{sk}_0$ is the vertices, $\\mathrm{sk}_1$ the vertices and arrows, $\\mathrm{sk}_2$ adds the triangles. Peel takes the top layer off." },
-    { p: "The <b>boundary</b> $\\partial\\Delta^n$ is $\\mathrm{sk}_{n-1}\\Delta^n$: all the faces, without the filling. So $\\partial\\Delta^2$ is a hollow triangle." },
+    { p: "The <b>$n$-skeleton</b> $\\mathrm{sk}_nX$ keeps the simplices of dimension at most $n$ and throws away the rest. $\\mathrm{sk}_0$ is the vertices, $\\mathrm{sk}_1$ adds the arrows, $\\mathrm{sk}_2$ the triangles. Peel removes the top layer." },
+    { p: "The <b>boundary</b> $\\partial\\Delta^n$ is the skeleton $\\mathrm{sk}_{n-1}\\Delta^n$: every face, no inside. So $\\partial\\Delta^2$ is a hollow triangle, and $\\partial\\Delta^3$ is the hollow shell of a tetrahedron." },
     { diagram: { dots: [{id:"a",label:"a",x:15,y:42},{id:"b",label:"b",x:50,y:12},{id:"c",label:"c",x:85,y:42}],
                  arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"a",to:"c",label:"h"}], ghost: [["a","b","c"]] } },
-    { p: "To <b>attach an $n$-cell</b> to $X$ along a map $\\partial\\Delta^n\\to X$, glue in a new $\\Delta^n$ whose boundary lands on that part of $X$. Formally this is a pushout of $\\partial\\Delta^n\\hookrightarrow\\Delta^n$. Every simplicial set can be built from nothing by attaching cells, one dimension at a time." },
-    { p: "Attaching a cell differs from filling a horn: a horn lacks exactly one face, while a boundary lacks the whole interior. This difference matters in a few worlds: filling a horn never changes the overall shape, but attaching a cell can." },
-    { p: "The skeleton has an opposite, the <b>coskeleton</b>. Where the $n$-skeleton forgets everything above dimension $n$, the $n$-coskeleton puts back exactly one cell wherever a boundary is present above dimension $n$. A shape is called $n$-coskeletal when it is determined by its simplices up to dimension $n$ in this way. Nerves of ordinary categories are like that: everything above the triangles is forced." }
-  ]},
-
-  { id: "anodyne", before: "spine", title: "Anodyne maps", body: [
-    { p: "Some inclusions $A\\hookrightarrow B$ can be built purely from horn fillings. The class of such maps, the <b>anodyne</b> maps, is the smallest class containing every horn inclusion $\\Lambda^n_k\\hookrightarrow\\Delta^n$ and closed under gluing, composition and retracts. Using only inner horns gives the <b>inner anodyne</b> maps." },
-    { p: "Anodyne maps never change the shape. Each one is a weak homotopy equivalence, because a horn is contractible, just as $\\Delta^n$ is. For example the <b>spine</b>, the path of $n$ arrows inside $\\Delta^n$, is inner anodyne. Hence composable chains always extend to a full simplex in a quasi-category." },
-    { diagram: { dots: [{id:"a",label:"0",x:8,y:38},{id:"b",label:"1",x:34,y:20},{id:"c",label:"2",x:62,y:38},{id:"d",label:"3",x:90,y:20}],
-                 arrows: [{from:"a",to:"b",label:""},{from:"b",to:"c",label:""},{from:"c",to:"d",label:""},{from:"a",to:"c",label:"",dashed:true},{from:"b",to:"d",label:"",dashed:true},{from:"a",to:"d",label:"",dashed:true}] } },
-    { p: "The inclusion $\\partial\\Delta^2\\hookrightarrow\\Delta^2$ is <i>not</i> anodyne. The hollow triangle is a circle; the filled one is a disc. No sequence of horn fillings can fill a hole without changing the shape." },
-    { p: "In the levels of this world, decide whether horn moves can reach the goal. If doing so would change the shape, say that it can't be done, and say why." }
-  ]},
-
-  { id: "lifting", before: "liftpath", title: "Maps and lifting problems", body: [
-    { p: "A <b>map</b> $p:X\\to S$ of simplicial sets sends vertices to vertices, arrows to arrows and triangles to triangles, keeping faces. Think of $S$ as the shadow of $X$." },
-    { diagram: { dots: [{id:"a",label:"a",x:15,y:10},{id:"b",label:"b",x:50,y:10},{id:"c",label:"c",x:85,y:10},{id:"A",label:"p(a)",x:15,y:48},{id:"B",label:"p(b)",x:50,y:48},{id:"C",label:"p(c)",x:85,y:48}],
-                 arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"A",to:"B",label:"pf"},{from:"B",to:"C",label:"pg"},{from:"a",to:"A",label:"",dashed:true},{from:"b",to:"B",label:"",dashed:true},{from:"c",to:"C",label:"",dashed:true}] } },
-    { p: "A <b>lifting problem</b> is a square: a map $A\\to X$, a map $B\\to S$, and an inclusion $A\\hookrightarrow B$. A <b>lift</b> is a map $B\\to X$ that restricts to the first map on $A$ and projects to the second." },
-    { p: "A map is an <b>inner fibration</b> if every lifting problem with $A$ an inner horn $\\Lambda^n_k$ and $B=\\Delta^n$ has a lift, and a <b>Kan fibration</b> if all horns do. A simplicial set $X$ is a quasi-category exactly when $X\\to\\Delta^0$, the map to a point, is an inner fibration. So 'filling a horn in $X$' is the special case where the shadow is a point." },
-    { p: "A <b>left fibration</b> lifts more: every horn $\\Lambda^n_k$ with $k<n$, which includes $\\Lambda^1_0$: an arrow of $S$ lifts from any chosen start. The end of the lift is chosen by the map and not by you. Think of a family of sets varying over $S$: an arrow of $S$ carries each element of one set to an element of the next." },
-    { p: "In the next levels the shadow $S$ is fixed, every new simplex of $X$ must lie over a simplex of $S$, and the kind of map decides which horns lift. The same picture can be solvable over a left fibration and impossible over an inner one." }
-  ]},
-
-  { id: "joyal", before: "joyal", title: "Joyal's theorem", body: [
-    { p: "Outer horns do not fill in a general quasi-category. But they do fill when the first edge is an isomorphism. <b>Joyal's theorem</b>: in a quasi-category $X$, for $n\\ge 2$, every horn $\\Lambda^n_0\\to X$ whose first edge is an equivalence has a filler. Dually for $\\Lambda^n_n$ and the last edge. Without the isomorphism hypothesis the statement fails: the one-way arrow showed that." },
-    { diagram: { dots: [{id:"a",label:"0",x:20,y:32},{id:"b",label:"1",x:50,y:10},{id:"c",label:"2",x:80,y:32}],
-                 arrows: [{from:"a",to:"b",label:"f (iso)"},{from:"a",to:"c",label:"h"},{from:"b",to:"c",label:"?",dashed:true}] } },
-    { p: "Conversely, if an edge has this extension property then it is an equivalence. So an $\\infty$-groupoid is exactly a quasi-category in which every arrow is an equivalence." },
-    { p: "The relative version: let $p:X\\to S$ be an inner fibration. A lifting problem for $\\Lambda^n_0\\hookrightarrow\\Delta^n$ against $p$ has a solution when the first edge of the horn is an equivalence in $X$." },
-    { p: "You used both forms: Solve built an inverse, and the padlock on the outer face of Tetrahedron opened because the edge involved was an isomorphism. In both cases invertibility of one edge permitted an outer filling." }
+    { p: "To <b>attach an $n$-cell</b> along a copy of $\\partial\\Delta^n$ in $X$, glue in a new $\\Delta^n$ whose boundary goes onto that copy. Glue triangle does this for $n=2$ and Glue solid for $n=3$. Every simplicial set can be built from vertices by attaching cells, one dimension at a time." },
+    { p: "A cell is glued along its whole boundary; a horn filler is glued along all faces but one. That difference matters: in this world you will turn a circle into a disc, two discs into a sphere, and a sphere into a solid ball, and a horn filler can never change a shape like that." },
+    { p: "The skeleton has a partner, the <b>coskeleton</b>. Where $\\mathrm{sk}_n$ forgets everything above dimension $n$, $\\mathrm{cosk}_n$ puts one simplex into every complete boundary above dimension $n$. Fill in applies it." }
   ]},
 
   { id: "spaces", before: "sphere", title: "Pictures as spaces", body: [
-    { p: "Every picture in this game is also a shape you could build out of paper. Each vertex is a point, each arrow a stretch of string, each filled triangle a solid triangle, each solid tetrahedron a solid tetrahedron, all glued along their faces. The result is the <b>geometric realisation</b> $|X|$ of the simplicial set $X$. Arrow directions are forgotten; only the shape is kept." },
+    { p: "Every board is also a shape you could make from paper and wire: each vertex a point, each arrow a piece of wire, each filled triangle a paper triangle, each solid a solid, all glued along their sides. That shape is the <b>geometric realisation</b> $|X|$. Arrow directions are forgotten." },
     { diagram: { dots: [{id:"a",label:"a",x:20,y:46},{id:"b",label:"b",x:50,y:12},{id:"c",label:"c",x:80,y:46}],
                  arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"a",to:"c",label:"h"}], fills: [["a","b","c"]] } },
-    { p: "A hollow triangle realises to a circle. A filled one is a disc. Two triangles glued along the same three sides, as in the next level, form a sphere, and so does the hollow tetrahedron you build later. These shapes are genuinely different: a loop around a circle cannot be shrunk to a point without leaving it, and a sphere encloses a hollow that a disc does not." },
-    { p: "Counting vertices minus arrows plus triangles minus tetrahedra, using only the non-degenerate ones, gives the <b>Euler characteristic</b>, which already separates many of these shapes. A disc gives $3-3+1=1$, a circle $3-3=0$, a sphere $3-3+2=2$. Peeling and gluing change it. Filling a horn never does: it adds one new face and one new cell at once, which is the arithmetic shadow of the fact you will meet in the anodyne world." }
+    { p: "A hollow triangle is a circle. A filled one is a disc. Two triangles glued along the same three sides, as in the next level, make a sphere, and so do the four faces of a hollow tetrahedron. Fill that shell with a solid and you have a ball. These are different shapes: a loop around the circle cannot be shrunk to a point, and the sphere has a hollow inside that the ball does not." },
+    { p: "A quick test that tells many of them apart is the <b>Euler characteristic</b>: vertices minus arrows plus triangles minus solids, counting only non-degenerate pieces. Disc: $3-3+1=1$. Circle: $3-3=0$. Sphere from two triangles: $3-3+2=2$. Hollow tetrahedron: $4-6+4=2$. Solid ball: $4-6+4-1=1$, the same as a single point. Filling a horn adds one simplex and one new face together, so it never changes this number; the next world turns that into a proof technique." }
   ]},
 
-  { id: "paths", before: "cancel", title: "Paths, loops and why undoing is natural", body: [
-    { p: "Kan complexes look like a technical condition: every horn fills. They describe spaces. Given any space, take every way of mapping a triangle, a tetrahedron, and so on into it; these form a simplicial set, called its <b>singular complex</b>, and it is always a Kan complex. Conversely every Kan complex has the same homotopy information as its realisation." },
-    { p: "Read the arrows of a singular complex as paths in the space. Composing is following one path and then the next. Undoing is running a path backwards, which is why every horn fills: a path can always be reversed and squashed back. A homotopy between two paths is a deformation of one into the other with the ends held fixed, exactly a triangle with an identity side." },
-    { diagram: { dots: [{id:"a",label:"a",x:20,y:30},{id:"b",label:"b",x:80,y:30}],
-                 arrows: [{from:"a",to:"b",label:"x",bend:0.3},{from:"a",to:"b",label:"y",bend:-0.3}], fills: [] } },
-    { p: "Loops at a point, up to homotopy, form a group: compose by following one loop then another, invert by running backwards. These classes form the <b>fundamental group</b>. Around a circle it is the integers, counting how many times you wind round, which is one more way to see that the hollow triangle is not a disc. In an ∞-groupoid every level of this story is present at once: paths, homotopies between paths, homotopies between those, and so on." }
+  { id: "pushouts", before: "ball", aside: true, title: "Gluing and pushouts", body: [
+    { p: "Gluing two things along a shared part has a name in category theory, a <b>pushout</b>. Say you have a simplicial set $X$ containing a hollow triangle, and a filled triangle $\\Delta^2$ whose rim is also a hollow triangle $\\partial\\Delta^2$. Glue the filled triangle's rim onto the hollow triangle in $X$. The result is written $X\\cup_{\\partial\\Delta^2}\\Delta^2$." },
+    { diagram: { caption: "The pushout square for gluing in a triangle.", dots: [{id:"d",label:"∂Δ²",x:15,y:10},{id:"x",label:"X",x:85,y:10},{id:"t",label:"Δ²",x:15,y:52},{id:"p",label:"X ∪ Δ²",x:85,y:52}],
+                 arrows: [{from:"d",to:"x",label:"rim in X"},{from:"d",to:"t",label:"rim"},{from:"x",to:"p",label:""},{from:"t",to:"p",label:""}] } },
+    { p: "Read the square from the top left. $\\partial\\Delta^2$ is the shared part. It maps into $X$ (where the rim sits) and into $\\Delta^2$ (as the boundary). The bottom right is the glued result, and both $X$ and $\\Delta^2$ map into it. The square commutes because the rim lands in the same place either way. The pushout is the smallest thing that receives $X$ and $\\Delta^2$ with their rims identified, and nothing else identified." },
+    { p: "You have built several. The sphere of <i>Two cells on one boundary</i> is two discs glued along their common circle: a pushout $\\Delta^2\\cup_{\\partial\\Delta^2}\\Delta^2$. In the next level you glue a solid onto a hollow tetrahedron: a pushout of $\\partial\\Delta^3\\hookrightarrow\\Delta^3$ along the shell." },
+    { p: "Filling a horn is the same kind of gluing with a different shared part. A horn in $X$ is a map $\\Lambda^n_k\\to X$, and filling it glues $\\Delta^n$ along $\\Lambda^n_k\\hookrightarrow\\Delta^n$. The shared part is the horn rather than the full boundary, and that is why a horn filling brings its missing face along with it." }
+  ]},
+
+  { id: "anodyne", before: "spine", title: "Anodyne maps", body: [
+    { p: "Some inclusions $A\\hookrightarrow B$ can be built from horn fillings alone: start with $A$, fill a horn, fill another, and arrive at $B$. Close this up under the obvious operations and you get the <b>anodyne</b> maps, the smallest class containing every $\\Lambda^n_k\\hookrightarrow\\Delta^n$ and closed under pushouts, composition and retracts. Using inner horns only gives the <b>inner anodyne</b> maps." },
+    { p: "Anodyne maps never change the shape: a horn is a cone, contractible like $\\Delta^n$ itself, so gluing $\\Delta^n$ along a horn adds nothing topologically interesting. The spine of $\\Delta^n$, its path of $n$ arrows, is inner anodyne in $\\Delta^n$, which is why a chain of arrows in a quasi-category always extends to a full simplex." },
+    { diagram: { dots: [{id:"a",label:"0",x:8,y:38},{id:"b",label:"1",x:34,y:20},{id:"c",label:"2",x:62,y:38},{id:"d",label:"3",x:90,y:20}],
+                 arrows: [{from:"a",to:"b",label:""},{from:"b",to:"c",label:""},{from:"c",to:"d",label:""},{from:"a",to:"c",label:"",dashed:true},{from:"b",to:"d",label:"",dashed:true},{from:"a",to:"d",label:"",dashed:true}] } },
+    { p: "The inclusion of the hollow triangle $\\partial\\Delta^2$ (three arrows in a loop, as in the Bones world) into $\\Delta^2$ is not anodyne. The hollow triangle is a circle and the filled one a disc, and horn fillings cannot turn one into the other." },
+    { p: "In this world some goals are reachable and some are not. When you think a goal is out of reach, say so, and back it up as the next note explains." }
   ]},
 
   { id: "counter", before: "nofill", title: "How to prove something is impossible", body: [
-    { p: "Showing a goal <i>can</i> be reached is easy to check: you do it. Showing it can <i>never</i> be reached is harder, because you cannot try every sequence of moves. In this note we'll construct counterexamples: one concrete simplicial set in which everything you were given is true and the goal is false." },
+    { p: "To show a goal can be reached, you reach it. To show it never can, you cannot try every sequence of moves. Instead you find a <b>counterexample</b>: one concrete world in which everything you were given holds and the goal fails." },
     { diagram: { dots: [{id:"a",label:"0",x:20,y:46},{id:"b",label:"1",x:50,y:12},{id:"c",label:"2",x:80,y:46}],
                  arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"a",to:"c",label:"h"},{from:"a",to:"c",label:"k"}] } },
-    { p: "The counterexamples are small ordinary categories, where composing has exactly one answer. In the picture, the pair $f,g$ has its own composite $k$, a different arrow from $h$. If your starting picture fits inside this simplicial set, with $h$ on $h$, then the claim that $h$ is a composite of $f$ and $g$ is false there." },
-    { p: "One such simplicial set settles it: every move you have is a horn filling, and an ordinary category can fill every inner horn too — composites exist and associativity holds. So anything you could ever build from the starting picture can also be built in the test simplicial set. If the goal were reachable, it would be true there. It is false there, so it is not reachable." },
-    { p: "Two things can go wrong, and both teach something. If a given fact fails in the test simplicial set, it does not contain your picture. If the goal is <i>true</i> there, the test proves nothing: try a different one. And if the level allows undoing every arrow, the test simplicial set must allow it too." }
+    { p: "The test worlds are small ordinary categories, where each pair has exactly one composite. In the picture, $f$ then $g$ composes to $k$, a different arrow from $h$. Send your board into it, $f$ to $f$, $g$ to $g$, $h$ to $h$. In that world the triangle $(f,g\\,;\\,h)$ is false." },
+    { p: "Why one world settles it: every move you have fills an inner horn, and a category fills every inner horn as well. So anything you could build from the starting board also exists in the test world. If the goal were reachable it would hold there, and it does not." },
+    { p: "Two ways to get it wrong. If one of the given facts fails in your world, the world does not contain your board. If the goal happens to hold in your world, it proves nothing; try another. And if the level lets every arrow be undone, the test world has to allow that too." }
+  ]},
+
+  { id: "zigzag", before: "halfspine", aside: true, title: "Composition as a zigzag of anodyne maps", body: [
+    { p: "Here is a classic exercise, told with the moves you know. To compose arrows in a quasi-category you choose fillers of $\\Lambda^2_1$. Choices are not unique, so why is composition associative, even up to homotopy? Write $\\Delta^{01}\\cup\\Delta^{12}\\cup\\Delta^{23}$ for the spine $f,g,h$, $\\Delta^{012}$ for a filled triangle on corners $0,1,2$, and so on." },
+    { diagram: { caption: "Two routes from the spine to the full tetrahedron. Every arrow is inner anodyne.", dots: [{id:"s",label:"Δ⁰¹∪Δ¹²∪Δ²³",x:50,y:6},{id:"l",label:"Δ⁰¹²∪Δ²³",x:14,y:30},{id:"r",label:"Δ⁰¹∪Δ¹²³",x:86,y:30},{id:"t",label:"Δ³",x:50,y:56}],
+                 arrows: [{from:"s",to:"l",label:""},{from:"s",to:"r",label:""},{from:"l",to:"t",label:""},{from:"r",to:"t",label:""}] } },
+    { p: "Left route: fill the triangle on $f,g$ first, giving $\\Delta^{012}\\cup\\Delta^{23}$, which is the bracketing $(f,g)$ then $h$. Right route: fill the triangle on $g,h$ first, giving $\\Delta^{01}\\cup\\Delta^{123}$, the bracketing $f$ then $(g,h)$. Each of the four inclusions in the picture can be built from inner horn fillings, so each is inner anodyne." },
+    { p: "Now the argument. In a quasi-category, any map out of the top shape extends along any inner anodyne map, so whatever bracketing you started with, it extends to a whole tetrahedron $\\Delta^3$, and inside that tetrahedron both bracketings appear as faces. You did the left route in <i>Two bracketings</i> and <i>Fill the spine</i>. The next level hands you the right-hand starting shape, $\\Delta^{01}\\cup\\Delta^{123}$, and asks you to finish the bottom-right arrow." }
+  ]},
+
+  { id: "lifting", before: "liftpath", title: "Maps and lifting problems", body: [
+    { p: "A <b>map</b> $p:X\\to S$ of simplicial sets sends vertices to vertices, arrows to arrows and triangles to triangles, keeping faces. Think of $X$ as a building and $S$ as its floor plan: everything in $X$ casts a shadow onto $S$." },
+    { diagram: { dots: [{id:"a",label:"a",x:15,y:10},{id:"b",label:"b",x:50,y:10},{id:"c",label:"c",x:85,y:10},{id:"A",label:"p(a)",x:15,y:48},{id:"B",label:"p(b)",x:50,y:48},{id:"C",label:"p(c)",x:85,y:48}],
+                 arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"A",to:"B",label:"pf"},{from:"B",to:"C",label:"pg"},{from:"a",to:"A",label:"",dashed:true},{from:"b",to:"B",label:"",dashed:true},{from:"c",to:"C",label:"",dashed:true}] } },
+    { p: "A <b>lifting problem</b> gives you a horn upstairs in $X$ and a filled simplex downstairs in $S$ whose faces are the shadows of the horn. A <b>lift</b> fills the horn upstairs with a simplex whose shadow is the given one." },
+    { p: "$p$ is an <b>inner fibration</b> if every lifting problem for an inner horn has a lift. A simplicial set $X$ is a quasi-category exactly when the map from $X$ to a single point is an inner fibration, so ordinary horn filling is lifting over a point. $p$ is a <b>left fibration</b> if lifting problems for $\\Lambda^n_k$ with $k<n$ all have lifts. That includes $\\Lambda^1_0$, which is a single vertex: any arrow of $S$ lifts from any chosen start. Where the lift ends is up to $p$." },
+    { p: "A useful picture for a left fibration: over each vertex of $S$ sits a set (or a space), and each arrow of $S$ carries every element of one set to an element of the next. In the coming levels the same board can be solvable over a left fibration and impossible over an inner one." }
+  ]},
+
+  { id: "liftsquare", before: "backfill", aside: true, title: "A lifting problem as a square", body: [
+    { p: "Lifting problems are usually drawn as a square. The left side is the inclusion of the horn into the full simplex. The top is your horn in $X$, the bottom is the simplex you see in the shadow $S$, and the right side is the map $p$. The square commutes: the horn's shadow is part of the bottom simplex." },
+    { diagram: { caption: "The dashed arrow is the lift you are asked for.", dots: [{id:"h",label:"Λⁿₖ",x:15,y:10},{id:"x",label:"X",x:85,y:10},{id:"d",label:"Δⁿ",x:15,y:52},{id:"s",label:"S",x:85,y:52}],
+                 arrows: [{from:"h",to:"x",label:"horn"},{from:"h",to:"d",label:""},{from:"x",to:"s",label:"p"},{from:"d",to:"s",label:"simplex"},{from:"d",to:"x",label:"?",dashed:true,kind:"given"}] } },
+    { p: "The dashed diagonal $\\Delta^n\\to X$ is a simplex of $X$. Going down the left and along the diagonal gives your horn back, so the simplex fills your horn. Going along the diagonal and then down $p$ gives the bottom simplex, so the new simplex lies over the right shadow. Both triangles in the square must commute, and that is the whole job." },
+    { p: "Joyal's lifting theorem is stated in exactly this form: for an inner fibration $p$, the square with $\\Lambda^n_0\\hookrightarrow\\Delta^n$ on the left has a diagonal whenever the horn's first edge is an isomorphism in $X$. In the next level, ask which horn's square you are being given." }
+  ]},
+
+  { id: "joyal", before: "detour", title: "Isomorphisms and Joyal's theorem", body: [
+    { p: "From this level on, some arrows carry the mark $\\cong$: they are isomorphisms, with inverses on both sides up to homotopy. Outer horns do not fill in a general quasi-category, as <i>An arrow with no inverse</i> showed. <b>Joyal's theorem</b> says they do fill along an isomorphism. For $n\\ge2$, a horn $\\Lambda^n_0$ whose first edge, from corner $0$ to corner $1$, is an isomorphism has a filler, and so does a horn $\\Lambda^n_n$ whose last edge is an isomorphism." },
+    { diagram: { dots: [{id:"a",label:"0",x:20,y:32},{id:"b",label:"1",x:50,y:10},{id:"c",label:"2",x:80,y:32}],
+                 arrows: [{from:"a",to:"b",label:"f ≅"},{from:"a",to:"c",label:"h"},{from:"b",to:"c",label:"?",dashed:true}] } },
+    { p: "On the board, the Tetrahedron tool shows a padlock on an outer missing face. The padlock opens exactly when the edge next to the missing corner is marked $\\cong$, and the Solve tools work only on arrows marked $\\cong$." },
+    { p: "The converse also holds: an arrow along which all these horns fill is an isomorphism. So a quasi-category in which every arrow is an isomorphism is a Kan complex, and $\\infty$-groupoids are the same as Kan complexes. There is a relative version too, which the Lifting world used in spirit: for an inner fibration $p:X\\to S$, lifting problems for $\\Lambda^n_0$ are solvable when the first edge is an isomorphism in $X$." }
   ]},
 
   { id: "squares", before: "natsq", title: "Arrows between arrows", body: [
-    { p: "So far arrows went between vertices. Now treat an arrow $f$ itself as a thing, and ask what an arrow from $f$ to another arrow $f'$ should be. The answer is a <b>commuting square</b>: sides $\\alpha$ and $\\beta$ joining the ends of $f$ to the ends of $f'$, so that going round either way agrees." },
-    { diagram: { dots: [{id:"a",label:"a",x:25,y:12},{id:"b",label:"b",x:75,y:12},{id:"c",label:"a'",x:25,y:48},{id:"d",label:"b'",x:75,y:48}],
-                 arrows: [{from:"a",to:"b",label:"f"},{from:"a",to:"c",label:"α"},{from:"b",to:"d",label:"β"},{from:"c",to:"d",label:"f'"},{from:"a",to:"d",label:"d"}],
+    { p: "So far arrows went between vertices. Now treat an arrow $f:a\\to b$ as a thing in its own right and ask what an arrow from $f$ to another arrow $f':a'\\to b'$ should be. Answer: a <b>commuting square</b>, with sides $\\alpha:a\\to a'$ and $\\beta:b\\to b'$ such that both roads from $a$ to $b'$ agree." },
+    { diagram: { dots: [{id:"a",label:"a",x:25,y:12},{id:"b",label:"b",x:75,y:12},{id:"c",label:"a′",x:25,y:48},{id:"d",label:"b′",x:75,y:48}],
+                 arrows: [{from:"a",to:"b",label:"f"},{from:"a",to:"c",label:"α"},{from:"b",to:"d",label:"β"},{from:"c",to:"d",label:"f′"},{from:"a",to:"d",label:"d"}],
                  fills: [["a","b","d"],["a","c","d"]] } },
-    { p: "In an $\\infty$-category \"agrees\" cannot mean equal. Each way round is a composite, so each is a triangle. The square commutes when the two triangles <i>share their diagonal</i>: $d$ is a composite of $f$ then $\\beta$, and also of $\\alpha$ then $f'$. A square is two triangles glued along one side." },
-    { p: "These squares are the arrows of a new $\\infty$-category, written $\\mathrm{Fun}(\\Delta^1,C)$: its vertices are the arrows of $C$. Stack two squares and you can paste them into one; that is composition there. With a bigger shape $K$ in place of a single arrow you get <b>natural transformations</b>: one square for every arrow of $K$." },
-    { p: "The last theorem of the game lives here. A natural transformation is invertible as soon as each of its sides is. No property of the squares needs to be assumed: the return squares can be <i>built</i>, using only horn filling." }
+    { p: "In a quasi-category agreeing means sharing a witness: the square is two triangles $(f,\\beta\\,;\\,d)$ and $(\\alpha,f'\\,;\\,d)$ with the same long side $d$." },
+    { p: "These squares are the arrows of a new quasi-category, $\\mathrm{Fun}(\\Delta^1,C)$, whose vertices are the arrows of $C$. Stacking two squares and pasting them is composition there. Replace the single arrow $\\Delta^1$ by a bigger shape $K$ and you get <b>natural transformations</b>, with one square for each arrow of $K$. The last level of the game shows that a square whose sides are isomorphisms can be inverted, by building the return square from horn fillings." }
   ]}
 ];
 
@@ -1326,7 +1369,7 @@ HC.Glossary = [
   {"term":"Fundamental group","world":5,"essential":false,"plain":"Loops at a point, up to homotopy, with composition. It records which round trips can be tightened to nothing.","formal":"$\\pi_1(X,x)$: endomorphisms of $x$ in the homotopy category of a Kan complex $X$.","eg":"<i>A closed loop</i> shows a loop that cannot be filled in, so its class is not the identity.","see":["∞-groupoid","Homotopy hypothesis"]},
   {"term":"Category","world":6,"essential":false,"plain":"Objects and arrows between them, where arrows compose and every object has a do-nothing arrow. Composition gives a definite arrow instead of a homotopy class.","formal":"A category $\\mathcal C$: objects, morphisms, associative composition, an identity morphism per object.","eg":"The composition table in <i>Only one filler</i> is a category's table.","see":["Functor","Nerve","Associativity"]},
   {"term":"Functor","world":6,"essential":false,"plain":"A map between categories that sends objects to objects and arrows to arrows, keeping composition and identities.","formal":"A functor $F:\\mathcal C\\to\\mathcal D$ with $F(g\\circ f)=F(g)\\circ F(f)$ and $F(1_x)=1_{Fx}$.","eg":"The map you follow in <i>Lifting a path</i> carries one shape onto the other.","see":["Category","Map","Natural transformation"]},
-  {"term":"Nerve","world":6,"essential":true,"plain":"A category drawn as shapes: its vertices are objects, its arrows are maps, and its higher simplices are chains of maps run one after another.","formal":"$N(\\mathcal C)$: $n$-simplices are chains of $n$ composable morphisms. Every inner horn fills uniquely.","eg":"<i>The Rulebook</i> is the smallest example, with a single arrow.","see":["Category","Segal condition","Spine"]},
+  {"term":"Nerve","world":6,"essential":true,"plain":"A category drawn as shapes: its vertices are objects, its arrows are maps, and its higher simplices are chains of maps run one after another.","formal":"$N(\\mathcal C)$: $n$-simplices are chains of $n$ composable morphisms. Every inner horn fills uniquely.","eg":"<i>The composition table</i> is the smallest example, with a single arrow.","see":["Category","Segal condition","Spine"]},
   {"term":"Spine","world":6,"essential":true,"plain":"The path of consecutive arrows inside a simplex, with everything else thrown away. Whether the spine can be filled, and how many ways, tells you what kind of shape you have.","formal":"$\\mathrm{Spine}^n\\subset\\Delta^n$: the union of the edges $\\{i,i+1\\}$. The inclusion is inner anodyne, and filling every spine uniquely is the Segal condition.","eg":"<i>Fill the spine</i> fills it; <i>Nerve or not?</i> asks when the filling is unique.","see":["Nerve","Segal condition","Inner anodyne map"]},
   {"term":"Segal condition","world":6,"essential":false,"plain":"Every spine fills in exactly one way. It is the test that turns a shape into the nerve of a category.","formal":"$X_n\\to X_1\\times_{X_0}\\cdots\\times_{X_0}X_1$ is a bijection for each $n$; equivalent to being a nerve.","eg":"<i>One of each</i> passes the test; <i>Too many fillers</i> fails it.","see":["Spine","Nerve"]},
   {"term":"Skeleton","world":7,"essential":true,"plain":"What is left after you throw away everything above a dimension: the vertices alone, or the vertices and arrows.","formal":"$\\mathrm{sk}_nX$: the simplicial subset generated by simplices of dimension $\\le n$.","eg":"<i>Skeleta</i> removes a top-dimensional cell and reveals the skeleton below.","see":["Coskeleton","Boundary","Cell"]},

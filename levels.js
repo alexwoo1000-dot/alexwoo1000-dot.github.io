@@ -71,6 +71,14 @@
   function withProj(o, extra) { var r = {}, k; for (k in o) r[k] = o[k]; for (k in extra) r[k] = extra[k]; return r; }
 
   HC.Levels = [
+    // ---- A first look at the interface: the answer is a card in the Facts list on the right. ----
+    { id: 0, name: 'welcome', kind: 'intro', world: 0, par: 1, vertices: tri3,
+      edges: [E('f', 'a', 'b'), E('g', 'b', 'c'), E('x', 'a', 'c')],
+      triangles: [T('G1', 'f', 'g', 'x')],
+      tools: [], kan: false,
+      goal: { pick: 'G1', ask: [{ card: true }] },
+      solution: [['pick', 'G1']] },
+
     // ---- World 0 (shown as world 1): Simplicial sets. Pick-a-fact levels: no tools, goal.pick. ----
     // goal.pick: a fact ref, or a list of refs picked in order; a wrong pick costs a move.
     // goal.ask: what the question asks (for the prose): face = which face of the triangle, edge = which arrow.

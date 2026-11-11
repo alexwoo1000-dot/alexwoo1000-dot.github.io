@@ -13,9 +13,9 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" crossorigin="anonymous" id="katex-js"></script>
 </head>
 <body data-screen="map">
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><marker id="mt-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,1 L9,5 L0,9 z" class="mt-ahp"/></marker></defs></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><marker id="mt-ah" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,1 L9,5 L0,9 z" class="mt-ahp"/></marker></defs></svg>
 <header class="topbar">
-  <button class="brand" id="brand" type="button" aria-label="Hornfiller: back to the level list">
+  <button class="brand" id="brand" type="button" aria-label="Hornfiller: the introduction">
     <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
       <path class="logo-side" d="M20 5 L5 33 H35"/>
       <path class="logo-miss" d="M20 5 L35 33"/>
@@ -23,7 +23,7 @@
     </svg>
     <span class="brand-name">horn<b>filler</b></span>
   </button>
-  <button id="btn-goback" class="ghost goback" type="button" hidden><span aria-hidden="true">←</span> Back</button>
+  <button id="btn-contents" class="ghost goback" type="button" title="Table of contents">Contents</button>
   <nav class="top-actions" aria-label="Settings">
     <button id="btn-mode" class="ghost mode" type="button" aria-pressed="false" title="Plain words or formal math">math / <b>plain</b></button>
     <button id="btn-glossary" class="ghost" type="button">Glossary</button>
@@ -44,6 +44,10 @@
     <p id="ending-link" class="ending-link" hidden><button type="button" class="linklike" id="btn-ending">Read the ending</button></p>
   </section>
 
+  <section id="screen-intro" class="screen" aria-label="About Hornfiller" hidden>
+    <div id="intro" class="intro"></div>
+  </section>
+
   <section id="screen-play" class="screen" aria-label="Puzzle" hidden>
     <div class="play-head">
       <button id="btn-back" class="ghost back" type="button"><span aria-hidden="true">←</span> Levels</button>
@@ -54,12 +58,12 @@
     <p id="offer" class="offer" hidden></p>
     <div class="play-grid">
       <aside class="col-words" aria-label="About this level">
-        <p id="bullets" class="bullets"></p>
         <section id="defcard" class="panel defcard" aria-label="Definition" hidden></section>
         <section id="briefing" class="panel briefing" aria-label="World briefing" hidden></section>
         <section id="explain" class="panel explain" aria-label="Explain" hidden></section>
       </aside>
       <div class="col-main">
+        <p id="bullets" class="bullets"></p>
         <p id="setting" class="setting"></p>
         <div id="toolbar" class="toolbar" role="toolbar" aria-label="Tools"></div>
         <div id="toolhint" class="toolhint" aria-live="polite"></div>

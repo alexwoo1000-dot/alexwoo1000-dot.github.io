@@ -221,7 +221,7 @@
   var STORE_KEY = 'hornfiller.progress.v1';
   function loadProgress() {
     var p = { solved: {}, best: {}, seenTools: {}, unlockAll: false, theme: null, mode: 'plain',
-      briefed: {}, explained: {}, notesRead: {}, wordsSeen: {}, pos: {} };
+      briefed: {}, explained: {}, notesRead: {}, wordsSeen: {}, pos: {}, introSeen: false };
     try {
       var raw = window.localStorage.getItem(STORE_KEY);
       if (raw) {
@@ -252,6 +252,7 @@
   function saveSession() {
     if (restoringSession) return;
     var scr = document.body.getAttribute('data-screen'), out = { t: 'map' };
+    if (scr === 'intro') { clearSession(); return; }
     try {
       if (scr === 'play' && P.level && P.state) {
         var st = P.state, copy = {};
@@ -410,7 +411,7 @@
     var A = { x: 8, y: 36 }, B = { x: 32, y: 8 }, C = { x: 56, y: 36 };
     function lab(s) { s = stripTags(String(s == null ? '?' : s)).replace(/_\{?([a-z0-9])\}?/g, '$1'); return s.length > 4 ? s.slice(0, 3) + '\u2026' : s; }
     function ln(p, q, i, ox, oy, anchor) {
-      var a = towards(p, q, 4.5), b = towards(q, p, 6.5), mx = (p.x + q.x) / 2 + ox, my = (p.y + q.y) / 2 + oy;
+      var a = towards(p, q, 4.5), b = towards(q, p, 10), mx = (p.x + q.x) / 2 + ox, my = (p.y + q.y) / 2 + oy;
       var idE = ids[i] && /^id:/.test(String(ids[i])) || /^1/.test(String(labels[i] || '')) && String(labels[i]).length <= 4 && /^1(_|[\u2080-\u209C]|$)/.test(String(labels[i]));
       return '<path class="mt-e' + (idE ? ' id' : '') + (labels[i] === '?' ? ' q' : '') + '" d="M' + pt(a) + ' L' + pt(b) + '" marker-end="url(#mt-ah)"/>' +
         '<text class="mt-l' + (labels[i] === '?' ? ' q' : '') + '" x="' + r1(mx) + '" y="' + r1(my) + '" text-anchor="' + anchor + '">' + esc(lab(labels[i])) + '</text>';
@@ -543,8 +544,9 @@
   function isIntro(lv) { return !lv || !lv.kind || lv.kind === 'intro' || lv.kind === 'sandbox'; }
   function mathMode() { return progress.mode === 'math'; }
 
-  function startLevel(i, restore) {
-    var lv = levels()[i];
+  function startLevel(i, restore, lvOverride) {
+    if (demoOn && !lvOverride) exitIntro();       // any real level leaves the intro demo behind
+    var lv = lvOverride || levels()[i];
     if (!lv) return;
     restoringSession = !!(restore && restore.state);
     var st;
@@ -795,6 +797,7 @@
     if (!a) return 'the triangle described on the left';
     function lbl(x) { var e = m.e[x]; return math(e ? eTeX(m, x) : labTeX(x)); }
     function fname(f) { return math('d_' + String(f).replace(/^d/, '')); }
+    if (a.card) return 'the triangle in the <b>Facts</b> list on the right';
     if (a.face && a.edge) return 'the triangle whose ' + fname(a.face) + ' is ' + lbl(a.edge);
     if (a.face && a.degenerate != null) return 'face ' + fname(a.face) + ' of the tetrahedron' + (a.degenerate ? ' <span class="note">(it is one of the degenerate triangles)</span>' : '');
     var ks = ['d2', 'd0', 'd1'].filter(function (k) { return a[k] != null; });
@@ -822,6 +825,7 @@
     if (!P.level || isSandbox(P.level) || P.won) return;
     if (!goalDone()) return;
     P.won = true;
+    if (demoOn) introGate();
     applyHighlights();
     var key = lkey(P.level);
     progress.solved[key] = true;
@@ -1081,7 +1085,7 @@
     var cells = horns.map(function (h) {
       var st = ok(h.k);
       var svg = '<svg class="hp" viewBox="0 0 60 44" aria-hidden="true">' +
-        h.legs.map(function (l) { var a = towards(l[0], l[1], 3), b = towards(l[1], l[0], 5); return '<path class="hp-e" d="M' + pt(a) + ' L' + pt(b) + '" marker-end="url(#mt-ah)"/>'; }).join('') +
+        h.legs.map(function (l) { var a = towards(l[0], l[1], 3), b = towards(l[1], l[0], 8.5); return '<path class="hp-e" d="M' + pt(a) + ' L' + pt(b) + '" marker-end="url(#mt-ah)"/>'; }).join('') +
         '<path class="hp-m ' + st + '" d="M' + pt(towards(h.miss[0], h.miss[1], 3)) + ' L' + pt(towards(h.miss[1], h.miss[0], 3)) + '"/>' +
         [A, B, C].map(function (p) { return '<circle class="mt-v" cx="' + p.x + '" cy="' + p.y + '" r="2.6"/>'; }).join('') + '</svg>';
       var cap = st === 'yes' ? 'fills' : st === 'iso' ? 'fills along \u2245' : 'stays open';
@@ -1381,7 +1385,7 @@
     });
     // SPEC5: every dot shows its identity 1_a (a degenerate edge); faint unless a shown triangle or a pick uses it
     var edges = arr(st.edges).slice(), have = setOf(edges.map(function (e) { return e.id; }));
-    arr(st.vertices).forEach(function (v) { var id = 'id:' + v.id; if (!have[id]) edges.push({ id: id, src: v.id, dst: v.id, label: '1_' + vLabel(m, v.id), kind: 'identity', virtual: true }); });
+    if (!(P.level && P.level.noIdentityLoops)) arr(st.vertices).forEach(function (v) { var id = 'id:' + v.id; if (!have[id]) edges.push({ id: id, src: v.id, dst: v.id, label: '1_' + vLabel(m, v.id), kind: 'identity', virtual: true }); });
     P.usedIds = used;
     var keep = setOf(edges.map(function (e) { return e.id; }));
     return { vertices: st.vertices, edges: edges, tetras: st.tetras,
@@ -2004,7 +2008,7 @@
     var E = [['01', 0, 1], ['12', 1, 2], ['23', 2, 3], ['02', 0, 2], ['13', 1, 3], ['03', 0, 3]];
     var edges = E.map(function (e) {
       var A = V[e[1]], B = V[e[2]];
-      var a = towards(A, B, 6), b = towards(B, A, 8);
+      var a = towards(A, B, 6), b = towards(B, A, 11);
       var mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
       var dx = B.x - A.x, dy = B.y - A.y, l = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / l, ny = dx / l;
       var cx = 65, cy = 70; if ((mx - cx) * nx + (my - cy) * ny < 0) { nx = -nx; ny = -ny; }
@@ -2024,7 +2028,7 @@
       var cx = (c[0].x + c[1].x + c[2].x) / 3, cy = (c[0].y + c[1].y + c[2].y) / 3;
       lock = '<g class="sk-lock" transform="translate(' + r1(cx - 5) + ',' + r1(cy - 6) + ')"><rect x="0" y="5" width="10" height="8" rx="1.5"/><path d="M2 5 V3 a3 3 0 0 1 6 0 V5" fill="none"/></g>';
     });
-    return '<svg class="trip-sketch" viewBox="-6 -8 152 140" role="img" aria-label="tetrahedron sketch"><defs><marker id="sk-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 z" class="sk-ahp"/></marker></defs>' +
+    return '<svg class="trip-sketch" viewBox="-6 -8 152 140" role="img" aria-label="tetrahedron sketch"><defs><marker id="sk-ah" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 z" class="sk-ahp"/></marker></defs>' +
       faces + edges + dots + lock + '</svg>';
   }
   function t3Model(model) {
@@ -2462,7 +2466,7 @@
     ['01', '02', '03', '12', '13', '23'].forEach(function (ij) {
       var a = c[+ij[0]].p, b = c[+ij[1]].p, id = T.edges['e' + ij]; if (!a || !b) return;
       var idEdge = !!id && isIdentityEdge(m, id);
-      var p0 = towards(a, b, VR + 3), p1 = towards(b, a, VR + 4);
+      var p0 = towards(a, b, VR + 3), p1 = towards(b, a, VR + 12);
       var grp = sEl('g', { class: 'unf-edge' + (idEdge ? ' unf-id' : '') + (id ? '' : ' unf-unknown') });
       grp.appendChild(sEl('path', { d: 'M' + pt(p0) + ' L' + pt(p1), class: 'line', 'marker-end': 'url(#ah-' + (idEdge ? 'identity' : 'given') + ')' }));
       var mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, dx = b.x - a.x, dy = b.y - a.y, l = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -2481,7 +2485,7 @@
     model.tris.forEach(function (u) {
       [u.idArrow, u.copy].forEach(function (a, j) {
         if (!a.from || !a.to) return;
-        var p0 = towards(a.from, a.to, VR + 3), p1 = towards(a.to, a.from, VR + 4);
+        var p0 = towards(a.from, a.to, VR + 3), p1 = towards(a.to, a.from, VR + 12);
         var grp = sEl('g', { class: 'unf-edge' + (j === 0 ? ' unf-id' : ''), 'data-unf': u.key });
         grp.appendChild(sEl('path', { d: 'M' + pt(p0) + ' L' + pt(p1), class: 'line', 'marker-end': 'url(#ah-' + (j === 0 ? 'identity' : 'given') + ')' }));
         var mid = { x: (a.from.x + a.to.x) / 2, y: (a.from.y + a.to.y) / 2 };
@@ -2968,8 +2972,9 @@
     if (P.skel >= 2) {
       var fr = freeTris();
       progress.freeOpen = progress.freeOpen || {};
-      var w = P.level && P.level.world, firstWorld = w != null && w <= Math.min.apply(null, levels().map(function (l) { return l.world || 0; }));
-      var open = progress.freeOpen[w] != null ? !!progress.freeOpen[w] : !!firstWorld;
+      var w = P.level && P.level.world;
+      // a level that is about degenerate triangles opens the list; otherwise it starts closed
+      var open = progress.freeOpen[w] != null ? !!progress.freeOpen[w] : !!(P.level && P.level.freeOpen);
       var det = hEl('details', { class: 'facts-sec free-sec' });
       if (open) det.open = true;
       det.innerHTML = '<summary><span class="facts-h">Degenerate triangles</span> <span class="count">' + fr.length + '</span> <span class="note">from identities</span></summary>';
@@ -3211,6 +3216,58 @@
 
   /* ---------- level map ---------- */
   var ICON_TICK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 L6.5 12 L13 4" fill="none"/></svg>';
+  /* ---------- intro: the compose level itself, with its chrome put away ---------- */
+  function introDone() { progress.introSeen = true; saveProgress(); }
+  var demoOn = false, demoSnap = null;
+  function introBase() {
+    var out = null;
+    levels().forEach(function (l) { if (l.name === 'compose') out = l; });
+    return out;
+  }
+  function paintIntro() {
+    var I = HC.Intro || {};
+    $('lvl-title').innerHTML = prose(I.title || 'Hornfiller');
+    $('bullets').innerHTML = '';
+    var offer = $('offer');
+    offer.hidden = false;
+    offer.innerHTML = '<span class="intro-lede">' + prose(I.lede || '') + '</span>' +
+      '<span class="intro-act"><button type="button" class="btn primary" data-act="intro-start">' + prose(I.start || 'Start') + '</button>' +
+      (I.note ? ' <button type="button" class="linklike" data-act="intro-note">' + prose(I.note) + '</button>' : '') + '</span>';
+    introGate();
+  }
+  function introGate() {
+    var I = HC.Intro || {}, d = I.demo || {};
+    var done = !!(demoOn && P.level && P.level.name === 'intro-demo' && P.won);
+    Array.prototype.forEach.call(document.querySelectorAll('#offer [data-act]'), function (b) {
+      b.disabled = !done;
+      b.setAttribute('aria-disabled', done ? 'false' : 'true');
+    });
+    var act = document.querySelector('#offer .intro-act');
+    if (act) act.classList.toggle('ready', done);
+  }
+  function enterIntro() {
+    var base = introBase();
+    if (!base || !HC.Engine) { showScreen('map'); return; }
+    demoSnap = JSON.parse(JSON.stringify(progress));
+    var lv = JSON.parse(JSON.stringify(base));
+    lv.name = 'intro-demo'; lv.noIdentityLoops = true; lv.par = null; lv.kind = 'intro';
+    demoOn = true;
+    document.body.setAttribute('data-demo', 'on');
+    startLevel(0, null, lv);
+    paintIntro();
+  }
+  function exitIntro() {
+    if (!demoOn) return;
+    demoOn = false;
+    document.body.removeAttribute('data-demo');
+    if (demoSnap) {
+      var seen = progress.introSeen;
+      progress = demoSnap;
+      progress.introSeen = seen;
+      demoSnap = null;
+      saveProgress();
+    }
+  }
   function renderMap() {
     var root = $('worlds'), L = levels();
     root.innerHTML = '';
@@ -3276,7 +3333,8 @@
 
   /* ---------- screens, toast, theme ---------- */
   function showScreen(name) {
-    ['map', 'play', 'ending', 'note'].forEach(function (s) { var el = $('screen-' + s); if (el) el.hidden = name !== s; });
+    if (demoOn && name !== 'play') exitIntro();
+    ['intro', 'map', 'play', 'ending', 'note'].forEach(function (s) { var el = $('screen-' + s); if (el) el.hidden = name !== s; });
     if (name !== 'play') { closeTrip(); close3D(); closeWhy(); stopRename(); }
     document.body.setAttribute('data-screen', name);
     if (name !== 'play') { P.level = null; hideTetra(); hideWin(); }
@@ -3384,6 +3442,8 @@
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (k === 'z' || k === 'Z')) { e.preventDefault(); undo(); return; }
     if (e.ctrlKey || e.metaKey) return;
     if (k === 'Enter') {
+      // a solved level: Enter is Next, wherever the focus was left (a board arrow, a fact card)
+      if (winShown() && !(e.target && e.target.closest && e.target.closest('#winbox button, #toolbar, .actions'))) { e.preventDefault(); nextLevel(); return; }
       if (tg === 'BUTTON' || tg === 'A' || tg === 'SUMMARY') return;
       if (e.target && e.target.closest && e.target.closest('#board [tabindex]')) return;
       if (P.trip && P.trip.res && P.trip.res.claim) { e.preventDefault(); tripClaim(); return; }
@@ -3562,7 +3622,14 @@
     $('btn-ending-back').addEventListener('click', function () { showScreen('map'); });
     $('btn-note-back').addEventListener('click', noteBack);
     $('btn-ending').addEventListener('click', function () { showScreen('ending'); });
-    $('brand').addEventListener('click', function () { closeModal('glossary'); showScreen('map'); });
+    $('brand').addEventListener('click', function () { closeModal('glossary'); enterIntro(); });
+    var ct = $('btn-contents'); if (ct) ct.addEventListener('click', function () { closeModal('glossary'); showScreen('map'); });
+    $('offer').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+      var act = b.getAttribute('data-act');
+      if (act === 'intro-start') { introDone(); exitIntro(); startLevel(0); }
+      else if (act === 'intro-note') { introDone(); exitIntro(); showNote((HC.Intro && HC.Intro.noteId) || 'simplicial'); }
+    });
 
     $('worlds').addEventListener('click', function (e) {
       var b = e.target.closest('[data-level]'); if (!b) return;
@@ -3660,10 +3727,9 @@
     if (sess && sess.t === 'note' && noteById(sess.note)) { showNote(sess.note); return; }
     if (sess && sess.t === 'level' && levels()[sess.level] && isUnlocked(sess.level) && sess.state) { startLevel(sess.level, sess); return; }
     if (sess) { showScreen('map'); return; }
-    // first visit: open on the exposition that introduces the game, then "Play" starts level 1
+    // first visit: explain the site, then let them start
     var played = Object.keys(progress.solved || {}).length > 0;
-    var first = levels()[0], opening = first && noteBefore(first.name);
-    if (!played && opening) { showNote(opening.id); return; }
+    if (!progress.introSeen && !played) { enterIntro(); return; }
     showScreen('map');
     if (!HC.Engine) toast('engine.js did not load.', 'warn');
   }
@@ -3696,8 +3762,8 @@
     var R = readingOrder(), i = hereInOrder();
     if (i < 0) return null;
     for (var j = i + dir; j >= 0 && j < R.length; j += dir) {
+      // going forward past a world whose next world is still locked, keep walking to the next open page
       if (R[j].t === 'note' ? isUnlocked(R[j].lv) : isUnlocked(R[j].k)) return R[j];
-      if (dir > 0) return null;
     }
     return null;
   }
@@ -3737,9 +3803,9 @@
     if (lv.base) return lv.licence === 'left'
       ? 'You are working over a <b>left fibration</b>. Upstairs you may lift any arrow of the shadow from a start you choose, and fill a horn that is missing its first face, provided a matching shape lies below it.'
       : 'You are working over an <b>inner fibration</b>, so upstairs only inner horns can be filled, and only over a matching shape below.';
-    if (lv.goal && lv.goal.pick != null) return 'This is a <b>simplicial set</b>: vertices, arrows and triangles, together with the identity arrows and degenerate triangles that every simplicial set has. Nothing gets filled here; you are reading the picture.';
-    if (has('witness') || has('isNerve')) return 'This is a bare <b>simplicial set</b>. Nothing gets filled here; you are judging the picture as it stands.';
-    if (has('cell2') || has('addEdge') || has('peel') || has('cosk')) return 'This is a bare <b>simplicial set</b>. Nothing fills by itself, so you add and remove cells by hand.';
+    if (lv.goal && lv.goal.pick != null) return 'A <b>simplicial set</b>: vertices, arrows, triangles. Nothing fills here — you are reading the picture.';
+    if (has('witness') || has('isNerve')) return 'A bare <b>simplicial set</b>. Nothing fills here; you judge the picture as it stands.';
+    if (has('cell2') || has('addEdge') || has('peel') || has('cosk')) return 'A bare <b>simplicial set</b>: nothing fills by itself, so you add and remove cells by hand.';
     if (lv.strict) return 'You are working in the <b>nerve of a category</b>, where every two arrows end to end have exactly one composite, read off the composition table.';
     if (lv.kan) return 'You are working in a <b>Kan complex</b>. Every horn can be filled, inner or outer, which means every arrow can be undone.';
     if (lv.joyal) return 'You are working in an <b>∞-category</b>. Inner horns fill as usual, and an outer horn fills only when the arrow it has to undo is marked ≅, an isomorphism.';
@@ -3750,7 +3816,6 @@
   showNote = function (id) { navPush('note', id); var r = showNote0.apply(null, arguments); updBack(); return r; };
   showScreen = function (name) { if (name === 'map') navPush('map', 0); else if (name === 'ending') navPush('ending', 0); var r = showScreen0.apply(null, arguments); updBack(); return r; };
   (function () {
-    var gb = $('btn-goback'); if (gb) gb.addEventListener('click', goBack);
     ['btn-prev', 'btn-prevn'].forEach(function (id) { var el = $(id); if (el) el.addEventListener('click', function () { goStep(-1); }); });
     ['btn-next', 'btn-nextn'].forEach(function (id) { var el = $(id); if (el) el.addEventListener('click', function () { goStep(1); }); });
     // the browser's own Back button: follow the address

@@ -63,7 +63,7 @@ function checkCandidates(s, st, tag) {
 }
 
 // ---------- 0. level table sanity ----------
-check(HC.Levels.length === 67, '67 levels');
+check(HC.Levels.length === 68, '68 levels');
 // "nerve or not?": the stored answer must be the true one
 HC.Levels.forEach(function (L0) {
   if (!L0.goal || L0.goal.flag !== 'verdict') return;

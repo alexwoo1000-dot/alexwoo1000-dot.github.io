@@ -138,6 +138,8 @@ h1, h2, h3 { font-weight: bold; line-height: 1.2; }
 .bullets { margin: 4px 0 10px; padding-left: 22px; max-width: 680px; }
 .bullets li { margin: 0; }
 .bullets.formal { list-style: none; padding-left: 0; font-style: italic; }
+/* the task sits above the board, in the middle column */
+.col-main .bullets { margin: 0 0 6px; padding-left: 0; max-width: none; font-size: 18px; line-height: 1.4; }
 .play-grid { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 24px; align-items: start; }
 .col-main, .col-side { min-width: 0; }
 .col-side { display: grid; gap: 16px; align-content: start; position: sticky; top: 10px; max-height: calc(100vh - 20px); overflow-y: auto; overscroll-behavior: contain; }
@@ -639,6 +641,54 @@ body.mode-math .tp-cap { font-size: 13px; }
 .notenode { font-style: italic; }
 .brief-map summary { cursor: pointer; color: var(--link); font-size: 14px; width: max-content; }
 .brief-map .brief-body { font-size: 15px; }
+
+/* intro screen: the page a first-time visitor lands on */
+#screen-intro { padding: 20px 16px 70px; }
+.intro { max-width: 660px; margin: 0 auto; }
+.intro-h { font-size: 44px; line-height: 1.05; margin: 12px 0 8px; letter-spacing: -.01em; }
+.intro-lede { font-size: 21px; line-height: 1.35; color: var(--ink-soft); margin: 0 0 24px; }
+.intro p { font-size: 18px; margin: 0 0 15px; }
+.intro .note-fig { margin: 26px 0 28px; }
+.intro .note-fig svg { max-width: 380px; }
+.intro-actions { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; }
+/* the landing page demo: a real mini board drawn by the notes renderer */
+.intro-demo { max-width: 520px; margin: 26px 0 0; }
+.intro-demo .intro-demo-svg { width: 100%; max-width: 520px; height: auto; display: block; margin: 0 auto; }
+.intro-demo .intro-hit { fill: none; stroke: transparent; stroke-width: 46; pointer-events: stroke; cursor: pointer; }
+.intro-actions .btn[disabled], .intro-actions .linklike[disabled] { opacity: .35; cursor: not-allowed; text-decoration: none; }
+.intro-hint { margin: 4px 0 0; font-size: 16px; line-height: 1.45; color: var(--ink-soft); }
+
+/* the intro: the compose level with its chrome put away */
+body[data-demo="on"] .col-words,
+body[data-demo="on"] .col-side,
+body[data-demo="on"] #showbar,
+body[data-demo="on"] #lvl-tag,
+body[data-demo="on"] #btn-back,
+body[data-demo="on"] .lvl-nav,
+body[data-demo="on"] #moves,
+body[data-demo="on"] #skel,
+body[data-demo="on"] #btn-undo,
+body[data-demo="on"] #btn-reset,
+body[data-demo="on"] #btn-claim,
+body[data-demo="on"] #btn-hint,
+body[data-demo="on"] #winbox,
+body[data-demo="on"] .foot { display: none !important; }
+body[data-demo="on"] .play-grid { grid-template-columns: minmax(0, 1fr); max-width: 760px; margin: 0 auto; }
+body[data-demo="on"] .play-head { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; align-items: flex-start; padding-bottom: 4px; }
+body[data-demo="on"] #lvl-title { font-size: 42px; line-height: 1.05; margin: 6px 0 2px; }
+body[data-demo="on"] #offer { display: block; max-width: 760px; margin: 2px auto 10px; }
+body[data-demo="on"] .intro-lede { display: block; font-size: 21px; line-height: 1.35; color: var(--ink-soft); margin: 0 0 15px; }
+body[data-demo="on"] .intro-act { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; }
+body[data-demo="on"] #bullets,
+body[data-demo="on"] #setting { display: none !important; }
+body[data-demo="on"] #toolbar,
+body[data-demo="on"] #toolhint { display: none !important; }
+body[data-demo="on"] .intro-act { opacity: 0; pointer-events: none; transition: opacity .28s ease-out; }
+body[data-demo="on"] .intro-act.ready { opacity: 1; pointer-events: auto; }
+body[data-demo="on"] #bullets { font-size: 21px; color: var(--ink-soft); margin-bottom: 12px; }
+body[data-demo="on"] #offer .btn[disabled], body[data-demo="on"] #offer .linklike[disabled] { opacity: .35; cursor: not-allowed; text-decoration: none; }
+/* the unlock/reset row belongs to the level list, not the landing page */
+body[data-screen="intro"] .foot { display: none; }
 
 /* note pages */
 .notepage p { max-width: 660px; }
