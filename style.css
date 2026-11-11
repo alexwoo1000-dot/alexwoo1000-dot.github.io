@@ -800,3 +800,6 @@ details.gl-sec > summary.gl-world { cursor: pointer; list-style: revert; }
 .free-ov-v .vdot { fill: var(--paper); stroke: var(--ink); stroke-width: 2; stroke-dasharray: 4 3; }
 .free-ov-v .vlabel { fill: var(--ink); }
 .free-ov-name { font: italic 22px var(--font-math); fill: var(--ink); paint-order: stroke; stroke: var(--halo); stroke-width: 6px; }
+/* the opened copy fades in, like a highlighted triangle fill (see .tri transition) */
+.free-ov.in { animation: freeIn .2s ease-out both; }
+@keyframes freeIn { from { opacity: 0; } }

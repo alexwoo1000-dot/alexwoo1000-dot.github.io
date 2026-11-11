@@ -16,7 +16,7 @@
     1: 'Arrows', 2: 'Triangles are proofs', 3: 'Undo everything', 4: 'Nerves of categories',
     5: 'Bones', 6: 'Possible or not?', 7: 'The licence', 8: 'Playground'
   };
-  var KIND_NAMES = { given: 'given', compose: 'made', thin: 'free', solved: 'solved', filled: 'deduced', cell: 'glued', trip: 'trip', theorem: 'theorem' };
+  var KIND_NAMES = { given: 'given', compose: 'made', thin: 'degenerate', solved: 'solved', filled: 'deduced', cell: 'glued', trip: 'trip', theorem: 'theorem' };
 
   /* ---------- helpers ---------- */
   function $(id) { return document.getElementById(id); }
@@ -562,7 +562,7 @@
     P.tool = modal.length === 1 ? modal[0] : null;
     P.picks = []; P.choice = null; P.trip = null; P.hintsShown = 0; P.won = false; P.hoverTri = null; P.pinnedTri = null; P.previewEdges = null;
     P.fresh = emptyFresh(); P.goalPrev = []; P.blanksPrev = {}; P.skel = 3; P.selEdge = null; P.goalGhost = null; P.ghostPos = {}; P.vbFrozen = null;
-    P.layers = { v: true, e: true, t: true, s: true }; P.unfold = !!lv.startUnfolded; P.unfoldTripKey = ''; stopRename(); closeWhy(); hideChooser(); close3D();
+    P.layers = { v: true, e: true, t: true, s: true }; P.unfold = !!lv.startUnfolded; P.unfoldAvail = false; P.unfoldTripKey = ''; stopRename(); closeWhy(); hideChooser(); close3D();
     hideTetra(); hideWin();
     showScreen('play');
     renderPlayStatic();
@@ -655,7 +655,7 @@
     var real = tris.filter(function (t) { return !isThin(t); });
     if (real.length) return 'New fact ' + math(triTeX(m, real[real.length - 1]));
     if (arr(a.tetras).length) return 'Filled, and it agrees with what you had.';
-    if (tris.length) return 'Free triangles for ' + math(eTeX(m, tris[0].e02));
+    if (tris.length) return 'Degenerate triangles for ' + math(eTeX(m, tris[0].e02));
     var es = arr(a.edges).filter(function (id) { return m.e[id]; });
     if (es.length) return 'New arrow ' + math(edgeTeXFull(m, es[es.length - 1]));
     if (arr(a.vertices).length) return 'New vertex ' + math(labTeX(vLabel(m, a.vertices[0])));
@@ -795,9 +795,9 @@
     function lbl(x) { var e = m.e[x]; return math(e ? eTeX(m, x) : labTeX(x)); }
     function fname(f) { return math('d_' + String(f).replace(/^d/, '')); }
     if (a.face && a.edge) return 'the triangle whose ' + fname(a.face) + ' is ' + lbl(a.edge);
-    if (a.face && a.degenerate != null) return 'face ' + fname(a.face) + ' of the tetrahedron' + (a.degenerate ? ' <span class="note">(it is one of the free triangles)</span>' : '');
+    if (a.face && a.degenerate != null) return 'face ' + fname(a.face) + ' of the tetrahedron' + (a.degenerate ? ' <span class="note">(it is one of the degenerate triangles)</span>' : '');
     var ks = ['d2', 'd0', 'd1'].filter(function (k) { return a[k] != null; });
-    if (ks.length) return 'the free triangle with ' + ks.map(function (k) { return fname(k) + ' = ' + lbl(a[k]); }).join(' and ');
+    if (ks.length) return 'the degenerate triangle with ' + ks.map(function (k) { return fname(k) + ' = ' + lbl(a[k]); }).join(' and ');
     return 'the triangle described on the left';
   }
   function patternHTML(pat, b, m, shared, construct) {
@@ -1701,36 +1701,83 @@
     });
   }
 
-  /* A free (degenerate) triangle is not drawn on the board, because two of its corners are the same vertex.
+  /* A degenerate ("free") triangle is not drawn on the board, because two of its corners are the same vertex.
      While one is hovered or pinned, draw it opened up: the repeated vertex gets a copy, joined to it by the
      identity arrow, and the triangle is shaded, so the player can see exactly which triangle it is. */
   function drawFreeOverlay() {
     var svg = $('board'); if (!svg) return;
-    var old = svg.querySelector('.free-ov'); if (old) old.parentNode.removeChild(old);
+    var g = svg.querySelector('.free-ov');
+    function hide() { P.freeOvRef = null; if (g && g.parentNode) g.parentNode.removeChild(g); }
     var pk = (P.choice ? P.choice.picks : P.trip ? P.trip.picks : P.picks) || [];
     var ref = [P.hoverTri, P.pinnedTri].concat(pk.filter(function (p) { return p && p.kind === 'tri'; }).map(function (p) { return p.id; }).reverse()).filter(function (r) { return r && /^s[01]:/.test(r); })[0];
-    if (!ref || !P.geo || !P.m || !engineHas('describe')) return;
-    var d; try { d = HC.Engine.describe(P.state, ref); } catch (e) { return; }
-    var bd = d && d.boundary; if (!bd || bd.length !== 3) return;
-    var m = P.m;
+    if (!ref || !P.geo || !P.m) return hide();
+    var d = null;
+    if (engineHas('describe')) { try { d = HC.Engine.describe(P.state, ref); } catch (e) { d = null; } }
+    var bd = d && d.boundary; if (!bd || bd.length !== 3) return hide();
+    var m = P.m, pos = P.geo.pos;
     function ends(id) { if (/^id:/.test(id)) { var v = id.slice(3); return { src: v, dst: v, id: true }; } var e = m.e[id]; return e ? { src: e.src, dst: e.dst } : null; }
-    var A = ends(bd[0]), B = ends(bd[1]); if (!A || !B) return;
+    var A = ends(bd[0]), B = ends(bd[1]); if (!A || !B) return hide();
     var v0 = A.src, v1 = A.dst, v2 = B.dst;                       // corners 0, 1, 2 (two of them coincide)
-    var pos = P.geo.pos; if (!pos[v0] || !pos[v1] || !pos[v2]) return;
-    var cen = { x: 0, y: 0 }, n = 0; Object.keys(pos).forEach(function (k) { cen.x += pos[k].x; cen.y += pos[k].y; n++; }); cen.x /= n || 1; cen.y /= n || 1;
-    function away(p, from, len) {
-      var dx = p.x - from.x, dy = p.y - from.y, l = Math.sqrt(dx * dx + dy * dy);
-      var nx, ny;
-      if (l < 1) { nx = p.x - cen.x; ny = p.y - cen.y; var l2 = Math.sqrt(nx * nx + ny * ny); if (l2 < 1) { nx = 0; ny = -1; } else { nx /= l2; ny /= l2; } }
-      else { nx = -dy / l; ny = dx / l; if ((p.x + from.x) / 2 - cen.x > 0 ? nx < 0 : nx > 0) { nx = -nx; ny = -ny; } }
-      return { x: p.x + nx * len, y: p.y + ny * len };
+    if (!pos[v0] || !pos[v1] || !pos[v2]) return hide();
+    var cen = { x: 0, y: 0 }, n = 0;
+    Object.keys(pos).forEach(function (k) { cen.x += pos[k].x; cen.y += pos[k].y; n++; });
+    cen.x /= n || 1; cen.y /= n || 1;
+    var others = Object.keys(pos).filter(function (k) { return k !== v0 && k !== v1 && k !== v2; }).map(function (k) { return pos[k]; });
+    function rot(vx, vy, a) { var c = Math.cos(a), s = Math.sin(a); return { x: vx * c - vy * s, y: vx * s + vy * c }; }
+    function clearOf(p) {
+      for (var i = 0; i < others.length; i++) if (Math.hypot(p.x - others[i].x, p.y - others[i].y) < VR * 2.3) return false;
+      return true;
     }
-    // corner positions, with copies for repeated vertices
-    var P0 = pos[v0], P1 = pos[v1], P2 = pos[v2], copies = [];
-    if (v1 === v0 && v2 === v0) { P1 = away(P0, P0, 110); P2 = { x: P0.x + (P1.x - P0.x) * 0.2 + 95, y: P0.y + (P1.y - P0.y) * 0.6 }; copies = [[P1, v0, '′'], [P2, v0, '″']]; }
-    else if (v1 === v0) { P1 = away(P0, P2, Math.max(80, Math.min(140, 0.45 * Math.hypot(P2.x - P0.x, P2.y - P0.y)))); copies = [[P1, v0, '′']]; }
-    else if (v2 === v1) { P2 = away(P1, P0, Math.max(80, Math.min(140, 0.45 * Math.hypot(P1.x - P0.x, P1.y - P0.y)))); copies = [[P2, v1, '′']]; }
-    var g = sEl('g', { class: 'free-ov', 'aria-hidden': 'true' });
+    var P0 = pos[v0], P1 = pos[v1], P2 = pos[v2];
+    var moves = [];                                               // { anchor, dx, dy, k } for each copied corner
+    // a fully degenerate triangle (s0 1_a) repeats ONE vertex at all three corners: fan the copies apart,
+    // otherwise both land on the same spot and the "opened" triangle is a point
+    if (v1 === v0 && v2 === v0) {
+      var bx = P0.x - cen.x, by = P0.y - cen.y, bl = Math.hypot(bx, by);
+      if (bl < 1) { bx = 0; by = -1; } else { bx /= bl; by /= bl; }
+      var R = 120;
+      var c1 = rot(bx, by, -1.05), c2 = rot(bx, by, 1.05);
+      if (!clearOf({ x: P0.x + c1.x * R, y: P0.y + c1.y * R })) c1 = rot(bx, by, -1.75);
+      if (!clearOf({ x: P0.x + c2.x * R, y: P0.y + c2.y * R })) c2 = rot(bx, by, 1.75);
+      moves.push({ anchor: P0, dx: c1.x * R, dy: c1.y * R, k: 1, v: v0, mark: '′' });
+      moves.push({ anchor: P0, dx: c2.x * R, dy: c2.y * R, k: 1, v: v0, mark: '″' });
+    } else if (v1 === v0) {
+      // s0f = (1_a, f ; f): corner 1 copies corner 0, corner 2 is the real vertex b
+      var o = pos[v2], len = Math.max(112, Math.min(150, 0.62 * Math.hypot(o.x - P0.x, o.y - P0.y)));
+      var px = P0.x - o.x, py = P0.y - o.y, pl = Math.hypot(px, py) || 1;
+      var mx = -py / pl, my = px / pl;
+      if ((P0.x - cen.x) * mx + (P0.y - cen.y) * my < 0) { mx = -mx; my = -my; }
+      if (!clearOf({ x: P0.x + mx * len, y: P0.y + my * len })) { var m1 = rot(mx, my, 0.8); mx = m1.x; my = m1.y; }
+      moves.push({ anchor: P0, dx: mx * len, dy: my * len, k: 1, v: v0, mark: '′' });
+    } else if (v2 === v1) {
+      // s1f = (f, 1_b ; f): corner 2 copies corner 1, corner 0 is the real vertex a
+      var o2 = pos[v0], len2 = Math.max(112, Math.min(150, 0.62 * Math.hypot(P1.x - o2.x, P1.y - o2.y)));
+      var qx = P1.x - o2.x, qy = P1.y - o2.y, ql = Math.hypot(qx, qy) || 1;
+      var nx = -qy / ql, ny = qx / ql;
+      if ((P1.x - cen.x) * nx + (P1.y - cen.y) * ny < 0) { nx = -nx; ny = -ny; }
+      if (!clearOf({ x: P1.x + nx * len2, y: P1.y + ny * len2 })) { var n1 = rot(nx, ny, -0.8); nx = n1.x; ny = n1.y; }
+      moves.push({ anchor: P1, dx: nx * len2, dy: ny * len2, k: 1, v: v1, mark: '′' });
+    }
+    // keep the opened copies inside the frame by shortening the fan, never by moving the real vertex
+    try {
+      var vb = svg.viewBox.baseVal, pad = VR + 24;
+      function fits(q) { return q.x >= vb.x + pad && q.x <= vb.x + vb.width - pad && q.y >= vb.y + pad && q.y <= vb.y + vb.height - pad; }
+      for (var pass = 0; pass < 8; pass++) {
+        var bad = moves.filter(function (mv) { return !fits({ x: mv.anchor.x + mv.dx * mv.k, y: mv.anchor.y + mv.dy * mv.k }); });
+        if (!bad.length) break;
+        moves.forEach(function (mv) { mv.k *= 0.82; });
+      }
+    } catch (e) {}
+    var copies = [];
+    moves.forEach(function (mv) {
+      var q = { x: mv.anchor.x + mv.dx * mv.k, y: mv.anchor.y + mv.dy * mv.k };
+      copies.push([q, mv.v, mv.mark]);
+    });
+    if (copies.length === 2) { P1 = copies[0][0]; P2 = copies[1][0]; }
+    else if (moves.length === 1 && moves[0].v === v0) { P1 = copies[0][0]; }
+    else if (moves.length === 1) { P2 = copies[0][0]; }
+    if (!g || !g.parentNode) { g = sEl('g', { class: 'free-ov', 'aria-hidden': 'true' }); svg.appendChild(g); }
+    while (g.firstChild) g.removeChild(g.firstChild);
     g.appendChild(sEl('path', { class: 'free-ov-face', d: 'M' + pt(P0) + ' L' + pt(P1) + ' L' + pt(P2) + ' Z' }));
     [[P0, P1, bd[0]], [P1, P2, bd[1]], [P0, P2, bd[2]]].forEach(function (s) {
       var a = s[0], b = s[1]; if (Math.hypot(b.x - a.x, b.y - a.y) < 2) return;
@@ -1744,22 +1791,20 @@
     copies.forEach(function (c) {
       var vg = sEl('g', { class: 'free-ov-v', transform: 'translate(' + pt(c[0]) + ')' });
       vg.appendChild(sEl('circle', { r: VR, class: 'vdot' }));
-      var t = sEl('text', { class: 'vlabel', 'text-anchor': 'middle', 'dominant-baseline': 'central', y: 1 }); t.textContent = vLabel(m, c[1]) + c[2];
+      var t = sEl('text', { class: 'vlabel', 'text-anchor': 'middle', 'dominant-baseline': 'central', y: 1 });
+      t.textContent = vLabel(m, c[1]) + c[2];
       vg.appendChild(t); g.appendChild(vg);
     });
     var cap = sEl('text', { x: r1((P0.x + P1.x + P2.x) / 3), y: r1((P0.y + P1.y + P2.y) / 3), class: 'free-ov-name', 'text-anchor': 'middle', 'dominant-baseline': 'central' });
     cap.textContent = d.name || '';
     g.appendChild(cap);
-    svg.appendChild(g);
-    // make sure the copies are inside the visible frame
-    try {
-      var vb = svg.viewBox.baseVal, xs = [P0.x, P1.x, P2.x], ys = [P0.y, P1.y, P2.y];
-      if (Math.min.apply(null, xs) - VR < vb.x || Math.max.apply(null, xs) + VR > vb.x + vb.width || Math.min.apply(null, ys) - VR < vb.y || Math.max.apply(null, ys) + VR > vb.y + vb.height) {
-        var x0 = Math.min(vb.x, Math.min.apply(null, xs) - VR - 30), y0 = Math.min(vb.y, Math.min.apply(null, ys) - VR - 30);
-        var x1 = Math.max(vb.x + vb.width, Math.max.apply(null, xs) + VR + 30), y1 = Math.max(vb.y + vb.height, Math.max.apply(null, ys) + VR + 30);
-        svg.setAttribute('viewBox', [r1(x0), r1(y0), r1(x1 - x0), r1(y1 - y0)].join(' '));
-      }
-    } catch (e) {}
+    // a short fade, so the opened copy arrives instead of snapping in, like a highlighted triangle's fill
+    if (P.freeOvRef !== ref) {
+      P.freeOvRef = ref;
+      g.classList.remove('in');
+      void g.getBoundingClientRect();
+      g.classList.add('in');
+    }
   }
 
   /* ================= the Tetrahedron panel (SPEC4 §3) =================
@@ -2059,7 +2104,7 @@
         cls = k === claimed ? ' new' : ' set';
         val = factPic(m, f.e01, f.e12, f.e02, k === claimed ? 'tcn' : f.free ? 'tcf' : 'tc0') +
           '<span class="tfact' + (k === claimed ? ' claimed' : '') + '">' + math(factNamedTeX(m, f.ref, f.e01, f.e12, f.e02)) + '</span>' +
-          (f.free ? ' <span class="note">free (degenerate)</span>' : '') +
+          (f.free ? ' <span class="note">degenerate</span>' : '') +
           (alts.length ? ' <span class="note">or</span> ' + alts.map(function (c) { return chip(k, c, true); }).join(' ') : '') +
           (!claimed && mine && P.trip.mode === 'path' ? ' <button type="button" class="linklike tx" data-clear="' + k + '">unset</button>' : '');
       } else if (cl && cl.slot === k) {
@@ -2071,7 +2116,7 @@
           (allowed ? 'Fill <span class="kbd">Enter</span>' : LOCK_SVG + ' Locked') + '</button>';
       } else if (cands.length) {
         // more than one triangle fits: never chosen for the player
-        val = '<span class="ttmpl">' + math(tmpl) + '</span> <span class="note">' + (cands.length > 1 ? 'choose one:' : 'fits:') + (allFree ? ' free (degenerate)' : '') + '</span> ' +
+        val = '<span class="ttmpl">' + math(tmpl) + '</span> <span class="note">' + (cands.length > 1 ? 'choose one:' : 'fits:') + (allFree ? ' degenerate' : '') + '</span> ' +
           cands.map(function (c) { return chip(k, c, false); }).join(' ');
       } else {
         cls = ' unknown';
@@ -2333,8 +2378,8 @@
      of the repeated dot (b′, b″, …), joined to b by the identity arrow 1_b, so every triangle opens
      into a real face. Copies of the same dot fan out at different angles so faces never cover each
      other. Ghost keys are triangle ids. */
-  function unfoldModel(vst, geo, m) {
-    if (!P.unfold) return null;
+  function unfoldModel(vst, geo, m, probe) {
+    if (!P.unfold && !probe) return null;
     var ghosts = {}, tris = [];
     var cen = { x: 0, y: 0 }, n = 0;
     Object.keys(geo.pos).forEach(function (k) { cen.x += geo.pos[k].x; cen.y += geo.pos[k].y; n++; });
@@ -2554,13 +2599,31 @@
 
   /* --- show bar: layers, unfold, 3D, tidy --- */
   var LAYERS = [['v', 'vertices'], ['e', 'arrows'], ['t', 'triangles'], ['s', 'solids']];
+  // a level that works with identities can always be opened up; err on the side of offering the control
+  function levelUsesIdentities(lv) {
+    if (!lv) return false;
+    if (lv.startUnfolded) return true;
+    if (arr(lv.tools).indexOf('identity') >= 0) return true;
+    if (/1_|id:/.test(JSON.stringify(lv.goal || {}) + JSON.stringify(lv.solution || []))) return true;
+    return (lv.edges || []).some(function (e) { return /^id:/.test(String(e && e.id)); });
+  }
+  function canUnfold() {
+    if (P.unfold || P.unfoldAvail) return true;
+    if (levelUsesIdentities(P.level)) return true;
+    if (!P.geo || !P.state || !P.m) return false;
+    try {
+      var u = unfoldModel(P.state, P.geo, P.m, true);
+      if (u && ((u.tris && u.tris.length) || u.tetra)) { P.unfoldAvail = true; return true; }
+    } catch (e) {}
+    return false;
+  }
   function renderShowBar() {
     var bar = $('showbar'); if (!bar || !P.level) return;
     var hasSolid = arr(P.state && P.state.tetras).length > 0;
     var html = '<span class="note">show</span> ' + LAYERS.map(function (l) {
       return '<button type="button" class="seg" data-layer="' + l[0] + '" aria-pressed="' + (P.layers[l[0]] !== false) + '">' + l[1] + '</button>';
     }).join('') +
-      ' <button type="button" class="seg" data-act="unfold" aria-pressed="' + !!P.unfold + '" title="Open up flat triangles that use an identity arrow (U)">unfold <span class="kbd">U</span></button>' +
+      (canUnfold() ? ' <button type="button" class="seg" data-act="unfold" aria-pressed="' + !!P.unfold + '" title="Open up flat triangles that use an identity arrow (U)">unfold <span class="kbd">U</span></button>' : '') +
       (hasSolid ? ' <button type="button" class="seg" data-act="view3d" title="Look at a solid in 3D">3D</button>' : '') +
       ' <button type="button" class="seg" data-act="tidy" title="Put the vertices back where they started">tidy</button>';
     if (P.unfold && P.unfoldModel && P.unfoldModel.tetra) {
@@ -2862,7 +2925,7 @@
   }
 
   /* ---------- facts ---------- */
-  // SPEC5 §2: Facts = Triangles (given/made, named σᵢ) + Free triangles (degenerate, collapsed by default)
+  // SPEC5 §2: Facts = Triangles (given/made, named σᵢ) + Degenerate triangles (collapsed by default)
   function freeTris() {
     var st = P.state, m = P.m, out = [], seen = {};
     function add(fi, nm) { if (!fi || seen[fi.ref]) return; seen[fi.ref] = 1; if (nm) fi.name = nm; out.push(fi); }
@@ -2877,9 +2940,9 @@
   function factCard(ref, f, i, kind, free) {
     var m = P.m;
     var c = hEl('button', { type: 'button', class: 'fact tc' + (i % 4) + (free ? ' freefact' : '') + (P.fresh.triangles[ref] && !reduceMotion ? ' fresh' : ''), 'data-tid': ref, 'aria-pressed': 'false',
-      title: triReadPlain(m, f.e01, f.e12, f.e02, ref) + (free ? ' (degenerate: built from identities, true for free)' : '') + '. Click to isolate it on the board.' },
+      title: triReadPlain(m, f.e01, f.e12, f.e02, ref) + (free ? ' (built from identities, so always available)' : '') + '. Click to isolate it on the board.' },
       '<span class="swatch" aria-hidden="true"></span>' + factPic(m, f.e01, f.e12, f.e02, 'tc' + (i % 4)) +
-      '<span class="ftext">' + math(factNamedTeX(m, ref, f.e01, f.e12, f.e02)) + '</span><span class="fkind' + (kind ? ' k-' + esc(kind) : '') + '">' + esc(free ? 'free' : KIND_NAMES[kind] || kind || '') + '</span><span class="pnum" aria-hidden="true"></span>');
+      '<span class="ftext">' + math(factNamedTeX(m, ref, f.e01, f.e12, f.e02)) + '</span><span class="fkind' + (kind ? ' k-' + esc(kind) : '') + '">' + esc(free ? 'degenerate' : KIND_NAMES[kind] || kind || '') + '</span><span class="pnum" aria-hidden="true"></span>');
     P.els.card[ref] = c;
     return c;
   }
@@ -2900,7 +2963,7 @@
         '<span class="swatch" aria-hidden="true"></span><span class="ftext">solid ' + math(vs.map(labTeX).join('\\,')) + '</span><span class="fkind">tetrahedron</span>'));
     });
     box.appendChild(sec);
-    // the degenerate triangles: there on every board, true for free, usable like any other fact
+    // the degenerate triangles: there on every board, usable like any other fact
     if (P.skel >= 2) {
       var fr = freeTris();
       progress.freeOpen = progress.freeOpen || {};
@@ -2908,7 +2971,7 @@
       var open = progress.freeOpen[w] != null ? !!progress.freeOpen[w] : !!firstWorld;
       var det = hEl('details', { class: 'facts-sec free-sec' });
       if (open) det.open = true;
-      det.innerHTML = '<summary><span class="facts-h">Free triangles</span> <span class="count">' + fr.length + '</span> <span class="note">degenerate, from identities</span></summary>';
+      det.innerHTML = '<summary><span class="facts-h">Degenerate triangles</span> <span class="count">' + fr.length + '</span> <span class="note">from identities</span></summary>';
       fr.forEach(function (f, i) { det.appendChild(factCard(f.ref, f, i, 'thin', true)); });
       det.addEventListener('toggle', function () { progress.freeOpen[w] = det.open; saveProgress(); });
       box.appendChild(det);
@@ -3187,7 +3250,7 @@
         var star = solved && lv.par != null && progress.best[key] != null && progress.best[key] <= lv.par;
         var li = hEl('li', { value: String(i + 1), class: (solved ? 'solved' : '') + (open ? '' : ' locked') + (i === current ? ' current' : '') });
         var nb = noteBefore(lv.name);
-        if (nb) { var nli = hEl('li', { class: 'noteli' }, '<button type="button" class="node notenode" data-note="' + esc(nb.id) + '">\uD83D\uDCD6 ' + prose(nb.title || 'Note') + '</button>' + (nb.aside ? ' <span class="note">optional aside</span>' : '') + (progress.notesRead && progress.notesRead[nb.id] ? ' <span class="note">read</span>' : '')); ol.appendChild(nli); }
+        if (nb) { var nli = hEl('li', { class: 'noteli' }, '<button type="button" class="node notenode" data-note="' + esc(nb.id) + '">\uD83D\uDCD6 ' + prose(nb.title || 'Note') + '</button>' + (progress.notesRead && progress.notesRead[nb.id] ? ' <span class="note">read</span>' : '')); ol.appendChild(nli); }
         var boss = lv.kind === 'boss';
         if (boss) li.className += ' boss';
         li.innerHTML = '<button type="button" class="node" data-level="' + i + '"' + (open ? '' : ' aria-disabled="true"') + '>' + prose(titleFor(lv)) + '</button>' +

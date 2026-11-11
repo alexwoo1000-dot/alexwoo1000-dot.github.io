@@ -41,7 +41,7 @@ HC.Worlds = [
         fills: [], ghost: [["a", "b", "c"]] } } },
 
   { id: 3, title: "Tetrahedra", mathTitle: "Inner horns $\\Lambda^3_1,\\Lambda^3_2$", blurb: "",
-    definition: "A <b>tetrahedron</b> is a 3-simplex with corners $0,1,2,3$ and four triangular faces $d_0,\\dots,d_3$, where $d_i$ is the face omitting corner $i$. Its corners may lie over the same vertex, and then some faces are degenerate. If three faces of a tetrahedron are known and the fourth is $d_1$ or $d_2$, the three form an inner horn $\\Lambda^3_1$ or $\\Lambda^3_2$. In this world every such horn has a filler, which is a tetrahedron, and the filler's remaining face is a new triangle. The same tetrahedra define homotopy: parallel arrows $x,y:a\to b$ are <b>homotopic</b>, $x\simeq y$, if a triangle $(x,1_b\,;\,y)$ exists. That is only a definition; the next world studies the relation.",
+    definition: "A <b>tetrahedron</b> is a 3-simplex with corners $0,1,2,3$ and four triangular faces $d_0,\\dots,d_3$, where $d_i$ is the face omitting corner $i$. Its corners may lie over the same vertex, and then some faces are degenerate. If three faces of a tetrahedron are known and the fourth is $d_1$ or $d_2$, the three form an inner horn $\\Lambda^3_1$ or $\\Lambda^3_2$. In this world every such horn has a filler, which is a tetrahedron, and the filler's remaining face is a new triangle. The same tetrahedra define homotopy: parallel arrows $x,y:a\\to b$ are <b>homotopic</b>, $x\\simeq y$, if a triangle $(x,1_b\\,;\\,y)$ exists. That is only a definition; the next world studies the relation.",
     definitionDiagram: { dots: [{id:"a",label:"0",x:8,y:46},{id:"b",label:"1",x:50,y:6},{id:"c",label:"2",x:50,y:32},{id:"d",label:"3",x:92,y:46}],
       arrows: [{from:"a",to:"b",label:""},{from:"b",to:"d",label:""},{from:"a",to:"d",label:""},{from:"a",to:"c",label:""},{from:"c",to:"d",label:""},{from:"b",to:"c",label:""}], fills: [["a","b","c"],["b","c","d"],["a","c","d"]] },
     hornsFill: "inner",
@@ -944,7 +944,7 @@ HC.Text = {
   moveacross: {
     title: "Moving an isomorphism across",
     bullets: ["Given $\\sigma_2=(\\alpha,p\\,;\\,q)$, with $\\bar\\alpha$ undoing $\\alpha$ by $\\sigma_1$.", "Prove $(\\bar\\alpha,q\\,;\\,p)$ exists."],
-    explain: "In school algebra $\\alpha p=q$ gives $p=\\alpha^{-1}q$: you divide both sides by $\\alpha$. The same holds here, but it is a proof and not a rule. Take the path $\\bar\\alpha,\\alpha,p$, with corners $a',a,a',c$. Its first two steps cancel against $1_{a'}$ by $\\sigma_1$, and the free triangle $s_0p$ makes the face $d_1$ degenerate. That leaves one face open: $d_2$, which is exactly $(\\bar\\alpha,q\\,;\\,p)$. Afterwards you own <b>Divide</b>, which does this on either side in one click.",
+    explain: "In school algebra $\\alpha p=q$ gives $p=\\alpha^{-1}q$: you divide both sides by $\\alpha$. The same holds here, but it is a proof and not a rule. Take the path $\\bar\\alpha,\\alpha,p$, with corners $a',a,a',c$. Its first two steps cancel against $1_{a'}$ by $\\sigma_1$, and the degenerate triangle $s_0p$ fills the face $d_1$. That leaves one face open: $d_2$, which is exactly $(\\bar\\alpha,q\\,;\\,p)$. Afterwards you own <b>Divide</b>, which does this on either side in one click.",
     hints: ["Use a path that starts by undoing $\\alpha$.", "Tetrahedron: path $\\bar\\alpha,\\alpha,p$; $d_3=\\sigma_1$, $d_0=\\sigma_2$, $d_1=s_0p$. Fill."],
     win: ["An isomorphism can be moved across, like dividing. New tool: Divide."],
     term: "Dividing by an isomorphism",
@@ -1011,7 +1011,7 @@ HC.Text = {
   sandbox: {
     title: "Sandbox",
     bullets: ["Every tool is unlocked.", "There is no goal. Undo is always available."],
-    explain: "Everything you have learnt is available: Compose, Solve, Tetrahedron, the theorem tools, Draw arrow, Glue triangle, Peel and Fill in, with the Kan option on, so that every horn can be filled. Try constructing an inverse, relating two composites, or building a sphere. A construction that does not work out costs nothing, since Undo restores the previous state. The Facts panel lists the free triangles as well, so you can use $s_0f$ and $s_1f$ in a tetrahedron whenever it needs one.",
+    explain: "Everything you have learnt is available: Compose, Solve, Tetrahedron, the theorem tools, Draw arrow, Glue triangle, Peel and Fill in, with the Kan option on, so that every horn can be filled. Try constructing an inverse, relating two composites, or building a sphere. A construction that does not work out costs nothing, since Undo restores the previous state. The Facts panel lists the degenerate triangles as well, so you can use $s_0f$ and $s_1f$ in a tetrahedron whenever it needs one.",
     hints: ["Compose two arrows.", "Compose two arrows. Tetrahedron on a path of three."],
     win: [],
     term: "Simplicial set",
@@ -1037,9 +1037,9 @@ HC.Text = {
   },
 
   freebies: {
-    title: "Free triangles",
-    bullets: ["An arrow $f:a\\to b$ is given.", "Tap the free triangles $(f,1_b\\,;\\,f)$ and $(1_a,f\\,;\\,f)$."],
-    explain: "Every vertex $a$ has a degenerate arrow $1_a$, and every arrow $f:a\\to b$ has two degenerate triangles: $s_0f=(1_a,f\\,;\\,f)$ and $s_1f=(f,1_b\\,;\\,f)$. They exist in every simplicial set without being made, which is why the Facts panel lists them separately as free triangles. The subscript says which corner of $f$ is repeated: $s_0f$ repeats the start of $f$, and $s_1f$ repeats its end. You will use them whenever a proof needs an identity to take part, and from now on every vertex on the board shows its faint loop $1_a$.",
+    title: "Degenerate triangles",
+    bullets: ["An arrow $f:a\\to b$ is given.", "Tap the degenerate triangles $(f,1_b\\,;\\,f)$ and $(1_a,f\\,;\\,f)$."],
+    explain: "Every vertex $a$ has a degenerate arrow $1_a$, and every arrow $f:a\\to b$ has two degenerate triangles: $s_0f=(1_a,f\\,;\\,f)$ and $s_1f=(f,1_b\\,;\\,f)$. They exist in every simplicial set without being made, which is why the Facts panel lists them separately as degenerate triangles. The subscript says which corner of $f$ is repeated: $s_0f$ repeats the start of $f$, and $s_1f$ repeats its end. You will use them whenever a proof needs an identity to take part, and from now on every vertex on the board shows its faint loop $1_a$.",
     hints: ["Read the legs: look for the one that is $1_b$.", "Tap $s_1f$ first, then $s_0f$."],
     win: ["$s_1f=(f,1_b\\,;\\,f)$ and $s_0f=(1_a,f\\,;\\,f)$ exist for every arrow $f$."],
     term: "Degenerate triangles",
@@ -1052,8 +1052,8 @@ HC.Text = {
   whichface: {
     title: "Repeated corners",
     bullets: ["The tetrahedron has corners $0,1,2,3$ over the vertices $a,b,b,c$.", "Tap its degenerate face $d_3$."],
-    explain: "A tetrahedron has four corners, but they need not lie over four different vertices. Here corners $1$ and $2$ both lie over $b$; they are different corners, joined by the arrow $12=1_b$. The face $d_i$ omits corner $i$. Face $d_3$ omits the corner over $c$ and keeps the corners over $a,b,b$: its legs are $f$ and $1_b$ and its long side is $f$, which is exactly the free triangle $s_1f$. Face $d_0$ is degenerate in the same way, with legs $1_b,g$. The other two faces, $d_1$ and $d_2$, are the real triangle $\\sigma_1$.",
-    hints: ["Face $d_3$ omits the last corner.", "Tap $s_1f$, the free triangle with legs $f$ and $1_b$."],
+    explain: "A tetrahedron has four corners, but they need not lie over four different vertices. Here corners $1$ and $2$ both lie over $b$; they are different corners, joined by the arrow $12=1_b$. The face $d_i$ omits corner $i$. Face $d_3$ omits the corner over $c$ and keeps the corners over $a,b,b$: its legs are $f$ and $1_b$ and its long side is $f$, which is exactly the degenerate triangle $s_1f$. Face $d_0$ is degenerate in the same way, with legs $1_b,g$. The other two faces, $d_1$ and $d_2$, are the real triangle $\\sigma_1$.",
+    hints: ["Face $d_3$ omits the last corner.", "Tap $s_1f$, the degenerate triangle with legs $f$ and $1_b$."],
     win: ["$d_3=s_1f$: a repeated corner makes a degenerate face."],
     term: "Degenerate faces",
     math: {
@@ -1087,7 +1087,7 @@ HC.Reasons = {
 HC.Notes = [
 
   { id: "simplicial", before: "faces", title: "Vertices, arrows, triangles", body: [
-    { p: "Define a $n$-<b>simplex</b> as a directed (filled) triangle of dimension $n$: vertices, arrows, triangles with interior, solid tetrahedra, and so on.  (In this game, we'll only work with $n \le 3$, for obvious reasons.)" },
+    { p: "Define a $n$-<b>simplex</b> as a directed (filled) triangle of dimension $n$: vertices, arrows, triangles with interior, solid tetrahedra, and so on. (In this game, we'll only work with $n \\le 3$, for obvious reasons.)" },
     { p: "A <b>simplicial set</b> is composed of many simplices, possibly glued together along their directed components." },
     { diagram: { caption: "One simplicial set.", glow: { pts: ["y3","y4","y5"], cx: 72, cy: 38, r: 27, op: 0.26 }, dots: [{id:"y0",label:"0",x:4,y:30},{id:"y1",label:"1",x:26,y:2},{id:"y2",label:"2",x:48,y:30},{id:"y3",label:"3",x:72,y:16},{id:"y4",label:"4",x:52,y:56},{id:"y5",label:"5",x:92,y:56},{id:"y6",label:"6",x:72,y:43},{id:"y7",label:"7",x:26,y:50},{id:"y8",label:"8",x:100,y:6},{id:"y9",label:"9",x:108,y:20}],
       arrows: [{from:"y0",to:"y1"},{from:"y1",to:"y2"},{from:"y0",to:"y2"},{from:"y2",to:"y3"},{from:"y1",to:"y3"},{from:"y0",to:"y7"},{from:"y7",to:"y2"},{from:"y4",to:"y5"},{from:"y3",to:"y4"},{from:"y3",to:"y5"},{from:"y6",to:"y4"},{from:"y6",to:"y5"},{from:"y6",to:"y3"},{from:"y8",to:"y9"}],
@@ -1096,7 +1096,7 @@ HC.Notes = [
               { pts: ["y3","y4","y6"], grad: { a: 0.05, b: 0.20, x1: 0, y1: 0, x2: 0.8, y2: 1 } },
               { pts: ["y3","y5","y6"], grad: { a: 0.10, b: 0.42, x1: 1, y1: 0, x2: 0, y2: 1 } },
               { pts: ["y4","y5","y6"], grad: { a: 0.16, b: 0.62, x1: 0, y1: 0, x2: 0, y2: 1 } }] } },
-    { p: "Note the hollow triangle with vertices $\{0,7,2\}$ in the above picture is not actually a $2$-simplex, but in fact just three $1$-simplices glued together." },
+    { p: "Note the hollow triangle with vertices $\\{0,7,2\\}$ in the above picture is not actually a $2$-simplex, but in fact just three $1$-simplices glued together." },
 
 		{p: "The <b>boundary</b> $\\delta S$ of each $n$-simplex $S$ consists of simplices of dimension $n-1$: here's a triangle with arrows as boundaries."},
     { diagram: { dots: [{id:"a",label:"0",x:15,y:44},{id:"b",label:"1",x:50,y:10},{id:"c",label:"2",x:85,y:44}],
@@ -1114,7 +1114,7 @@ HC.Notes = [
     { diagram: { caption: "The two degenerate triangles on $f$: $s_0f$ repeats $a$, $s_1f$ repeats $b$.", dots: [{id:"a",label:"0 = a",x:10,y:44},{id:"b",label:"1 = a",x:30,y:10},{id:"c",label:"2 = b",x:50,y:44},{id:"d",label:"0 = a",x:60,y:44},{id:"e",label:"1 = b",x:80,y:10},{id:"f",label:"2 = b",x:98,y:44}],
       arrows: [{from:"a",to:"b",label:"1_a",kind:"identity"},{from:"b",to:"c",label:"f"},{from:"a",to:"c",label:"f"},{from:"d",to:"e",label:"f"},{from:"e",to:"f",label:"1_b",kind:"identity"},{from:"d",to:"f",label:"f"}], fills: [["a","b","c"],["d","e","f"]] } },
     { p: "A degenerate triangle is a real triangle, not a broken one: it is <i>flat</i>, because two of its corners are the same vertex and the side between them is the identity. On the board the two copies sit exactly on top of each other, so you see a line where there should be a sheet. That is the only thing 'degenerate' means here: nothing is missing, two corners coincide." },
-    { p: "These triangles always exist, so you never build them. $(f,1_b\\,;\\,f)$ can go into a proof without appearing among the triangles you have made, and the Facts panel lists it under <b>Free triangles</b>. In <i>Free triangles</i> you pick these out of that list; in <i>Repeated corners</i> you have to say which corner is the doubled one." },
+    { p: "These triangles always exist, so you never build them. $(f,1_b\\,;\\,f)$ can go into a proof without appearing among the triangles you have made, and the Facts panel lists it under <b>Degenerate triangles</b>. In <i>Degenerate triangles</i> you pick these out of that list; in <i>Repeated corners</i> you have to say which corner is the doubled one." },
     { h: "Splitting a vertex along its identity" },
     { p: "A flat triangle is hard to read, so the game can pull the two copies of the vertex apart. That is what <b>splitting a vertex along its identity</b> means: one vertex $b$ becomes two vertices $b$ and $b'$, joined by a copy of the identity arrow $1_b$. Nothing is added and nothing is proved — it is the same triangle with room to breathe, and the identity arrow is the record that $b'$ <i>is</i> $b$." },
     { demo: "split-vertex" },
@@ -1178,7 +1178,7 @@ HC.Notes = [
 
   { id: "quasicat", before: "symmetric", title: "Quasi-categories", body: [
     { p: "A <b>quasi-category</b> (also called an <b>$\\infty$-category</b>) is a simplicial set in which every inner horn $\\Lambda^n_k\\to X$ with $0<k<n$ has a filler. We've proved so far that this implies any path of arrows can be composed, though not uniquely." },
-    { p: "Everything you've built so far has been applying the filler property to prove small theorems about quasi-categories. We'll meet other special types of simplicial sets later. " },
+    { p: "Everything you've built so far has been applying the filler property to prove small theorems about quasi-categories. We'll meet other special types of simplicial sets later." },
     { p: "Below are some non-quasi-categorical simplicial sets, called $\\Lambda^2_1$ and $\\partial\\Delta^2$." },
     { diagram: { dots: [{id:"a",label:"a",x:12,y:42},{id:"b",label:"b",x:30,y:15},{id:"c",label:"c",x:48,y:42},{id:"d",label:"a",x:60,y:42},{id:"e",label:"b",x:78,y:15},{id:"f",label:"c",x:96,y:42}],
                  arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"d",to:"e",label:"f"},{from:"e",to:"f",label:"g"},{from:"d",to:"f",label:"h"}]} },
@@ -1261,12 +1261,12 @@ HC.Notes = [
   ]},
 
   { id: "counter", before: "nofill", title: "How to prove something is impossible", body: [
-    { p: "Showing a goal <i>can</i> be reached is easy to check: you do it. Showing it can <i>never</i> be reached is harder, because you cannot try every sequence of moves. In this world, we'll construct counterexamples: one concrete world in which everything you were given is true and the goal is false." },
+    { p: "Showing a goal <i>can</i> be reached is easy to check: you do it. Showing it can <i>never</i> be reached is harder, because you cannot try every sequence of moves. In this note we'll construct counterexamples: one concrete simplicial set in which everything you were given is true and the goal is false." },
     { diagram: { dots: [{id:"a",label:"0",x:20,y:46},{id:"b",label:"1",x:50,y:12},{id:"c",label:"2",x:80,y:46}],
                  arrows: [{from:"a",to:"b",label:"f"},{from:"b",to:"c",label:"g"},{from:"a",to:"c",label:"h"},{from:"a",to:"c",label:"k"}] } },
-    { p: "Here the worlds are small ordinary categories, where composing has exactly one answer. In the picture, the pair $f,g$ has its own composite $k$, a different arrow from $h$. If your starting picture fits inside this world, with $h$ on $h$, then the claim that $h$ is a composite of $f$ and $g$ is false there." },
-    { p: "One world settles it because every move you have is a horn filling, and an ordinary category can fill every inner horn too: composites exist and associativity holds. So anything you could ever build from the starting picture can also be built in the test world. If the goal were reachable, it would be true there. It is false there, so it is not reachable." },
-    { p: "Two things can go wrong, and both teach something. If a given fact fails in your world, the world does not contain your picture. If the goal is <i>true</i> in your world, the world proves nothing: try a different one. And if the level allows undoing every arrow, the test world must allow it too." }
+    { p: "The counterexamples are small ordinary categories, where composing has exactly one answer. In the picture, the pair $f,g$ has its own composite $k$, a different arrow from $h$. If your starting picture fits inside this simplicial set, with $h$ on $h$, then the claim that $h$ is a composite of $f$ and $g$ is false there." },
+    { p: "One such simplicial set settles it: every move you have is a horn filling, and an ordinary category can fill every inner horn too — composites exist and associativity holds. So anything you could ever build from the starting picture can also be built in the test simplicial set. If the goal were reachable, it would be true there. It is false there, so it is not reachable." },
+    { p: "Two things can go wrong, and both teach something. If a given fact fails in the test simplicial set, it does not contain your picture. If the goal is <i>true</i> there, the test proves nothing: try a different one. And if the level allows undoing every arrow, the test simplicial set must allow it too." }
   ]},
 
   { id: "squares", before: "natsq", title: "Arrows between arrows", body: [
@@ -1293,8 +1293,8 @@ HC.Glossary = [
   {"term":"Horn","world":2,"essential":true,"plain":"A simplex with its inside and one face removed — the situation you are given to complete. Which face is missing decides whether the horn may be filled.","formal":"$\\Lambda^n_k\\subset\\Delta^n$: the union of all faces of $\\Delta^n$ except the one opposite vertex $k$.","eg":"Every puzzle starts with a horn: three sides of a triangle, or three faces of a solid.","see":["Inner horn","Outer horn","Filler"]},
   {"term":"Inner horn","world":2,"essential":true,"plain":"A horn whose missing face is not at either end of the trip. These are the ones an $\\infty$-category is guaranteed to fill.","formal":"$\\Lambda^n_k$ with $0<k<n$.","eg":"<i>A fourth face</i> fills $\\Lambda^3_2$, a solid missing a middle face.","see":["Horn","Outer horn","Quasi-category (∞-category)"]},
   {"term":"Filler","world":2,"essential":false,"plain":"A simplex that completes a horn: the piece the puzzle asks you to add. A filling exists only if the faces already there agree.","formal":"An extension $\\Delta^n\\to X$ of a map $\\Lambda^n_k\\to X$.","eg":"The new triangle in <i>Constructing a composite</i> is a filler.","see":["Horn","Lift"]},
-  {"term":"Identity (degenerate simplex)","world":1,"essential":true,"plain":"The do-nothing arrow $1_a$ at a vertex, and the degenerate triangles $s_0f$, $s_1f$ built on it.","formal":"$s_0(v)=1_v$ is the identity edge; $s_0(f)$ and $s_1(f)$ are degenerate 2-simplices.","eg":"<i>Free triangles</i> shows the two degenerate triangles of an arrow.","see":["Arrow (edge)","Associativity","Homotopy"]},
-  {"term":"Degenerate triangle","world":1,"essential":true,"plain":"A triangle with a repeated corner, such as $s_0f$ or $s_1f$. It exists without being built.","formal":"$s_0f=(1_a,f\\,;\\,f)$ and $s_1f=(f,1_b\\,;\\,f)$ for $f:a\\to b$; the degenerate 2-simplices on $f$.","eg":"<i>Free triangles</i> asks you to find both, and <i>Repeated corners</i> finds one as a face of a tetrahedron.","see":["Identity (degenerate simplex)","Face","Triangle"]},
+  {"term":"Identity (degenerate simplex)","world":1,"essential":true,"plain":"The do-nothing arrow $1_a$ at a vertex, and the degenerate triangles $s_0f$, $s_1f$ built on it.","formal":"$s_0(v)=1_v$ is the identity edge; $s_0(f)$ and $s_1(f)$ are degenerate 2-simplices.","eg":"<i>Degenerate triangles</i> shows the two degenerate triangles of an arrow.","see":["Arrow (edge)","Associativity","Homotopy"]},
+  {"term":"Degenerate triangle","world":1,"essential":true,"plain":"A triangle with a repeated corner, such as $s_0f$ or $s_1f$. It exists without being built.","formal":"$s_0f=(1_a,f\\,;\\,f)$ and $s_1f=(f,1_b\\,;\\,f)$ for $f:a\\to b$; the degenerate 2-simplices on $f$.","eg":"<i>Degenerate triangles</i> asks you to find both, and <i>Repeated corners</i> finds one as a face of a tetrahedron.","see":["Identity (degenerate simplex)","Face","Triangle"]},
   {"term":"Associativity","world":3,"essential":false,"plain":"The two ways of bracketing three arrows are related by a triangle, not by an equation.","formal":"The two bracketings of $f,g,h$ are faces of a 3-simplex; in a quasi-category they are homotopic, not equal.","eg":"<i>Two bracketings</i> proves exactly this.","see":["Tetrahedron","Homotopy","Quasi-category (∞-category)"]},
   {"term":"Homotopy","world":3,"essential":true,"plain":"Parallel arrows $x,y$ joined by a triangle $(x,1_b\\,;\\,y)$. This is the definition; symmetry and transitivity are theorems.","formal":"$x\\simeq y$ iff some 2-simplex has boundary $(x,1_b\\,;\\,y)$. In a quasi-category this is an equivalence relation.","eg":"<i>Two composites, one triangle</i> shows two different composites are homotopic.","see":["Equivalence relation","Homotopy category","Identity (degenerate simplex)"]},
   {"term":"Equivalence relation","world":4,"essential":false,"plain":"A relation that is reflexive, symmetric and transitive: everything is related to itself, the relation runs both ways, and it chains. Homotopy of arrows is one.","formal":"Homotopy of edges is reflexive, symmetric and transitive, so $hX$ has well-defined hom-sets.","eg":"<i>Transitivity is a theorem</i> builds a chain of homotopies into a single one.","see":["Homotopy","Homotopy category"]},
