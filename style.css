@@ -886,3 +886,4 @@ details.gl-sec > summary.gl-world { cursor: pointer; list-style: revert; }
 .sel-msg { color: var(--warn); font-size: 15px; }
 .ah-kept { fill: var(--ok); }
 .tsub { font-size: 12px; color: var(--muted); margin-left: 2px; } .tool.active .tsub { color: inherit; opacity: .8; }
+.bossmark.challenge { border-color: var(--k-composite); color: var(--k-composite); }

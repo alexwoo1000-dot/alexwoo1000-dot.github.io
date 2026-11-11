@@ -460,6 +460,13 @@
   // comp keys are "first,second" (first then second); identities are implicit ('id:<object>').
   function A(id, src, dst, label) { return { id: id, src: src, dst: dst, label: label || id }; }
   HC.Models = [
+    { id: 'retractions', name: 'Two retractions', objects: ['0', '1'],
+      arrows: [A('i', '0', '1'), A('r', '1', '0'), A('r2', '1', '0', 'r′'), A('e', '1', '1', 'ε'), A('e2', '1', '1', 'ε′')],
+      comp: { 'i,r': 'id:0', 'i,r2': 'id:0', 'r,i': 'e', 'r2,i': 'e2', 'e,e': 'e', 'e2,e2': 'e2', 'e,e2': 'e', 'e2,e': 'e2',
+        'i,e': 'i', 'i,e2': 'i', 'e,r': 'r', 'e,r2': 'r', 'e2,r': 'r2', 'e2,r2': 'r2' },
+      note: 'i then r and i then r′ are both the identity, but r and r′ are different.',
+      diagram: { dots: [{ id: '0', label: '0', x: 25, y: 30 }, { id: '1', label: '1', x: 75, y: 30 }],
+        arrows: [{ from: '0', to: '1', label: 'i' }, { from: '1', to: '0', label: 'r' }, { from: '1', to: '0', label: 'r′' }] } },
     { id: 'arrow', name: 'One arrow', objects: ['0', '1'], arrows: [A('u', '0', '1')], comp: {},
       diagram: { dots: [{ id: '0', label: '0', x: 25, y: 30 }, { id: '1', label: '1', x: 75, y: 30 }], arrows: [{ from: '0', to: '1', label: 'u' }] } },
     { id: 'iso', name: 'An isomorphism', objects: ['0', '1'], arrows: [A('j', '0', '1'), A('jb', '1', '0', 'j⁻¹')],
@@ -565,7 +572,7 @@
       return assign(0);
     }
     if (rec(0, {})) return { ok: false, goalHolds: true, reason: 'In that category the goal holds, so it is not a counterexample.' };
-    return { ok: true, message: 'A counterexample: the goal fails in this category, so it cannot be done.' };
+    return { ok: true, message: 'A counterexample: the goal fails here, so it is impossible.' };
   };
   function shapeTextsRaw(lv, a, b, c) {
     function lab(id) { if (id.indexOf('id:') === 0) return '1'; var r = id; (lv.edges || []).forEach(function (ed) { if (ed.id === id) r = ed.label; }); return r; }
@@ -1456,28 +1463,51 @@
   }
   // which solids may be picked next, given the picks so far (each must be completable to a fillable horn)
   function fill4Candidates(s, picks) {
-    var pool = solidPool(s), sols = {};
-    pool.forEach(function (r) { sols[r] = solidOfRef(s, r); });
-    var base = picks.map(function (r) { var so = solidOfRef(s, r); return so ? so.ref : r; });
+    var pool = solidPool(s), sols = pool.map(function (r) { return solidOfRef(s, r); }), n = pool.length;
+    var idx = {};
+    pool.forEach(function (r, i) { idx[r] = i; });
+    var base = [];
+    for (var q = 0; q < picks.length; q++) {
+      var so = solidOfRef(s, picks[q]);
+      if (!so || idx[so.ref] === undefined) return [];
+      base.push(idx[so.ref]);
+    }
+    if (base.length >= 4) return [];
+    var pairMemo = {};
+    function pairOK(i, j) {
+      var k = i < j ? i + ',' + j : j + ',' + i;
+      if (pairMemo[k] === undefined) pairMemo[k] = partialPlacement([sols[i], sols[j]]);
+      return pairMemo[k];
+    }
+    var fullMemo = {};
+    function fullOK(cur) {
+      var k = cur.slice().sort(function (x, y) { return x - y; }).join(',');
+      if (fullMemo[k] === undefined) fullMemo[k] = Engine.fill4Options(s, cur.map(function (i) { return pool[i]; })).length > 0;
+      return fullMemo[k];
+    }
     function completable(cur, from) {
-      if (cur.length === 4) return Engine.fill4Options(s, cur).length > 0;
-      for (var i = from; i < pool.length; i++) {
-        if (cur.indexOf(pool[i]) >= 0) continue;
-        var next = cur.concat([pool[i]]);
-        if (!partialPlacement(next.map(function (r) { return sols[r] || solidOfRef(s, r); }))) continue;
+      if (cur.length === 4) return fullOK(cur);
+      for (var i = from; i < n; i++) {
+        if (cur.indexOf(i) >= 0) continue;
+        var good = true;
+        for (var c = 0; c < cur.length && good; c++) if (!pairOK(cur[c], i)) good = false;
+        if (!good) continue;
+        var next = cur.concat([i]);
+        if (next.length > 2 && !partialPlacement(next.map(function (k) { return sols[k]; }))) continue;
         if (completable(next, i + 1)) return true;
       }
       return false;
     }
-    if (base.length >= 4) return [];
-    if (base.some(function (r) { return !solidOfRef(s, r); })) return [];
     var out = [];
-    pool.forEach(function (x) {
-      if (base.indexOf(x) >= 0) return;
-      var next = base.concat([x]);
-      if (!partialPlacement(next.map(function (r) { return sols[r] || solidOfRef(s, r); }))) return;
-      if (completable(next, 0)) out.push(x);
-    });
+    for (var x = 0; x < n; x++) {
+      if (base.indexOf(x) >= 0) continue;
+      var okp = true;
+      for (var c2 = 0; c2 < base.length && okp; c2++) if (!pairOK(base[c2], x)) okp = false;
+      if (!okp) continue;
+      var next2 = base.concat([x]);
+      if (next2.length > 2 && !partialPlacement(next2.map(function (k) { return sols[k]; }))) continue;
+      if (completable(next2, 0)) out.push(pool[x]);
+    }
     return out;
   }
 
@@ -1722,7 +1752,7 @@
         var fullS = matchSolidsFull(s, trial);
         var dS = !!fullS;
         if (dS) accS = trial;
-        var fnames = p.map(function (x) { if (x.charAt(0) === '?') return x; var t = triOfRef(s, x); return t ? (t.name || x) : x; });
+        var fnames = p.map(function (x) { if (x.charAt(0) === '?') { var bx = dS && fullS.b[x]; var bt = bx && triOfRef(s, bx); return bt ? (bt.name || bx) : x; } var t = triOfRef(s, x); return t ? (t.name || x) : x; });
         var txt = 'tetrahedron (' + fnames.join(', ') + ')';
         add({ kind: 'solid', verb: 'prove', faces: p.slice(), faceNames: fnames, text: txt, plain: txt, tuple: txt,
           name: dS && fullS.tets[accS.length - 1] ? fullS.tets[accS.length - 1].name : null, done: dS });

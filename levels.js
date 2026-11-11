@@ -715,6 +715,48 @@
       solution: [['compose', 'ali', 'f'], ['divide', 'G1', 'G4'], ['trip', ['ali', 'f', 'be'], { A: 't1', B: 'G3', D: 't2' }],
         ['divide', 'G2', 't3']] },
 
+    // ---- Challenges: hard, thinking-required levels ----
+    // No theorem tools: redo substitution and uniqueness with bare tetrahedra and degenerate faces.
+    { id: 0, name: 'barehands', kind: 'puzzle', challenge: true, world: 90, par: 3, vertices: [V('a', 14, 46), V('b', 50, 10), V('c', 86, 46)],
+      edges: [E('f', 'a', 'b'), E('f2', 'a', 'b', 'f′'), E('g', 'b', 'c'), E('g2', 'b', 'c', 'g′'), E('x', 'a', 'c'), E('x2', 'a', 'c', 'x′'), ID('b'), ID('c')],
+      triangles: [T('G1', 'f', 'id:b', 'f2'), T('G2', 'g', 'id:c', 'g2'), T('G3', 'f', 'g', 'x'), T('G4', 'f2', 'g2', 'x2')],
+      tools: ['trip'], kan: false,
+      goal: { triangles: [['x', 'id:c', 'x2']] },
+      solution: [['trip', ['f', 'id:b', 'g'], { A: 'G1', B: 's0:g', D: 'G3' }],
+        ['trip', ['f2', 'g', 'id:c'], { A: 't1', B: 'G2', C: 's1:x' }],
+        ['trip', ['f2', 'g2', 'id:c'], { A: 't2', B: 's1:g2', D: 'G4' }]] },
+
+    // Cancel an isomorphism on the left, without the Divide tool.
+    { id: 0, name: 'leftcancel', kind: 'puzzle', challenge: true, world: 90, par: 3, vertices: [V('a', 14, 46), V('b', 50, 10), V('c', 86, 46)],
+      edges: [E('f', 'a', 'b', 'f', { iso: true }), E('fi', 'b', 'a', 'f̄'), E('g', 'b', 'c'), E('g2', 'b', 'c', 'g′'), E('x', 'a', 'c'), ID('a'), ID('b')],
+      triangles: [T('G1', 'f', 'fi', 'id:a'), T('G2', 'fi', 'f', 'id:b'), T('G3', 'f', 'g', 'x'), T('G4', 'f', 'g2', 'x')],
+      tools: ['trip', 'same'], kan: false,
+      goal: { triangles: [['g', 'id:c', 'g2']] },
+      solution: [['trip', ['fi', 'f', 'g'], { A: 'G2', B: 'G3', C: 's0:g' }],
+        ['trip', ['fi', 'f', 'g2'], { A: 'G2', B: 'G4', C: 's0:g2' }],
+        ['same', 't1', 't2']] },
+
+    // Two retractions of the same arrow need not be homotopic.
+    { id: 0, name: 'tworetractions', kind: 'puzzle', challenge: true, world: 90, par: 1, claimable: true,
+      vertices: [V('a', 22, 30), V('b', 78, 30)],
+      edges: [E('f', 'a', 'b'), E('g', 'b', 'a'), E('h', 'b', 'a'), ID('a')],
+      triangles: [T('G1', 'f', 'g', 'id:a'), T('G2', 'f', 'h', 'id:a')],
+      tools: ['compose', 'trip', 'same', 'flip', 'link', 'swapin'], kan: false,
+      goal: { triangles: [['g', 'id:a', 'h']], impossible: true },
+      solution: [['claim', { model: 'retractions', paint: { vertices: { a: '0', b: '1' }, edges: { f: 'i', g: 'r', h: 'r2' } } }]] },
+
+    // Two out of three: if f and a composite x of (f, g) are isomorphisms, so is g.
+    { id: 0, name: 'twoofthree', kind: 'puzzle', challenge: true, world: 90, par: 7, claimable: true, vertices: [V('a', 14, 46), V('b', 50, 10), V('c', 86, 46)],
+      edges: [E('f', 'a', 'b', 'f', { iso: true }), E('fi', 'b', 'a', 'f̄'), E('g', 'b', 'c'), E('x', 'a', 'c', 'x', { iso: true }), E('xi', 'c', 'a', 'x̄'),
+        ID('a'), ID('b'), ID('c')],
+      triangles: [T('G1', 'f', 'fi', 'id:a'), T('G2', 'fi', 'f', 'id:b'), T('G3', 'x', 'xi', 'id:a'), T('G4', 'xi', 'x', 'id:c'), T('G5', 'f', 'g', 'x')],
+      tools: ['compose', 'trip', 'same', 'flip', 'link', 'swapin', 'divide'], kan: false,
+      goal: { triangles: [['g', '?k', 'id:b'], ['?k', 'g', 'id:c']] },
+      solution: [['compose', 'xi', 'f'], ['trip', ['xi', 'f', 'g'], { A: 't1', B: 'G5', D: 'G4' }],
+        ['compose', 'g', 'xi'], ['trip', ['f', 'g', 'xi'], { A: 'G5', B: 't3', C: 'G3' }],
+        ['divide', 'G2', 't4'], ['swapin', 't5', 'G2'],
+        ['trip', ['g', 'xi', 'f'], { A: 't3', B: 't1', C: 't6' }]] },
+
     // ---- World 11: Sandbox ----
     { id: 51, name: 'sandbox', kind: 'sandbox', world: 13, par: 0, vertices: tet4(),
       edges: [E('f', 'a', 'b'), E('g', 'b', 'c'), E('h', 'c', 'd'), E('x', 'a', 'c'), E('y', 'b', 'd')],
@@ -724,6 +766,18 @@
       solution: [] }
 
   ];
+  // Held back for now (unfinished): the higher-simplices world and the subcategories world.
+  var HOLD = ['solidfact', 'thicken', 'pentagon', 'twohomotopies', 'pentagonproof', 'fullsub', 'subcat', 'subcat2', 'core'];
+  HC.HeldLevels = HC.Levels.filter(function (L) { return HOLD.indexOf(L.name) >= 0; });
+  HC.Levels = HC.Levels.filter(function (L) { return HOLD.indexOf(L.name) < 0; });
+  // worlds are numbered consecutively in the order they appear, with the sandbox last
+  (function () {
+    HC.Levels.forEach(function (L) { if (L.name === 'sandbox') L.world = 999; });
+    var ws = []; HC.Levels.forEach(function (L) { if (ws.indexOf(L.world) < 0) ws.push(L.world); });
+    ws.sort(function (a, b) { return a - b; });
+    HC.Levels.forEach(function (L) { L.world = ws.indexOf(L.world); });
+    HC.Levels.sort(function (a, b) { return a.world - b.world; });       // stable: keeps the order inside a world
+  })();
   HC.Levels.forEach(function (L, i) { L.id = i + 1; L.world = L.world + 1; });   // world 0 (simplicial sets) is shown as world 1
   HC.LegacyLevels = [
     // ---- World 8: Lifting ----

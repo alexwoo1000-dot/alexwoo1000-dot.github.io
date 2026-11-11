@@ -3,7 +3,7 @@ require('./engine.js');
 require('./levels.js');
 var HC = globalThis.HC, En = HC.Engine, fails = 0, passes = 0;
 function check(c, msg) { if (c) passes++; else { fails++; console.log('FAIL: ' + msg); } }
-function lv(name) { return HC.Levels.concat(HC.LegacyLevels || []).filter(function (l) { return l.name === name; })[0]; }
+function lv(name) { return HC.Levels.concat(HC.LegacyLevels || [], HC.HeldLevels || []).filter(function (l) { return l.name === name; })[0]; }
 function custom(base, patch) { var l = JSON.parse(JSON.stringify(lv(base))); for (var k in patch) l[k] = patch[k]; return l; }
 function mk(name, patch) { return En.createState(patch ? custom(name, patch) : lv(name)); }
 function has(arr, x) { return arr.indexOf(x) >= 0; }
@@ -68,7 +68,7 @@ function checkCandidates(s, st, tag) {
 }
 
 // ---------- 0. level table sanity ----------
-check(HC.Levels.length === 77, '77 levels');
+check(HC.Levels.length === 72, '72 levels (9 held back)');
 // "nerve or not?": the stored answer must be the true one
 HC.Levels.forEach(function (L0) {
   if (!L0.goal || L0.goal.flag !== 'verdict') return;
@@ -685,7 +685,7 @@ HC.Levels.forEach(function (L) {
   // no S triangle below
   var ns = mk('shadow', { base: { vertices: lv('shadow').base.vertices, edges: lv('shadow').base.edges, triangles: [] } });
   var rn = En.compose(ns, 'f', 'g');
-  check(!rn.ok && /No triangle below/.test(rn.reason) && ns.edges.length === 2 && !En.canUndo(ns), 'no triangle below: ' + rn.reason);
+  check(!rn.ok && /No triangle of the base/.test(rn.reason) && ns.edges.length === 2 && !En.canUndo(ns), 'no triangle below: ' + rn.reason);
   check(En.candidates(ns, 'compose', ['f']).edges.indexOf('g') < 0, 'candidates dim arrows with nothing below');
   // two lifts: option index chooses
   var l = mk('lift');
@@ -710,7 +710,7 @@ HC.Levels.forEach(function (L) {
   var lb = mk('liftfill', { base: { vertices: lv('liftfill').base.vertices, edges: lv('liftfill').base.edges, triangles: lv('liftfill').base.triangles.slice(0, 3) } });
   En.compose(lb, 'g', 'h');
   var rb = En.claimRoute(lb, ['f', 'g', 'h'], {});
-  check(!rb.ok && /No triangle below/.test(rb.reason) && lb.tetras.length === 0, 'tetra claim with no S face below is refused: ' + rb.reason);
+  check(!rb.ok && /No triangle of the base/.test(rb.reason) && lb.tetras.length === 0, 'tetra claim with no S face below is refused: ' + rb.reason);
   // an outer horn lifted: iso edge upstairs, two triangles, a Solve, then the outer tetrahedron
   var li = mk('liftiso');
   En.compose(li, 'f', 'g'); En.compose(li, 'e1', 'h');
@@ -904,7 +904,7 @@ HC.Levels.forEach(function (L) {
   check(badEq === 0, 'plain text uses ≃ only for homotopies (x, 1 ; y)');
   HC.Models.forEach(function (M) { M.arrows.forEach(function (a) { check(String(a.label).indexOf('·') < 0, 'model ' + M.id + ' arrow ' + a.id + ' has no dot in its name'); }); });
   // worlds: simplicial sets is world 1 and the rest moved up by one
-  check(lv('faces').world === 1 && lv('freebies').world === 1 && lv('whichface').world === 1 && lv('compose').world === 2 && lv('tetra').world === 3 && lv('symmetric').world === 4 && lv('solidfact').world === 5 && lv('undo').world === 6 && lv('fullsub').world === 7 && lv('nerve').world === 8 && lv('disc').world === 9 && lv('spine').world === 10 && lv('liftpath').world === 11 && lv('oneway').world === 12 && lv('natsq').world === 13 && lv('sandbox').world === 14, 'world numbering: Simplicial sets 1, Composition 2, Tetrahedra 3, Homotopy 4, Solids 5, Undo 6, Subcategories 7, Nerves 8, Skeleta 9, Anodyne 10, Lifting 11, Isomorphisms 12, Squares 13, Playground 14');
+  check(lv('faces').world === 1 && lv('compose').world === 2 && lv('tetra').world === 3 && lv('symmetric').world === 4 && lv('undo').world === 5 && lv('nerve').world === 6 && lv('disc').world === 7 && lv('spine').world === 8 && lv('liftpath').world === 9 && lv('oneway').world === 10 && lv('natsq').world === 11 && lv('barehands').world === 12 && lv('sandbox').world === 13, 'world numbering: Simplicial sets 1 … Natural transformations 11, Challenges 12, Sandbox 13 (higher simplices and subcategories held back)');
 })();
 
 // ---------- 16h. v6: solids (3-simplices as facts), 4-horns, subcategories ----------
@@ -1099,13 +1099,14 @@ function snapKey(s) {
 // a degenerate (thin) triangle, so the number of unmet triangle patterns / missing tetrahedra bounds the moves still needed.
 function lowerBound(s) {
   var goal = s.level.goal;
-  if (!goal || goal.counts || goal.edges || goal.flag || goal.pick !== undefined) return 0;
-  var g = En.checkGoal(s), tri = 0, tet = 0;
+  if (!goal || goal.counts || goal.edges || goal.flag || goal.pick !== undefined || goal.select) return 0;
+  var g = En.checkGoal(s), tri = 0, tet = 0, solids = 0;
   g.parts.forEach(function (p) {
     if (p.kind === 'triangle' && !p.done) tri++;
     if (p.kind === 'min' && p.key === 'tetras' && !p.done) tet = Math.max(tet, p.want - p.have);
+    if (p.kind === 'solid' && !p.done) solids++;
   });
-  return Math.max(tri, tet);
+  return Math.max(tri, tet, solids);
 }
 function solvedNoClaim(s) {
   var g = En.checkGoal(s);
@@ -1162,6 +1163,13 @@ function moves(s) {
     else if (tool === 'addEdge') { for (i = 0; i < V.length; i++) for (j = 0; j < V.length; j++) if (i !== j) out.push(['addEdge', V[i], V[j]]); }
     else if (tool === 'cell2') { for (i = 0; i < E.length; i++) for (j = i + 1; j < E.length; j++) for (k = j + 1; k < E.length; k++) out.push(['cell2', [E[i], E[j], E[k]]]); }
     else if (tool === 'peel') out.push(['peel']);
+    else if (tool === 'fill4') {
+      var seenQ = {};
+      (function rec(picks) {
+        if (picks.length === 4) { var n = En.fill4Options(s, picks).length; for (var o = 0; o < n; o++) out.push(['fill4', picks.slice(), o]); return; }
+        En.candidates(s, 'fill4', picks).solids.forEach(function (x) { if (!picks.length || x > picks[picks.length - 1]) rec(picks.concat([x])); });
+      })([]);
+    }
     else if (tool === 'cosk') out.push(['cosk']);
     else if (tool === 'cell3') { var TT = s.triangles.filter(function (x) { return !x.thin && x.kind !== 'thin'; }).map(function (x) { return x.id; });
       for (i = 0; i < TT.length; i++) for (j = i + 1; j < TT.length; j++) for (k = j + 1; k < TT.length; k++) for (var q = k + 1; q < TT.length; q++) out.push(['cell3', [TT[i], TT[j], TT[k], TT[q]]]); }
@@ -1199,12 +1207,12 @@ function search(L, limit, deadline) {
 }
 // the search really finds things: every non-impossible level with par <= 2 is found at depth par
 HC.Levels.forEach(function (L) {
-  if (!L.goal || L.goal.pick !== undefined || L.goal.impossible || L.par > 2 || process.env.SKIP_SEARCH || process.env.ONLY) return;
+  if (!L.goal || L.goal.pick !== undefined || L.goal.select || L.goal.impossible || L.par > 2 || process.env.SKIP_SEARCH || process.env.ONLY) return;
   check(search(L, L.par, Date.now() + 60000) === L.par, 'search finds ' + L.name + ' at par ' + L.par);
 });
 var t0 = Date.now(), skipped = [];
 HC.Levels.forEach(function (L) {
-  if (!L.goal || L.goal.pick !== undefined || process.env.SKIP_SEARCH || (process.env.ONLY && process.env.ONLY !== L.name)) return;
+  if (!L.goal || L.goal.pick !== undefined || L.goal.select || process.env.SKIP_SEARCH || (process.env.ONLY && process.env.ONLY !== L.name)) return;
   var imp = !!L.goal.impossible;
   var limit = imp ? 4 : Math.min(L.par - 1, 5);
   if (limit < 1) { check(true, 'nothing shorter than par ' + L.par); return; }

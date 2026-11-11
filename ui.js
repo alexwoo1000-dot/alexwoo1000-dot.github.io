@@ -449,10 +449,10 @@
     identity: { label: 'Identity', key: 'I', desc: 'Identity arrows and their degenerate triangles.',
       picks: [pickStep('Tap a vertex or an arrow.', ['vertex', 'edge'], 'vertex or arrow')],
       run: function (p) { return ['identity', p[0].id]; } },
-    horn0: { labelTeX: '\\Lambda^2_0', subTeX: '(f,\\ ?\\,;\\ h)', label: 'Fill', key: 'L', desc: 'Find the missing second arrow (horn \u039B\u00B2\u2080).',
+    horn0: { labelTeX: '(f,\\ ?\\,;\\ h)', label: 'Solve', key: 'L', desc: 'Fill the horn Λ²₀: find the missing second arrow.',
       picks: [pickStep('Pick the first arrow <i>f</i>. A vertex means its identity.', ['edge'], 'f'), pickStep('Pick the whole way <i>h</i>.', ['edge'], 'h')],
       run: function (p) { return ['horn0', p[0].id, p[1].id]; } },
-    horn2: { labelTeX: '\\Lambda^2_2', subTeX: '(?,\\ g\\,;\\ h)', label: 'Fill', key: 'R', desc: 'Find the missing first arrow (horn \u039B\u00B2\u2082).',
+    horn2: { labelTeX: '(?,\\ g\\,;\\ h)', label: 'Solve', key: 'R', desc: 'Fill the horn Λ²₂: find the missing first arrow.',
       picks: [pickStep('Pick the last arrow <i>g</i>.', ['edge'], 'g'), pickStep('Pick the whole way <i>h</i>.', ['edge'], 'h')],
       run: function (p) { return ['horn2', p[0].id, p[1].id]; } },
     fill3: { label: 'Fill tetrahedron', desc: 'Three faces force a fourth.',
@@ -461,7 +461,7 @@
     tetra: { label: 'Tetrahedron', key: 'T', desc: 'Three faces (triangles), or a spine of three composable arrows. A vertex means its identity.',
       picks: [pickStep('Pick 3 triangles (faces), or a spine of 3 composable arrows.', ['tri', 'edge'], '1'), pickStep('Pick a 2nd one.', ['tri', 'edge'], '2'), pickStep('Pick a 3rd one.', ['tri', 'edge'], '3')],
       run: null },
-    cell2: { label: 'Attach a 2-cell', key: 'G', desc: 'Attach a triangle along three arrows that close up (glue along the boundary).',
+    cell2: { label: 'Glue triangle', key: 'G', desc: 'Attach a 2-cell: attach a triangle along three arrows that close up (glue along the boundary).',
       picks: [pickStep('Pick 3 arrows that close up.', ['edge'], '1'), pickStep('Pick a 2nd arrow.', ['edge'], '2'), pickStep('Pick a 3rd arrow.', ['edge'], '3')],
       run: function (p) { return ['cell2', [p[0].id, p[1].id, p[2].id]]; } },
     addEdge: { label: 'Draw arrow', key: 'D', desc: 'From one vertex to another.',
@@ -470,21 +470,21 @@
     addVertex: { label: 'Add vertex', key: 'A', desc: 'Tap an empty spot.',
       picks: [pickStep('Tap an empty spot.', ['point'], 'spot')],
       run: function (p) { return ['addVertex', p[0].x, p[0].y]; } },
-    cell3: { label: 'Attach a 3-cell', key: 'B', desc: 'Attach a tetrahedron along four triangles that close up (glue along the boundary).',
+    cell3: { label: 'Glue solid', key: 'B', desc: 'Attach a 3-cell: attach a tetrahedron along four triangles that close up (glue along the boundary).',
       picks: [pickStep('Pick 4 triangles that close up.', ['tri'], '1'), pickStep('Pick a 2nd triangle.', ['tri'], '2'), pickStep('Pick a 3rd triangle.', ['tri'], '3'), pickStep('Pick a 4th triangle.', ['tri'], '4')],
       run: function (p) { return ['cell3', [p[0].id, p[1].id, p[2].id, p[3].id]]; } },
-    peel: { label: 'Skeleton', key: 'P', desc: 'Remove the top layer.', instant: true, picks: [],
+    peel: { label: 'Peel', key: 'P', desc: 'Skeleton: pass to the next lower skeleton, removing the top-dimensional simplices.', instant: true, picks: [],
       run: function () { return ['peel']; } },
-    same: { label: 'Uniqueness', key: '1', desc: 'Two composites of the same pair are homotopic.', theorem: true,
+    same: { label: 'Same', key: '1', desc: 'Uniqueness of composites: two composites of the same pair are homotopic.', theorem: true,
       picks: [pickStep('Pick a triangle witnessing a composite.', ['tri'], '1'), pickStep('Pick another composite of the same pair.', ['tri'], '2')],
       run: function (p) { return ['same', p[0].id, p[1].id]; } },
-    flip: { label: 'Symmetry', key: '2', desc: 'x \u2243 y gives y \u2243 x.', theorem: true,
+    flip: { label: 'Flip', key: '2', desc: 'Symmetry of homotopy: x \u2243 y gives y \u2243 x.', theorem: true,
       picks: [pickStep('Pick a homotopy x \u2243 y.', ['tri'], '1')],
       run: function (p) { return ['flip', p[0].id]; } },
-    link: { label: 'Transitivity', key: '3', desc: 'x \u2243 y and y \u2243 z give x \u2243 z.', theorem: true,
+    link: { label: 'Link', key: '3', desc: 'Transitivity of homotopy: x \u2243 y and y \u2243 z give x \u2243 z.', theorem: true,
       picks: [pickStep('Pick x \u2243 y.', ['tri'], '1'), pickStep('Pick y \u2243 z.', ['tri'], '2')],
       run: function (p) { return ['link', p[0].id, p[1].id]; } },
-    swapin: { label: 'Substitution', key: '4', desc: 'Transport along a homotopy p \u2243 q: replace p by q in a triangle.', theorem: true,
+    swapin: { label: 'Swap in', key: '4', desc: 'Substitution, i.e. transport along a homotopy p \u2243 q: replace p by q in a triangle.', theorem: true,
       picks: [pickStep('Pick a homotopy p \u2243 q.', ['tri'], '1'), pickStep('Pick a triangle that uses p.', ['tri'], '2')],
       run: function (p) { return ['swapin', p[0].id, p[1].id]; } },
     witness: { label: 'Not a nerve: show a horn \u039B\u00B2\u2081 with no filler, or two', key: 'W', desc: 'Two arrows end to end with no composite, or with two different ones. A vertex means its identity.',
@@ -492,12 +492,12 @@
       run: function (p) { return ['witness', p[0].id, p[1].id]; } },
     isNerve: { label: 'It is a nerve', key: 'N', desc: 'Every two arrows end to end have exactly one composite.', instant: true, picks: [],
       run: function () { return ['isNerve']; } },
-    cosk: { label: 'Coskeleton', key: 'K', desc: 'Coskeleton: fill every hollow shape, in the only possible way.', instant: true, picks: [],
+    cosk: { label: 'Fill in', key: 'K', desc: 'Coskeleton: fill every hollow shape, in the only possible way.', instant: true, picks: [],
       run: function () { return ['cosk']; } },
     liftEdge: { label: 'Lift arrow', key: 'F', desc: 'Lift an arrow of the base S, starting at a vertex of X over its source. It ends at a new vertex.',
       picks: [pickStep('Pick the vertex to start from.', ['vertex'], 'start')],
       run: function (p) { return ['liftEdge', p[0].id]; } },
-    divide: { label: 'Cancel an isomorphism', key: '5', desc: 'If u then v is an identity, move u or v to the other side of a triangle.', theorem: true,
+    divide: { label: 'Divide', key: '5', desc: 'Cancel an isomorphism: if u then v is an identity, move u or v to the other side of a triangle.', theorem: true,
       picks: [pickStep('Pick a triangle saying two arrows compose to an identity.', ['tri'], '1'), pickStep('Pick a triangle that uses one of those arrows.', ['tri'], '2')],
       run: function (p) { return ['divide', p[0].id, p[1].id]; } }
   };
@@ -524,7 +524,7 @@
   ICONS.divide = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12 H19" fill="none"/><circle cx="12" cy="6.5" r="1.6"/><circle cx="12" cy="17.5" r="1.6"/></svg>';
   var TOOL_ORDER = ['witness', 'isNerve', 'liftEdge', 'compose', 'identity', 'horn0', 'horn2', 'fill3', 'tetra', 'fill4', 'addVertex', 'addEdge', 'cell2', 'cell3', 'peel', 'cosk', 'same', 'flip', 'link', 'swapin', 'divide'];
   ['compose', 'horn0', 'horn2', 'tetra', 'witness'].forEach(function (t) { TOOLS[t].stay = true; });
-  var THEOREM_NAMES = { same: 'Uniqueness', flip: 'Symmetry', link: 'Transitivity', swapin: 'Substitution', divide: 'Cancel an isomorphism' };
+  var THEOREM_NAMES = { same: 'Same', flip: 'Flip', link: 'Link', swapin: 'Swap in', divide: 'Divide' };
   function toolName(t) { return t === 'trip' ? 'tetra' : t; }
 
   function engineHas(name) { return !!(HC.Engine && typeof HC.Engine[name] === 'function'); }
@@ -2724,7 +2724,7 @@
   /* --- keyboard help overlay --- */
   function openHelp() {
     var rows = [
-      ['C', 'Compose'], ['T', 'Tetrahedron'], ['L / R', 'Fill \u039B\u00B2\u2080 / \u039B\u00B2\u2082 (solve for the second / first arrow)'], ['1–4', 'Your theorems (when no tool is picking)'],
+      ['C', 'Compose'], ['T', 'Tetrahedron'], ['L / R', 'Solve: fill Λ²₀ / Λ²₂ (the missing second / first arrow)'], ['1–4', 'Your theorems (when no tool is picking)'],
       ['G', 'Glue triangle'], ['D', 'Draw arrow'], ['P', 'Peel'], ['A', 'Add vertex'],
       ['1–9', 'With a tool active: the first press shows numbers on the targets, the next picks one'], ['Enter', 'Fill / claim / next note or level'], ['Esc', 'Clear picks / close'],
       ['Z or Ctrl+Z', 'Undo'], ['Backspace', 'Remove the last pick'], ['H', 'Hint'], ['U', 'Unfold identities'],
@@ -3598,6 +3598,7 @@
         if (boss) li.className += ' boss';
         li.innerHTML = '<button type="button" class="node" data-level="' + i + '"' + (open ? '' : ' aria-disabled="true"') + '>' + prose(titleFor(lv)) + '</button>' +
           (boss ? ' <span class="bossmark" title="boss level">boss</span>' : '') +
+          (lv.challenge ? ' <span class="bossmark challenge" title="challenge: harder than the rest of the game">challenge</span>' : '') +
           (solved ? ' <span class="mark" title="solved">' + ICON_TICK + '</span>' : '') +
           (star ? '<span class="star" title="solved at par">★</span>' : '') +
           (i === current ? ' <span class="here">← next</span>' : '');
