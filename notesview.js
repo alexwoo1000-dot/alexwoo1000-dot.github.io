@@ -12,6 +12,7 @@
   var HC = window.HC || (window.HC = {});
   var NS = 'http://www.w3.org/2000/svg';
   var SC = 6, VR = 20, AFONT = 29, AH = 17, AW = 7;
+  var HATCH_SEQ = 0;
 
   function el(tag, attrs, parent) {
     var e = document.createElementNS(NS, tag);
@@ -142,7 +143,7 @@
       geo[i] = arrowGeo(P0, P1, bendPx);
     });
 
-    var gF = el('g', { class: 'nv-fills' }, svg), gG = el('g', { class: 'nv-ghosts' }, svg), gX = el('g', { class: 'nv-extra' }, svg),
+    var gB = el('g', { class: 'nv-back' }, svg), gF = el('g', { class: 'nv-fills' }, svg), gG = el('g', { class: 'nv-ghosts' }, svg), gX = el('g', { class: 'nv-extra' }, svg),
       gA = el('g', { class: 'nv-arrows' }, svg), gL = el('g', { class: 'nv-labels' }, svg), gD = el('g', { class: 'nv-dots' }, svg);
 
     function triD(t) {
@@ -157,9 +158,35 @@
       }
       return 'M' + pt(pos[t[0]]) + seg(t[0], t[1]) + seg(t[1], t[2]) + seg(t[2], t[0]) + 'Z';
     }
-    (spec.fills || []).forEach(function (t, i) {
+    // a solid: one gradient per face (light falling across the surface) with a glow inside the body
+    var gradUrls = {};
+    function gradFill(g) {
+      var key = JSON.stringify(g);
+      if (gradUrls[key]) return gradUrls[key];
+      var pid = 'nv-grad-' + (++HATCH_SEQ);
+      var defs = el('defs', null, svg);
+      var lg = el('linearGradient', { id: pid, gradientUnits: 'objectBoundingBox', x1: g.x1 == null ? 0 : g.x1, y1: g.y1 == null ? 0 : g.y1, x2: g.x2 == null ? 1 : g.x2, y2: g.y2 == null ? 1 : g.y2 }, defs);
+      el('stop', { offset: '0', style: 'stop-color: var(--vol);stop-opacity:' + (g.a == null ? 0.05 : g.a) }, lg);
+      el('stop', { offset: '1', style: 'stop-color: var(--vol);stop-opacity:' + (g.b == null ? 0.3 : g.b) }, lg);
+      gradUrls[key] = 'url(#' + pid + ')';
+      return gradUrls[key];
+    }
+    if (spec.glow && Array.isArray(spec.glow.pts) && spec.glow.pts.length === 3) {
+      var gl = spec.glow, gid = 'nv-glow-' + (++HATCH_SEQ), gdefs = el('defs', null, svg);
+      var rg = el('radialGradient', { id: gid, gradientUnits: 'userSpaceOnUse', cx: r1((gl.cx || 0) * SC), cy: r1((gl.cy || 0) * SC), r: r1((gl.r || 20) * SC) }, gdefs);
+      el('stop', { offset: '0', style: 'stop-color: var(--vol);stop-opacity:' + (gl.op == null ? 0.2 : gl.op) }, rg);
+      el('stop', { offset: '1', style: 'stop-color: var(--vol);stop-opacity:0' }, rg);
+      var gd = triD(gl.pts);
+      if (gd) el('path', { d: gd, fill: 'url(#' + gid + ')' }, gB);
+    }
+    (spec.fills || []).forEach(function (f, i) {
+      // a fill is [a,b,c], or { pts:[a,b,c], cls:'...', hatch?:true } when it needs its own shading
+      var t = Array.isArray(f) ? f : (f && f.pts) || null;
+      var extra = (!Array.isArray(f) && f && f.cls) ? ' ' + f.cls : '';
       var d = triD(t); if (!d) return;
-      el('path', { d: d, class: 'nv-fill tc' + (i % 4) + (o.fresh && o.fresh['fill:' + i] ? ' fresh' : '') + (t.cls ? ' ' + t.cls : '') }, gF);
+      var grad = (!Array.isArray(f) && f && f.grad) ? f.grad : null;
+      if (grad) el('path', { d: d, class: 'nv-grad' + extra + (o.fresh && o.fresh['fill:' + i] ? ' fresh' : ''), fill: gradFill(grad) }, gF);
+      else el('path', { d: d, class: 'nv-fill tc' + (i % 4) + extra + (o.fresh && o.fresh['fill:' + i] ? ' fresh' : '') }, gF);
     });
     (spec.ghost || []).forEach(function (t) {
       var d = triD(t); if (!d) return;

@@ -25,6 +25,7 @@
   --tri2: #18794e;
   --tri3: #b98500;
   --tri-op: 0.12;
+  --vol: #6a3fc0;              /* the faces of a solid */
   --dot: #111;
   --dot-ink: #fff;
   --halo: #fff;
@@ -38,7 +39,7 @@
     --line: #555; --accent: #ff7aa8; --accent-ink: #111; --accent-soft: #3a1c27;
     --hi: #ffd43b; --hi-soft: #3b3311; --ok: #69db9c; --ok-soft: #14301f; --warn: #ff8a80; --link: #8ab4f8;
     --k-given: #eee; --k-composite: #7cb4ff; --k-solved: #c9a3ff; --k-identity: #8c8c8c;
-    --tri0: #7cb4ff; --tri1: #ff7aa8; --tri2: #69db9c; --tri3: #ffd43b; --tri-op: 0.16;
+    --tri0: #7cb4ff; --tri1: #ff7aa8; --tri2: #69db9c; --tri3: #ffd43b; --tri-op: 0.16; --vol: #c9a3ff;
     --dot: #eee; --dot-ink: #161616; --halo: #161616; --locked: #777;
   }
 }
@@ -47,7 +48,7 @@
   --line: #555; --accent: #ff7aa8; --accent-ink: #111; --accent-soft: #3a1c27;
   --hi: #ffd43b; --hi-soft: #3b3311; --ok: #69db9c; --ok-soft: #14301f; --warn: #ff8a80; --link: #8ab4f8;
   --k-given: #eee; --k-composite: #7cb4ff; --k-solved: #c9a3ff; --k-identity: #8c8c8c;
-  --tri0: #7cb4ff; --tri1: #ff7aa8; --tri2: #69db9c; --tri3: #ffd43b; --tri-op: 0.16;
+  --tri0: #7cb4ff; --tri1: #ff7aa8; --tri2: #69db9c; --tri3: #ffd43b; --tri-op: 0.16; --vol: #c9a3ff;
   --dot: #eee; --dot-ink: #161616; --halo: #161616; --locked: #777;
 }
 

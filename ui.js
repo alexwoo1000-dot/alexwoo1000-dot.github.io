@@ -445,10 +445,10 @@
       picks: [pickStep('Pick the first arrow.', ['edge'], 'first'), pickStep('Pick the arrow that comes next.', ['edge'], 'then')],
       run: function (p) { return ['compose', p[0].id, p[1].id]; } },
     identity: { label: 'Identity', key: 'I', desc: 'Identity arrows and their degenerate triangles.',
-      picks: [pickStep('Tap a dot or an arrow.', ['vertex', 'edge'], 'dot or arrow')],
+      picks: [pickStep('Tap a vertex or an arrow.', ['vertex', 'edge'], 'vertex or arrow')],
       run: function (p) { return ['identity', p[0].id]; } },
     horn0: { labelTeX: 'f\\cdot ? \\simeq h', label: 'Solve', key: 'L', desc: 'Find the missing second arrow (horn \u039B\u00B2\u2080).',
-      picks: [pickStep('Pick the first arrow <i>f</i>. A dot means its identity.', ['edge'], 'f'), pickStep('Pick the whole way <i>h</i>.', ['edge'], 'h')],
+      picks: [pickStep('Pick the first arrow <i>f</i>. A vertex means its identity.', ['edge'], 'f'), pickStep('Pick the whole way <i>h</i>.', ['edge'], 'h')],
       run: function (p) { return ['horn0', p[0].id, p[1].id]; } },
     horn2: { labelTeX: '? \\cdot g \\simeq h', label: 'Solve', key: 'R', desc: 'Find the missing first arrow (horn \u039B\u00B2\u2082).',
       picks: [pickStep('Pick the last arrow <i>g</i>.', ['edge'], 'g'), pickStep('Pick the whole way <i>h</i>.', ['edge'], 'h')],
@@ -456,16 +456,16 @@
     fill3: { label: 'Fill tetrahedron', desc: 'Three faces force a fourth.',
       picks: [pickStep('Pick 3 facts that fit together.', ['tri'], '1'), pickStep('Pick a 2nd fact.', ['tri'], '2'), pickStep('Pick a 3rd fact.', ['tri'], '3')],
       run: function (p) { return ['fill3', [p[0].id, p[1].id, p[2].id]]; } },
-    tetra: { label: 'Tetrahedron', key: 'T', desc: 'Three faces (facts) or three arrows end to end. A dot means its identity.',
+    tetra: { label: 'Tetrahedron', key: 'T', desc: 'Three faces (facts) or three arrows end to end. A vertex means its identity.',
       picks: [pickStep('Pick 3 facts (faces) \u2014 or 3 arrows end to end.', ['tri', 'edge'], '1'), pickStep('Pick a 2nd one.', ['tri', 'edge'], '2'), pickStep('Pick a 3rd one.', ['tri', 'edge'], '3')],
       run: null },
     cell2: { label: 'Glue triangle', key: 'G', desc: 'Fill in three arrows that close up.',
       picks: [pickStep('Pick 3 arrows that close up.', ['edge'], '1'), pickStep('Pick a 2nd arrow.', ['edge'], '2'), pickStep('Pick a 3rd arrow.', ['edge'], '3')],
       run: function (p) { return ['cell2', [p[0].id, p[1].id, p[2].id]]; } },
-    addEdge: { label: 'Draw arrow', key: 'D', desc: 'From one dot to another.',
-      picks: [pickStep('Tap the start dot.', ['vertex'], 'from'), pickStep('Tap the end dot.', ['vertex'], 'to')],
+    addEdge: { label: 'Draw arrow', key: 'D', desc: 'From one vertex to another.',
+      picks: [pickStep('Tap the start vertex.', ['vertex'], 'from'), pickStep('Tap the end vertex.', ['vertex'], 'to')],
       run: function (p) { return ['addEdge', p[0].id, p[1].id]; } },
-    addVertex: { label: 'Add dot', key: 'A', desc: 'Tap an empty spot.',
+    addVertex: { label: 'Add vertex', key: 'A', desc: 'Tap an empty spot.',
       picks: [pickStep('Tap an empty spot.', ['point'], 'spot')],
       run: function (p) { return ['addVertex', p[0].x, p[0].y]; } },
     peel: { label: 'Peel', key: 'P', desc: 'Remove the top layer.', instant: true, picks: [],
@@ -482,15 +482,15 @@
     swapin: { label: 'Swap in', key: '4', desc: 'Use p \u2243 q to replace p by q in a fact.', theorem: true,
       picks: [pickStep('Pick a homotopy p \u2243 q.', ['tri'], '1'), pickStep('Pick a fact that uses p.', ['tri'], '2')],
       run: function (p) { return ['swapin', p[0].id, p[1].id]; } },
-    witness: { label: 'Not a nerve: show a bad pair', key: 'W', desc: 'Two arrows end to end with no composite, or with two different ones. A dot means its identity.',
+    witness: { label: 'Not a nerve: show a bad pair', key: 'W', desc: 'Two arrows end to end with no composite, or with two different ones. A vertex means its identity.',
       picks: [pickStep('Pick the first arrow of the pair.', ['edge'], '1st'), pickStep('Pick the arrow that follows it.', ['edge'], '2nd')],
       run: function (p) { return ['witness', p[0].id, p[1].id]; } },
     isNerve: { label: 'It is a nerve', key: 'N', desc: 'Every two arrows end to end have exactly one composite.', instant: true, picks: [],
       run: function () { return ['isNerve']; } },
     cosk: { label: 'Fill in', key: 'K', desc: 'Coskeleton: fill every hollow shape, in the only possible way.', instant: true, picks: [],
       run: function () { return ['cosk']; } },
-    liftEdge: { label: 'Lift arrow', key: 'F', desc: 'Lift an arrow of the shadow, starting at a dot above its start. It ends at a new dot.',
-      picks: [pickStep('Pick the dot to start from.', ['vertex'], 'start')],
+    liftEdge: { label: 'Lift arrow', key: 'F', desc: 'Lift an arrow of the shadow, starting at a vertex above its start. It ends at a new vertex.',
+      picks: [pickStep('Pick the vertex to start from.', ['vertex'], 'start')],
       run: function (p) { return ['liftEdge', p[0].id]; } },
     divide: { label: 'Divide', key: '5', desc: 'If u then v is an identity, move u or v to the other side of a fact.', theorem: true,
       picks: [pickStep('Pick a fact saying two arrows compose to an identity.', ['tri'], '1'), pickStep('Pick a fact that uses one of those arrows.', ['tri'], '2')],
@@ -654,7 +654,7 @@
     if (tris.length) return 'Free triangles for ' + math(eTeX(m, tris[0].e02));
     var es = arr(a.edges).filter(function (id) { return m.e[id]; });
     if (es.length) return 'New arrow ' + math(edgeTeXFull(m, es[es.length - 1]));
-    if (arr(a.vertices).length) return 'New dot ' + math(labTeX(vLabel(m, a.vertices[0])));
+    if (arr(a.vertices).length) return 'New vertex ' + math(labTeX(vLabel(m, a.vertices[0])));
     return prose(res.message || 'Done.');
   }
 
@@ -722,7 +722,7 @@
     arr(st.triangles).forEach(function (t) { if (!isThin(t)) c.triangles++; });
     return c;
   }
-  var DIM_WORD = { edges: ['arrow', 'arrows'], triangles: ['triangle', 'triangles'], tetras: ['tetrahedron', 'tetrahedra'], vertices: ['dot', 'dots'] };
+  var DIM_WORD = { edges: ['arrow', 'arrows'], triangles: ['triangle', 'triangles'], tetras: ['tetrahedron', 'tetrahedra'], vertices: ['vertex', 'vertices'] };
 
   // the checklist: local list of parts, ticked by the engine's parts when they line up
   function goalParts() {
@@ -987,7 +987,7 @@
     var bl = arr(T.bullets).length ? T.bullets : bulletsOf(T.story);
     if (mathMode() && T.math && T.math.say) bl = bulletsOf(T.math.say);
     $('bullets').classList.toggle('formal', mathMode() && !!(T.math && T.math.say));
-    if (!bl.length && isSandbox(lv)) bl = ['No goal. Make dots, arrows and facts.'];
+    if (!bl.length && isSandbox(lv)) bl = ['No goal. Make vertices, arrows and facts.'];
     $('bullets').innerHTML = bl.map(function (b, i) { var t = prose(b); return (i === bl.length - 1 && bl.length > 1 && !mathMode()) ? '<b class="task">' + t + '</b>' : t; }).join(' ');
     // Explain: closed by default, open the first time on intro levels
     var ex = $('explain'), exText = T.explain || (T.math && !mathMode() ? null : null);
@@ -1430,7 +1430,7 @@
       var p = geo.pos[v.id];
       var over = opts.overClass ? opts.overClass(v.id) : '';
       var attrs = { class: 'vert' + (over ? ' ' + over : '') + (opts.shadow ? ' shadow' : ''), transform: 'translate(' + pt(p) + ')' };
-      if (!opts.shadow) { attrs['data-vid'] = v.id; attrs.tabindex = '0'; attrs.role = 'button'; attrs['aria-label'] = 'dot ' + vLabel(m, v.id); }
+      if (!opts.shadow) { attrs['data-vid'] = v.id; attrs.tabindex = '0'; attrs.role = 'button'; attrs['aria-label'] = 'vertex ' + vLabel(m, v.id); }
       else attrs['data-sid'] = v.id;
       var grp = sEl('g', attrs);
       var body = sEl('g', { class: 'vbody' + (!opts.shadow && P.fresh.vertices[v.id] && !reduceMotion ? ' fresh' : '') });
@@ -1567,7 +1567,7 @@
     svg.appendChild(gS); svg.appendChild(gF); svg.appendChild(gGoal); svg.appendChild(gE); svg.appendChild(gV); svg.appendChild(gG); svg.appendChild(gT); svg.appendChild(gB);
     if (!arr(st.vertices).length) {
       var t = sEl('text', { x: r1(geo.vb[0] + geo.vb[2] / 2), y: r1(geo.vb[1] + geo.vb[3] / 2), class: 'board-empty', 'text-anchor': 'middle' });
-      t.textContent = engineHas('addVertex') ? 'Empty. Use “Add dot”.' : 'Empty.';
+      t.textContent = engineHas('addVertex') ? 'Empty. Use “Add vertex”.' : 'Empty.';
       svg.appendChild(t);
     }
     renderShowBar();
@@ -2487,7 +2487,7 @@
   }
 
   /* --- show bar: layers, unfold, 3D, tidy --- */
-  var LAYERS = [['v', 'dots'], ['e', 'arrows'], ['t', 'triangles'], ['s', 'solids']];
+  var LAYERS = [['v', 'vertices'], ['e', 'arrows'], ['t', 'triangles'], ['s', 'solids']];
   function renderShowBar() {
     var bar = $('showbar'); if (!bar || !P.level) return;
     var hasSolid = arr(P.state && P.state.tetras).length > 0;
@@ -2496,16 +2496,16 @@
     }).join('') +
       ' <button type="button" class="seg" data-act="unfold" aria-pressed="' + !!P.unfold + '" title="Open up flat triangles that use an identity arrow (U)">unfold <span class="kbd">U</span></button>' +
       (hasSolid ? ' <button type="button" class="seg" data-act="view3d" title="Look at a solid in 3D">3D</button>' : '') +
-      ' <button type="button" class="seg" data-act="tidy" title="Put the dots back where they started">tidy</button>';
+      ' <button type="button" class="seg" data-act="tidy" title="Put the vertices back where they started">tidy</button>';
     if (P.unfold && P.unfoldModel && P.unfoldModel.tetra) {
       var tc = P.unfoldModel.tetra.corners.map(function (c) { return vLabel(P.m, c.v) + (c.ghost ? P.unfoldModel.ghosts[c.ghost].mark : ''); });
       html += '<p class="unf-note">This tetrahedron has corners ' + math(tc.map(function (s) { return s.replace(/′/g, "'").replace(/″/g, "''"); }).join(', ')) +
-        ': some dots repeat, so it lies flat on the board. Unfolded, each repeat gets its own copy, joined by identity arrows. Shaded faces are the ones you know; the outlined face is the one Fill will add.</p>';
+        ': some vertices repeat, so it lies flat on the board. Unfolded, each repeat gets its own copy, joined by identity arrows. Shaded faces are the ones you know; the outlined face is the one Fill will add.</p>';
     } else if (P.unfold) {
       var nDeg = P.unfoldModel ? P.unfoldModel.tris.length : 0;
       html += '<p class="unf-note">' + (nDeg
         ? 'A triangle like ' + math('x\\simeq y') + ' really has corners ' + math('a, b, b') + ': its middle side is the identity ' + math('1_b') +
-          ', so it lies flat. Unfold draws each one with its own copy ' + math("b'") + ' of the repeated dot, so you can see the face. ' +
+          ', so it lies flat. Unfold draws each one with its own copy ' + math("b'") + ' of the repeated vertex, so you can see the face. ' +
           'Drag a copy to stretch the face (a homotopy is this sheet between ' + math('x') + ' and ' + math('y') + '); it springs back. Nothing changes in the puzzle.'
         : 'Nothing to unfold yet: no triangle here uses an identity arrow. Unfold opens up triangles like ' + math('x\\simeq y') + ', whose middle side is an identity.') + '</p>';
     }
@@ -2549,13 +2549,13 @@
   function openHelp() {
     var rows = [
       ['C', 'Compose'], ['T', 'Tetrahedron'], ['L / R', 'Solve for the second / first arrow'], ['1–4', 'Your theorems (when no tool is picking)'],
-      ['G', 'Glue triangle'], ['D', 'Draw arrow'], ['P', 'Peel'], ['A', 'Add dot'],
+      ['G', 'Glue triangle'], ['D', 'Draw arrow'], ['P', 'Peel'], ['A', 'Add vertex'],
       ['1–9', 'With a tool active: the first press shows numbers on the targets, the next picks one'], ['Enter', 'Fill / claim / next note or level'], ['Esc', 'Clear picks / close'],
       ['Z or Ctrl+Z', 'Undo'], ['Backspace', 'Remove the last pick'], ['H', 'Hint'], ['U', 'Unfold identities'],
       ['R', 'Rename the selected arrow'], ['?', 'This help']
     ];
     $('help-list').innerHTML = rows.map(function (r) { return '<dt><span class="kbd">' + esc(r[0]) + '</span></dt><dd>' + esc(r[1]) + '</dd>'; }).join('') +
-      '<dt>mouse</dt><dd>Drag dots to move them. Double-click (or long-press) an arrow’s name to rename it. Hover a goal to see it on the board.</dd>';
+      '<dt>mouse</dt><dd>Drag vertices to move them. Double-click (or long-press) an arrow’s name to rename it. Hover a goal to see it on the board.</dd>';
     $('help').hidden = false;
     try { $('help-close').focus(); } catch (e) {}
   }
@@ -2605,13 +2605,13 @@
       }).join('') + '</div>';
     if (M) {
       if (M.note) html += '<p class="ce-note">In this world: ' + esc(M.note) + '</p>';
-      html += '<div class="ce-place"><div><p class="ce-h">Dots</p>' + arr(lv.vertices).map(function (v) {
+      html += '<div class="ce-place"><div><p class="ce-h">Vertices</p>' + arr(lv.vertices).map(function (v) {
         return '<label class="ce-row">' + math(labTeX(vl[v.id])) + ' <span class="note">goes to</span> <select data-cev="' + esc(v.id) + '"><option value="">?</option>' +
           M.objects.map(function (o) { return '<option value="' + esc(o) + '"' + (CE.v[v.id] === o ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select></label>';
       }).join('') + '</div><div><p class="ce-h">Arrows</p>' + arr(lv.edges).filter(function (ed) { return ed.kind !== 'identity'; }).map(function (ed) {
         var a = CE.v[ed.src], b = CE.v[ed.dst], opts = (a != null && b != null) ? HC.Engine.modelArrowsBetween(CE.model, a, b) : null;
         var body;
-        if (!opts) body = '<span class="note">place its dots first</span>';
+        if (!opts) body = '<span class="note">place its vertices first</span>';
         else if (!opts.length) body = '<span class="ce-bad">nothing goes from ' + esc(a) + ' to ' + esc(b) + '</span>';
         else body = '<select data-cee="' + esc(ed.id) + '">' + (opts.length > 1 ? '<option value="">?</option>' : '') + opts.map(function (o) {
           return '<option value="' + esc(o.id) + '"' + (CE.e[ed.id] === o.id ? ' selected' : '') + '>' + esc(o.label.replace(/^1_/, 'identity at ')) + '</option>'; }).join('') + '</select>';
@@ -2702,7 +2702,12 @@
     function P2(d) { return { x: ((+d.x || 0) - minx) * sc + 30, y: ((+d.y || 0) - miny) * sc + 30 }; }
     var W = (maxx - minx) * sc + 60, H = (maxy - miny) * sc + 60;
     var out = '<svg class="spec" viewBox="0 0 ' + r1(W) + ' ' + r1(H) + '" role="img"><defs><marker id="spec-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9 z"/></marker></defs>';
-    arr(spec.fills).forEach(function (f, i) { var ps = f.map(function (id) { return byId[id] && P2(byId[id]); }); if (ps.every(Boolean)) out += '<path class="sp-fill tc' + (i % 4) + '" d="M' + ps.map(pt).join(' L') + ' Z"/>'; });
+    arr(spec.fills).forEach(function (f, i) {
+      var t = Array.isArray(f) ? f : (f && f.pts) || null;
+      var extra = (!Array.isArray(f) && f && f.cls) ? ' ' + f.cls : '';
+      var ps = arr(t).map(function (id) { return byId[id] && P2(byId[id]); });
+      if (ps.length === 3 && ps.every(Boolean)) out += '<path class="sp-fill tc' + (i % 4) + extra + '" d="M' + ps.map(pt).join(' L') + ' Z"/>';
+    });
     arr(spec.ghost).forEach(function (f) { var ps = f.map(function (id) { return byId[id] && P2(byId[id]); }); if (ps.every(Boolean)) out += '<path class="sp-ghost" d="M' + ps.map(pt).join(' L') + ' Z"/>'; });
     arr(spec.arrows).forEach(function (a) {
       var A = byId[a.from] && P2(byId[a.from]), B = byId[a.to] && P2(byId[a.to]); if (!A || !B) return;
@@ -3601,7 +3606,7 @@
     if (lv.base) return lv.licence === 'left'
       ? 'You are working over a <b>left fibration</b>. Upstairs you may lift any arrow of the shadow from a start you choose, and fill a horn that is missing its first face, provided a matching shape lies below it.'
       : 'You are working over an <b>inner fibration</b>, so upstairs only inner horns can be filled, and only over a matching shape below.';
-    if (lv.goal && lv.goal.pick != null) return 'This is a <b>simplicial set</b>: dots, arrows and triangles, together with the identity arrows and degenerate triangles that every simplicial set has. Nothing gets filled here; you are reading the picture.';
+    if (lv.goal && lv.goal.pick != null) return 'This is a <b>simplicial set</b>: vertices, arrows and triangles, together with the identity arrows and degenerate triangles that every simplicial set has. Nothing gets filled here; you are reading the picture.';
     if (has('witness') || has('isNerve')) return 'This is a bare <b>simplicial set</b>. Nothing gets filled here; you are judging the picture as it stands.';
     if (has('cell2') || has('addEdge') || has('peel') || has('cosk')) return 'This is a bare <b>simplicial set</b>. Nothing fills by itself, so you add and remove cells by hand.';
     if (lv.strict) return 'You are working in the <b>nerve of a category</b>, where every two arrows end to end have exactly one composite, read off the composition table.';
