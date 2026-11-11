@@ -1087,12 +1087,14 @@ HC.Reasons = {
 HC.Notes = [
 
   { id: "simplicial", before: "faces", title: "Dots, arrows, triangles", body: [
-    { p: "A <b>simplicial set</b> is a collection of directed triangles of every dimension: dots, arrows, triangles, tetrahedra, and so on. We call these <b>simplexes</b>, which we will formally define later. \nNote the boundary of each simplex consists of simplexes of lower dimension" },
+    { p: "A <b>simplicial set</b> is a collection of directed triangles of every dimension: dots, arrows, triangles, tetrahedra, and so on. We call these <b>simplexes</b>." },
+		{p: "Note the boundary of each simplex consists of simplexes of lower dimension."},
     { diagram: { dots: [{id:"a",label:"0",x:15,y:44},{id:"b",label:"1",x:50,y:10},{id:"c",label:"2",x:85,y:44}],
                  arrows: [{from:"a",to:"b",label:"d₂"},{from:"b",to:"c",label:"d₀"},{from:"a",to:"c",label:"d₁"}], fills: [["a","b","c"]] } },
-    { p: "For example, an arrow ($1$-simplex) has a source and a target, which are both $0$-simplices. A triangle has three corners numbered $0,1,2$ and three faces, each an arrow: $d_2$ joins corners $0$ and $1$, $d_0$ joins $1$ and $2$, and $d_1$ joins $0$ and $2$. \nEach face is named numerically for the corner it omits. For convention, we will denote a triangle as the triple $(d_2,d_0\\,;\\,d_1)$: first leg, second leg, long side." },
+    { p: "For example, an arrow ($1$-simplex) has a source and a target, which are both $0$-simplices. A triangle has three corners numbered $0,1,2$ and three faces, each an arrow: $d_2$ joins corners $0$ and $1$, $d_0$ joins $1$ and $2$, and $d_1$ joins $0$ and $2$." },
+		{p:"\nEach face is named numerically for the corner it omits. For convention, we will denote a triangle as the triple $(d_2,d_0\\,;\\,d_1)$: first leg, second leg, long side."}
     { demo: "tetra-3d" },
-    { p: "Similarily, a tetrahedron has four corners and four triangular faces $d_0,\\dots,d_3$, with $d_i$ omitting corner $i$. \nEvery arrow runs from a lower corner to a higher one, and how every face of the tetrahedron is oriented either clockwise or counterclockwise." },
+    { p: "Similarily, a tetrahedron has four corners and four triangular faces $d_0,\\dots,d_3$, with $d_i$ omitting corner $i$. Every arrow runs from a lower corner to a higher one, and every face of the tetrahedron is oriented either clockwise or counterclockwise." },
     { p: "Let's look at some simple examples of simplicial sets." }
   ]},
 
