@@ -2671,7 +2671,7 @@
       return '<button type="button" class="seg" data-layer="' + l[0] + '" aria-pressed="' + (P.layers[l[0]] !== false) + '">' + l[1] + '</button>';
     }).join('') +
       (canUnfold() ? ' <button type="button" class="seg" data-act="unfold" aria-pressed="' + !!P.unfold + '" title="Open up flat triangles that use an identity arrow (U)">unfold <span class="kbd">U</span></button>' : '') +
-      (hasSolid ? ' <button type="button" class="seg" data-act="view3d" title="Look at a solid in 3D">3D</button>' : '') +
+      (hasSolid ? ' <button type="button" class="seg" data-act="view3d" title="Look at a tetrahedron in 3D">3D</button>' : '') +
       ' <button type="button" class="seg" data-act="tidy" title="Put the vertices back where they started">tidy</button>';
     if (P.unfold && P.unfoldModel && P.unfoldModel.tetra) {
       var tc = P.unfoldModel.tetra.corners.map(function (c) { return vLabel(P.m, c.v) + (c.ghost ? P.unfoldModel.ghosts[c.ghost].mark : ''); });
@@ -3598,6 +3598,7 @@
         if (boss) li.className += ' boss';
         li.innerHTML = '<button type="button" class="node" data-level="' + i + '"' + (open ? '' : ' aria-disabled="true"') + '>' + prose(titleFor(lv)) + '</button>' +
           (boss ? ' <span class="bossmark" title="boss level">boss</span>' : '') +
+          (lv.challenge ? ' <span class="bossmark" title="challenge level">challenge</span>' : '') +
           (lv.challenge ? ' <span class="bossmark challenge" title="challenge: harder than the rest of the game">challenge</span>' : '') +
           (solved ? ' <span class="mark" title="solved">' + ICON_TICK + '</span>' : '') +
           (star ? '<span class="star" title="solved at par">★</span>' : '') +
