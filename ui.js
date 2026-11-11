@@ -2786,117 +2786,235 @@
     for (var i = rs.length - 1; i > 0; i--) { seed = (seed * 1103515245 + 12345) >>> 0; var j = seed % (i + 1); var t = rs[i]; rs[i] = rs[j]; rs[j] = t; }
     return rs;
   }
-  /* --- "It can't be done": the player BUILDS a category in which the givens hold and the goal fails.
-     Objects, arrows and a composition table, checked for being a category (every composite defined,
-     associative), then the level's starting picture is placed in it. One such category settles it,
-     because every move in the game is a horn filling that the nerve of a category can also do. --- */
+  /* --- "It can't be done": build a category where the goal fails, on a canvas.
+     The level's starting picture is already in your category: its vertices are objects, its arrows are
+     arrows, and its given triangles are composites you can't change. You add objects (click empty space)
+     and arrows (drag from one object to another, or onto itself for a loop), and decide every composite
+     by tapping a candidate arrow. Check then tests that it really is a category (every composite decided,
+     composition associative) and that the goal is false in it. One such category settles it, because every
+     move in the game also works in the nerve of a category. --- */
   var CE = null;
   function usesModels(lv) { return !!(lv && lv.claimable && !lv.base && !(lv.reasons && lv.reasons.length) && engineHas('checkModel') && engineHas('checkCategory')); }
-  var CE_NAMES = 'pqrstuvwklmnjzyxabcde'.split('');
+  var CE_NAMES = 'kmnpqrstuvwjyzbcde'.split('');
   function ceFresh() {
-    var lv = P.level, vs = arr(lv.vertices);
-    var objs = vs.map(function (v, i) { return String(i); });
-    var vmap = {}; vs.forEach(function (v, i) { vmap[v.id] = String(i); });
-    return { level: lv, objects: objs, arrows: [], comp: {}, v: vmap, e: {}, msg: null, n: 0 };
+    var lv = P.level, used = {};
+    var objs = arr(lv.vertices).map(function (v) { return { id: v.id, label: v.label || v.id, x: +v.x, y: +v.y }; });
+    var arrows = arr(lv.edges).filter(function (e) { return e.kind !== 'identity' && !/^id:/.test(e.id); })
+      .map(function (e) { used[e.label] = 1; return { id: e.id, src: e.src, dst: e.dst, label: e.label, given: true, iso: !!e.iso }; });
+    var comp = {}, locked = {};
+    arr(lv.triangles).forEach(function (t) {
+      if (/^id:/.test(t.e01) || /^id:/.test(t.e12)) return;     // composites with an identity are automatic
+      comp[t.e01 + ',' + t.e12] = t.e02; locked[t.e01 + ',' + t.e12] = true;
+    });
+    return { level: lv, objs: objs, arrows: arrows, comp: comp, locked: locked, used: used, n: 0, sel: null, hi: null, msg: null, bad: null, drag: null };
   }
-  function ceNextName() {
+  function ceObj(id) { return CE.objs.filter(function (o) { return o.id === id; })[0]; }
+  function ceArrow(id) { return CE.arrows.filter(function (a) { return a.id === id; })[0]; }
+  function ceLabelOf(id) { if (/^id:/.test(id)) return '1_' + ((ceObj(id.slice(3)) || {}).label || id.slice(3)); var a = ceArrow(id); return a ? a.label : id; }
+  function ceNewName() {
     var used = {}; CE.arrows.forEach(function (a) { used[a.label] = 1; });
     for (var i = 0; i < CE_NAMES.length; i++) if (!used[CE_NAMES[i]]) return CE_NAMES[i];
-    return 'a' + (CE.arrows.length + 1);
+    for (var j = 1; ; j++) if (!used['k' + j]) return 'k' + j;
   }
-  function ceModelObj() { return { objects: CE.objects.slice(), arrows: CE.arrows.map(function (a) { return { id: a.id, src: a.src, dst: a.dst, label: a.label }; }), comp: Object.assign({}, CE.comp) }; }
-  function ceEnds(a) { if (a.indexOf('id:') === 0) return { src: a.slice(3), dst: a.slice(3), label: '1_' + a.slice(3) }; return CE.arrows.filter(function (x) { return x.id === a; })[0]; }
-  function ceBetween(s, d) {
-    var out = []; if (s != null && s === d) out.push({ id: 'id:' + s, label: '1_' + s });
-    CE.arrows.forEach(function (a) { if (a.src === s && a.dst === d) out.push({ id: a.id, label: a.label }); });
+  function ceAddArrow(src, dst) { var a = { id: 'n' + (++CE.n), src: src, dst: dst, label: ceNewName(), given: false }; CE.arrows.push(a); return a; }
+  function ceCandidates(src, dst) {
+    var out = []; if (src === dst) out.push('id:' + src);
+    CE.arrows.forEach(function (a) { if (a.src === src && a.dst === dst) out.push(a.id); });
+    return out;
+  }
+  function cePairs() {
+    var out = [];
+    CE.arrows.forEach(function (a) { CE.arrows.forEach(function (b) { if (a.dst === b.src) out.push([a, b]); }); });
     return out;
   }
   function ceTidy() {
-    // forget table entries and placements that no longer make sense
+    // drop composites that point at removed arrows
     Object.keys(CE.comp).forEach(function (k) {
-      var p = k.split(','), A = ceEnds(p[0]), B = ceEnds(p[1]), c = CE.comp[k], C = c && ceEnds(c);
-      if (!A || !B || A.dst !== B.src || !C || C.src !== A.src || C.dst !== B.dst) delete CE.comp[k];
+      var p = k.split(','), a = ceArrow(p[0]), b = ceArrow(p[1]), c = CE.comp[k];
+      var ok = a && b && a.dst === b.src && ceCandidates(a.src, b.dst).indexOf(c) >= 0;
+      if (!ok && !CE.locked[k]) delete CE.comp[k];
     });
-    Object.keys(CE.e).forEach(function (k) {
-      var ed = arr(P.level.edges).filter(function (x) { return x.id === k; })[0], x = ceEnds(CE.e[k]);
-      if (!ed || !x || x.src !== CE.v[ed.src] || x.dst !== CE.v[ed.dst]) delete CE.e[k];
-    });
-    // a pair with only one possible composite is filled in automatically; once there is a real
-    // choice again, an automatic entry is cleared so the player has to decide
-    CE.auto = CE.auto || {};
-    CE.arrows.forEach(function (a) { CE.arrows.forEach(function (b) {
-      if (a.dst !== b.src) return; var k = a.id + ',' + b.id;
-      var opts = ceBetween(a.src, b.dst);
-      if (CE.auto[k] && opts.length > 1) { delete CE.comp[k]; delete CE.auto[k]; }
-      if (!CE.comp[k] && opts.length === 1) { CE.comp[k] = opts[0].id; CE.auto[k] = true; }
-    }); });
-    arr(P.level.edges).forEach(function (ed) {
-      if (ed.kind === 'identity' || CE.e[ed.id]) return;
-      var opts = ceBetween(CE.v[ed.src], CE.v[ed.dst]); if (opts.length === 1) CE.e[ed.id] = opts[0].id;
-    });
+    // nothing is decided for you: even a pair with one candidate is a choice, because you could add another arrow
+  }
+  function ceModel() {
+    return { objects: CE.objs.map(function (o) { return o.id; }),
+      arrows: CE.arrows.map(function (a) { return { id: a.id, src: a.src, dst: a.dst, label: a.label }; }), comp: Object.assign({}, CE.comp) };
+  }
+  function cePaint() {
+    var v = {}, e = {};
+    CE.objs.forEach(function (o) { v[o.id] = o.id; });
+    CE.arrows.forEach(function (a) { if (a.given) e[a.id] = a.id; });
+    return { vertices: v, edges: e };
   }
   function openCounter() {
     if (!CE || CE.level !== P.level) CE = ceFresh();
     renderCounter();
-    try { $('why').scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' }); } catch (e) {}
+    try { $('why').scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }); } catch (e) {}
   }
-  function ceSelect(attr, key, opts, cur) {
-    return '<select ' + attr + '="' + esc(key) + '">' + (!opts.some(function (o) { return o.id === cur; }) ? '<option value="">?</option>' : '') +
-      opts.map(function (o) { return '<option value="' + esc(o.id) + '"' + (o.id === cur ? ' selected' : '') + '>' + esc(o.label) + '</option>'; }).join('') + '</select>';
+
+  /* ---- the canvas ---- */
+  var CE_W = 100, CE_H = 60;
+  function ceArrowGeom(a) {
+    var A = ceObj(a.src), B = ceObj(a.dst); if (!A || !B) return null;
+    if (a.src === a.dst) {
+      var loops = CE.arrows.filter(function (x) { return x.src === a.src && x.dst === a.src; }), li = loops.indexOf(a);
+      var ang = -Math.PI / 2 + (li - (loops.length - 1) / 2) * 0.9, r = 6;
+      var cx = A.x + Math.cos(ang) * 7, cy = A.y + Math.sin(ang) * 7;
+      var p0 = { x: A.x + Math.cos(ang - 0.5) * 3.4, y: A.y + Math.sin(ang - 0.5) * 3.4 }, p1 = { x: A.x + Math.cos(ang + 0.5) * 3.6, y: A.y + Math.sin(ang + 0.5) * 3.6 };
+      return { d: 'M' + p0.x + ' ' + p0.y + ' C' + (cx + Math.cos(ang - 1.2) * r) + ' ' + (cy + Math.sin(ang - 1.2) * r) + ' ' + (cx + Math.cos(ang + 1.2) * r) + ' ' + (cy + Math.sin(ang + 1.2) * r) + ' ' + p1.x + ' ' + p1.y,
+        lx: A.x + Math.cos(ang) * 13, ly: A.y + Math.sin(ang) * 13 };
+    }
+    var sib = CE.arrows.filter(function (x) { return (x.src === a.src && x.dst === a.dst) || (x.src === a.dst && x.dst === a.src); });
+    var i = sib.indexOf(a), n = sib.length, flip = a.src > a.dst ? -1 : 1;
+    var off = n > 1 ? (i - (n - 1) / 2) * 7 * flip : 0;
+    var dx = B.x - A.x, dy = B.y - A.y, L = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / L, ny = dx / L;
+    var cx2 = (A.x + B.x) / 2 + nx * off * 2, cy2 = (A.y + B.y) / 2 + ny * off * 2;
+    function towardC(P0, d) { var ex = cx2 - P0.x, ey = cy2 - P0.y, l = Math.sqrt(ex * ex + ey * ey) || 1; return { x: P0.x + ex / l * d, y: P0.y + ey / l * d }; }
+    var s = towardC(A, 3.4), t = towardC(B, 4.4);
+    var mx = 0.25 * s.x + 0.5 * cx2 + 0.25 * t.x, my = 0.25 * s.y + 0.5 * cy2 + 0.25 * t.y;
+    var side = off >= 0 ? 1 : -1;
+    return { d: 'M' + s.x + ' ' + s.y + ' Q' + cx2 + ' ' + cy2 + ' ' + t.x + ' ' + t.y, lx: mx + nx * 3.6 * side, ly: my + ny * 3.6 * side };
   }
+  function renderCECanvas() {
+    var svg = $('ce-canvas'); if (!svg) return;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var defs = sEl('defs');
+    [['ce-ah', 'ce-ah'], ['ce-ah-hi', 'ce-ah hi'], ['ce-ah-bad', 'ce-ah bad']].forEach(function (m) {
+      var mk = sEl('marker', { id: m[0], viewBox: '0 0 12 10', refX: '6', refY: '5', markerWidth: '4.2', markerHeight: '3.5', markerUnits: 'userSpaceOnUse', orient: 'auto' });
+      mk.appendChild(sEl('path', { d: 'M0,0 L12,5 L0,10 L3,5 Z', class: m[1] })); defs.appendChild(mk);
+    });
+    svg.appendChild(defs);
+    svg.appendChild(sEl('rect', { x: -10, y: -10, width: CE_W + 20, height: CE_H + 20, class: 'ce-bg' }));
+    var hi = CE.hi || [], bad = CE.bad || [];
+    CE.arrows.forEach(function (a) {
+      var g = ceArrowGeom(a); if (!g) return;
+      var isHi = hi.indexOf(a.id) >= 0, isBad = bad.indexOf(a.id) >= 0, isSel = CE.sel === a.id;
+      var grp = sEl('g', { class: 'ce-arrow' + (a.given ? ' given' : ' made') + (isHi ? ' hi' : '') + (isBad ? ' bad' : '') + (isSel ? ' sel' : ''), 'data-ce-arrow': a.id });
+      grp.appendChild(sEl('path', { d: g.d, class: 'ce-hit' }));
+      grp.appendChild(sEl('path', { d: g.d, class: 'ce-line', 'marker-end': 'url(#' + (isBad ? 'ce-ah-bad' : isHi || isSel ? 'ce-ah-hi' : 'ce-ah') + ')' }));
+      var tx = sEl('text', { x: g.lx, y: g.ly, class: 'ce-lab', 'text-anchor': 'middle', 'dominant-baseline': 'central' });
+      fillLabel(tx, a.label); grp.appendChild(tx);
+      if (a.iso) { var iso = sEl('text', { x: g.lx, y: g.ly + 3.6, class: 'ce-iso', 'text-anchor': 'middle' }); iso.textContent = '≅'; grp.appendChild(iso); }
+      svg.appendChild(grp);
+    });
+    if (CE.drag && CE.drag.to) {
+      var A = ceObj(CE.drag.from);
+      if (A) svg.appendChild(sEl('path', { d: 'M' + A.x + ' ' + A.y + ' L' + CE.drag.to.x + ' ' + CE.drag.to.y, class: 'ce-ghost', 'marker-end': 'url(#ce-ah-hi)' }));
+    }
+    CE.objs.forEach(function (o) {
+      var hiO = hi.indexOf('o:' + o.id) >= 0;
+      var grp = sEl('g', { class: 'ce-obj' + (hiO ? ' hi' : '') + (CE.drag && CE.drag.from === o.id ? ' from' : ''), 'data-ce-obj': o.id, transform: 'translate(' + o.x + ' ' + o.y + ')' });
+      grp.appendChild(sEl('circle', { r: 6, class: 'ce-ohit' }));
+      grp.appendChild(sEl("circle", { r: 4, class: "ce-dot" }));
+      var t = sEl('text', { class: 'ce-olab', 'text-anchor': 'middle', 'dominant-baseline': 'central', y: 0.3 }); t.textContent = o.label;
+      grp.appendChild(t); svg.appendChild(grp);
+    });
+  }
+  function ceBindCanvas() {
+    var svg = $('ce-canvas'); if (!svg || svg._ceBound) return; svg._ceBound = true;
+    function pt(evt) { var q = svgPoint(svg, evt); return q ? { x: Math.max(2, Math.min(CE_W - 2, q.x)), y: Math.max(2, Math.min(CE_H - 2, q.y)) } : null; }
+    function objAt(evt) { var t = evt.target && evt.target.closest && evt.target.closest('[data-ce-obj]'); return t ? t.getAttribute('data-ce-obj') : null; }
+    svg.addEventListener('pointerdown', function (evt) {
+      if (!CE) return;
+      var o = objAt(evt), q = pt(evt);
+      if (o) { CE.drag = { from: o, to: null, start: q }; try { svg.setPointerCapture(evt.pointerId); } catch (e) {} evt.preventDefault(); return; }
+      var ar = evt.target.closest && evt.target.closest('[data-ce-arrow]');
+      if (ar) { var id = ar.getAttribute('data-ce-arrow'); CE.sel = CE.sel === id ? null : id; renderCounter(); return; }
+      CE.drag = { from: null, start: q };
+    });
+    svg.addEventListener('pointermove', function (evt) {
+      if (!CE || !CE.drag || !CE.drag.from) return;
+      CE.drag.to = pt(evt);
+      var st = CE.drag.start, to = CE.drag.to;
+      if (st && to && Math.abs(to.x - st.x) + Math.abs(to.y - st.y) > 3) CE.drag.far = true;   // left the object at some point
+      renderCECanvas();
+    });
+    svg.addEventListener('pointerup', function (evt) {
+      if (!CE || !CE.drag) return;
+      var d = CE.drag; CE.drag = null;
+      var q = pt(evt);
+      var target = null;
+      if (d.from) {
+        // what is under the pointer now (pointer capture means evt.target is the svg)
+        // the object nearest to where the drag ended, if it is close enough
+        var best = 7.5;
+        if (q) CE.objs.forEach(function (o) { var dd = Math.sqrt((o.x - q.x) * (o.x - q.x) + (o.y - q.y) * (o.y - q.y)); if (dd < best) { best = dd; target = o.id; } });
+        var moved = !!d.far || (d.start && q && Math.abs(q.x - d.start.x) + Math.abs(q.y - d.start.y) > 1.5);
+        if (target && (target !== d.from || moved)) { ceAddArrow(d.from, target); CE.msg = null; CE.bad = null; CE.badPairs = null; }
+        else if (!target && moved) { CE.msg = 'Let go on an object to draw an arrow to it.'; }
+        else if (!moved) { CE.msg = 'Drag from this object to another one to draw an arrow; drag it back onto itself for a loop.'; }
+        renderCounter(); return;
+      }
+      if (q && d.start && Math.abs(q.x - d.start.x) + Math.abs(q.y - d.start.y) < 1.5) {
+        var id = 'o' + (++CE.n), used = {}; CE.objs.forEach(function (o) { used[o.label] = 1; });
+        var lab = 'abcdefghij'.split('').filter(function (c) { return !used[c]; })[0] || ('o' + CE.n);
+        CE.objs.push({ id: id, label: lab, x: q.x, y: q.y }); CE.sel = null; CE.msg = null; CE.bad = null; CE.badPairs = null; renderCounter();
+      }
+    });
+  }
+
+  /* ---- the panel ---- */
   function renderCounter() {
-    var box = $('why'), lv = P.level, vl = {};
-    arr(lv.vertices).forEach(function (v) { vl[v.id] = v.label || v.id; });
+    var box = $('why'), lv = P.level;
     ceTidy();
-    var objOpts = CE.objects.map(function (o) { return { id: o, label: o }; });
-    var html = '<p class="why-h"><b>Prove it can’t be done: build a category where it fails.</b> <button type="button" class="linklike" data-act="why-close">cancel</button></p>' +
-      '<p class="ce-note">Make a small category, place this level’s starting picture inside it so that every given triangle becomes a true equation in your composition table, and make sure the goal is false there. Every move in the game also works inside the nerve of a category, so if the goal fails in yours, no sequence of moves can ever reach it.</p>';
-    html += '<div class="ce-build"><div class="ce-col"><p class="ce-h">Objects</p><p class="ce-row">' + CE.objects.map(function (o) { return '<span class="ce-obj">' + esc(o) + '</span>'; }).join(' ') +
-      ' <button type="button" class="mini" data-act="ce-addobj">+ object</button>' + (CE.objects.length > 1 ? ' <button type="button" class="mini" data-act="ce-delobj">− last</button>' : '') + '</p>';
-    html += '<p class="ce-h">Arrows <span class="note">(identities are built in)</span></p>' + (CE.arrows.length ? '' : '<p class="ce-row note">None yet.</p>') +
-      CE.arrows.map(function (a) { return '<p class="ce-row">' + math(labTeX(a.label) + ' : ' + a.src + ' \\to ' + a.dst) + ' <button type="button" class="linklike" data-cedel="' + esc(a.id) + '">remove</button></p>'; }).join('') +
-      '<p class="ce-row">new arrow from ' + ceSelect('data-cenew', 'src', objOpts, CE.newSrc || CE.objects[0]) + ' to ' + ceSelect('data-cenew', 'dst', objOpts, CE.newDst || CE.objects[Math.min(1, CE.objects.length - 1)]) +
-      ' <button type="button" class="mini" data-act="ce-addarrow">+ arrow</button></p></div>';
-    var pairs = [];
-    CE.arrows.forEach(function (a) { CE.arrows.forEach(function (b) { if (a.dst === b.src) pairs.push([a, b]); }); });
-    html += '<div class="ce-col"><p class="ce-h">Composition table <span class="note">(first, then second)</span></p>' + (pairs.length ? '' : '<p class="ce-row note">No two arrows meet end to end yet, so there is nothing to fill in.</p>') +
-      pairs.map(function (p) { var k = p[0].id + ',' + p[1].id, opts = ceBetween(p[0].src, p[1].dst);
-        return '<p class="ce-row">' + math(labTeX(p[0].label) + '\\text{ then }' + labTeX(p[1].label)) + ' = ' +
-          (opts.length ? ceSelect('data-cecomp', k, opts, CE.comp[k]) : '<span class="ce-bad">no arrow from ' + esc(p[0].src) + ' to ' + esc(p[1].dst) + ' yet</span>') + '</p>'; }).join('') + '</div>';
-    html += '<div class="ce-col"><p class="ce-h">Place the starting picture</p>' + arr(lv.vertices).map(function (v) {
-        return '<p class="ce-row">' + math(labTeX(vl[v.id])) + ' ↦ ' + ceSelect('data-cev', v.id, objOpts, CE.v[v.id]) + '</p>'; }).join('') +
-      arr(lv.edges).filter(function (ed) { return ed.kind !== 'identity'; }).map(function (ed) {
-        var opts = ceBetween(CE.v[ed.src], CE.v[ed.dst]);
-        return '<p class="ce-row">' + math(labTeX(ed.label) + (ed.iso ? '\\ (\\cong)' : '')) + ' ↦ ' + (opts.length ? ceSelect('data-cee', ed.id, opts, CE.e[ed.id]) : '<span class="ce-bad">no arrow from ' + esc(CE.v[ed.src]) + ' to ' + esc(CE.v[ed.dst]) + '</span>') + '</p>';
-      }).join('') + '</div></div>';
-    html += '<p><button type="button" class="btn primary" data-act="ce-check">Check</button> ' + (CE.msg ? '<span class="ce-msg">' + prose(CE.msg) + '</span>' : '') + '</p>';
-    box.innerHTML = html; box.hidden = false;
-    function on(sel, ev, fn) { Array.prototype.forEach.call(box.querySelectorAll(sel), function (n) { n.addEventListener(ev, function () { fn(n); }); }); }
-    on('[data-act="ce-addobj"]', 'click', function () { CE.objects.push(String(CE.objects.length)); CE.msg = null; renderCounter(); });
-    on('[data-act="ce-delobj"]', 'click', function () {
-      var o = CE.objects.pop();
-      CE.arrows = CE.arrows.filter(function (a) { return a.src !== o && a.dst !== o; });
-      Object.keys(CE.v).forEach(function (k) { if (CE.v[k] === o) delete CE.v[k]; });
-      CE.msg = null; renderCounter();
+    var pairs = cePairs(), decided = pairs.filter(function (p) { return CE.comp[p[0].id + ',' + p[1].id]; }).length;
+    var goalTxt = arr(goalParts && goalParts()).filter(function (p) { return p.kind === 'triangle'; }).map(function (p) { return p.html; }).join('<br>');
+    var html = '<div class="ce-head"><b>Prove it can’t be done</b> <span class="note">by building a category where the goal is false</span>' +
+      ' <button type="button" class="linklike" data-act="why-close">close</button></div>' +
+      '<p class="ce-note">Your category starts as this level’s picture. <b>Click empty space</b> to add an object, <b>drag from one object to another</b> to add an arrow (onto itself for a loop), then decide every composite below. The given triangles are composites already, and identities are built in.</p>' +
+      '<div class="ce-main"><div class="ce-left"><svg id="ce-canvas" class="ce-canvas" viewBox="-8 -8 ' + (CE_W + 16) + ' ' + (CE_H + 16) + '" role="img" aria-label="Your category"></svg>' +
+      (CE.sel && ceArrow(CE.sel) && !ceArrow(CE.sel).given ? '<p class="ce-row">Arrow ' + math(labTeX(ceArrow(CE.sel).label)) + ' selected: <button type="button" class="mini" data-act="ce-del">remove it</button></p>' : '') +
+      (goalTxt ? '<p class="ce-goal"><span class="note">must be false in your category:</span><br>' + goalTxt + '</p>' : '') + '</div>' +
+      '<div class="ce-right"><p class="ce-h">Composites <span class="note">' + decided + ' of ' + pairs.length + ' decided</span></p>' +
+      (pairs.length ? '' : '<p class="note">No two arrows meet end to end, so there is nothing to decide.</p>') +
+      pairs.map(function (p) {
+        var k = p[0].id + ',' + p[1].id, c = ceCandidates(p[0].src, p[1].dst), cur = CE.comp[k], lock = CE.locked[k];
+        var bad = (CE.badPairs || []).indexOf(k) >= 0;
+        return '<div class="ce-pair' + (cur ? ' done' : '') + (bad ? ' bad' : '') + '" data-ce-pair="' + esc(k) + '">' +
+          '<span class="ce-eq">' + math(labTeX(p[0].label) + '\\text{ then }' + labTeX(p[1].label) + ' =') + '</span> ' +
+          (lock ? '<span class="ce-chip on locked" title="given in the level">' + math(labTeX(ceLabelOf(cur))) + ' 🔒</span>' :
+            c.map(function (x) { return '<button type="button" class="ce-chip' + (x === cur ? ' on' : '') + '" data-ce-set="' + esc(k) + '|' + esc(x) + '">' + math(labTeX(ceLabelOf(x))) + '</button>'; }).join('') +
+            '<button type="button" class="ce-chip new" data-ce-new="' + esc(k) + '" title="a new arrow from ' + esc(ceObj(p[0].src).label) + ' to ' + esc(ceObj(p[1].dst).label) + '">+ new</button>') +
+          '</div>';
+      }).join('') + '</div></div>' +
+      '<p class="ce-act"><button type="button" class="btn primary" data-act="ce-check">Check my category</button> <button type="button" class="linklike" data-act="ce-reset">start over</button> ' +
+      (CE.msg ? '<span class="ce-msg">' + prose(CE.msg) + '</span>' : '') + '</p>';
+    box.innerHTML = html; box.hidden = false; box.classList.add('ce-open');
+    renderCECanvas(); ceBindCanvas();
+    function on(sel, ev, fn) { Array.prototype.forEach.call(box.querySelectorAll(sel), function (n) { n.addEventListener(ev, function (e) { fn(n, e); }); }); }
+    on('[data-ce-set]', 'click', function (n) { var v = n.getAttribute('data-ce-set').split('|'); CE.comp[v[0]] = v[1]; if (CE.auto) delete CE.auto[v[0]]; CE.msg = null; CE.bad = null; CE.badPairs = null; renderCounter(); });
+    on('[data-ce-new]', 'click', function (n) {
+      var k = n.getAttribute('data-ce-new'), p = k.split(','), a = ceArrow(p[0]), b = ceArrow(p[1]);
+      var na = ceAddArrow(a.src, b.dst); CE.comp[k] = na.id; if (CE.auto) delete CE.auto[k]; CE.msg = null; CE.bad = null; CE.badPairs = null; renderCounter();
     });
-    on('[data-cenew]', 'change', function (n) { if (n.getAttribute('data-cenew') === 'src') CE.newSrc = n.value; else CE.newDst = n.value; });
-    on('[data-act="ce-addarrow"]', 'click', function () {
-      var s = CE.newSrc || CE.objects[0], d = CE.newDst || CE.objects[Math.min(1, CE.objects.length - 1)];
-      CE.arrows.push({ id: 'u' + (++CE.n), src: s, dst: d, label: ceNextName() }); CE.msg = null; renderCounter();
+    on('[data-ce-pair]', 'mouseenter', function (n) {
+      var p = n.getAttribute('data-ce-pair').split(','), c = CE.comp[p.join(',')];
+      CE.hi = [p[0], p[1]].concat(c ? [c] : []); renderCECanvas();
     });
-    on('[data-cedel]', 'click', function (n) { var id = n.getAttribute('data-cedel'); CE.arrows = CE.arrows.filter(function (a) { return a.id !== id; }); CE.msg = null; renderCounter(); });
-    on('[data-cecomp]', 'change', function (n) { var k = n.getAttribute('data-cecomp'); if (CE.auto) delete CE.auto[k]; if (n.value) CE.comp[k] = n.value; else delete CE.comp[k]; CE.msg = null; renderCounter(); });
-    on('[data-cev]', 'change', function (n) { var k = n.getAttribute('data-cev'); if (n.value) CE.v[k] = n.value; else delete CE.v[k]; CE.msg = null; renderCounter(); });
-    on('[data-cee]', 'change', function (n) { var k = n.getAttribute('data-cee'); if (n.value) CE.e[k] = n.value; else delete CE.e[k]; CE.msg = null; renderCounter(); });
+    on('[data-ce-pair]', 'mouseleave', function () { CE.hi = null; renderCECanvas(); });
+    on('[data-act="ce-del"]', 'click', function () {
+      var id = CE.sel; CE.arrows = CE.arrows.filter(function (a) { return a.id !== id; });
+      Object.keys(CE.comp).forEach(function (k) { if (k.split(',').indexOf(id) >= 0 || CE.comp[k] === id) { if (!CE.locked[k]) delete CE.comp[k]; } });
+      CE.sel = null; CE.msg = null; CE.bad = null; CE.badPairs = null; renderCounter();
+    });
+    on('[data-act="ce-reset"]', 'click', function () { CE = ceFresh(); renderCounter(); });
     on('[data-act="ce-check"]', 'click', ceCheck);
   }
   function ceCheck() {
     if (!CE) return;
-    var arg = { model: ceModelObj(), paint: { vertices: Object.assign({}, CE.v), edges: Object.assign({}, CE.e) } };
-    var res = HC.Engine.checkModel(P.level, arg.model, arg.paint);
-    if (!res.ok) {
-      CE.msg = res.goalHolds ? 'The goal is true in this category, so it isn’t a counterexample yet. Change the category so that it fails.' : res.reason;
+    var model = ceModel(), cat = HC.Engine.checkCategory(model);
+    if (!cat.ok) {
+      var wh = cat.where || [];
+      CE.msg = cat.reason; CE.bad = wh.filter(function (x) { return !/^id:/.test(x); });
+      CE.badPairs = wh.length >= 2 ? [wh[0] + ',' + wh[1]].concat(wh.length >= 3 ? [wh[1] + ',' + wh[2]] : []) : [];
       renderCounter(); return;
+    }
+    CE.badPairs = [];
+    var arg = { model: model, paint: cePaint() };
+    var res = HC.Engine.checkModel(P.level, model, arg.paint);
+    if (!res.ok) {
+      CE.msg = res.goalHolds ? 'This is a category, but the goal is true in it, so it isn’t a counterexample. Change it so that the goal fails.' : res.reason;
+      CE.bad = null; renderCounter(); return;
     }
     closeWhy(); CE = null;
     doMove(['claimImpossible', arg]);
@@ -2913,7 +3031,7 @@
     box.hidden = false;
     try { box.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' }); } catch (e) {}
   }
-  function closeWhy() { var b = $('why'); if (b) { b.hidden = true; b.innerHTML = ''; } }
+  function closeWhy() { var b = $('why'); if (b) { b.hidden = true; b.innerHTML = ''; b.classList.remove('ce-open'); } }
   function claimWith(reasonId) {
     closeWhy();
     if (!engineHas('claimImpossible')) { toast('Not available yet.', 'info'); return; }

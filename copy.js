@@ -1268,7 +1268,7 @@ HC.Copy = {
       explain: String.raw`This loop is a hollow triangle, the shape the Skeleta and cells world capped with Glue triangle, and that tool isn't in this world. Every tool here fills a horn: a shape missing exactly one face. Compose on $f,g$ adds a new arrow with a triangle on it and leaves $h$ alone. To prove the goal impossible, pick the counter-model Hollow triangle, a category with objects $0,1,2$ in which $f$ then $g$ composes to its own arrow $k$, different from $h$. Your picture fits inside it, the triangle $(f,g\,;\,h)$ is false there, and horn fillings can't change that.`,
       hints: [
         String.raw`Is any horn here missing exactly the face you want?`,
-        String.raw`This can't be done. Build objects $0,1,2$ with an arrow for each of $f,g,h$, plus one more arrow $k:0\to 2$, and set ($f$'s arrow) then ($g$'s arrow) $=k$.`
+        String.raw`This can't be done. In the builder, decide $f$ then $g$ with + new, so the composite is a new arrow and not $h$. Check.`
       ],
       win: [String.raw`Impossible: in the hollow-triangle category, $f$ then $g$ is $k$, never $h$.`],
       term: String.raw`Not anodyne`,
@@ -1287,7 +1287,7 @@ HC.Copy = {
       explain: String.raw`You can get from $a$ to $d$ by $f$ then $g$, or by $u$ then $v$. Composing each pair gives an arrow from $a$ to $d$, and the goal asks for a single arrow that composes both. Nothing on the board joins the two ways round: the square is a closed loop of four arrows with a hole in the middle. In the counter-model Square that doesn't commute, $f$ then $g$ is an arrow $x$ and $u$ then $v$ is a different arrow $y$. Your four arrows fit inside it, and no arrow composes both pairs there.`,
       hints: [
         String.raw`Compose each way round. What could join the two results?`,
-        String.raw`This can't be done. Build objects $0,1,2,3$, an arrow for each of $f,g,u,v$, and two different arrows $p,q:0\to 3$; set $f$ then $g$ to $p$ and $u$ then $v$ to $q$.`
+        String.raw`This can't be done. In the builder, give $f$ then $g$ and $u$ then $v$ two different new arrows (+ new on each). Check.`
       ],
       win: [String.raw`Impossible: the two ways round have different composites in the non-commuting square.`],
       term: String.raw`A hole`,
@@ -1306,7 +1306,7 @@ HC.Copy = {
       explain: String.raw`Sharing endpoints doesn't make two arrows homotopic. You need a triangle $(f,1_b\,;\,g)$, and every tool here builds triangles out of triangles that already exist. The only triangles on this board are the degenerate ones, $s_0f$, $s_1f$, $s_0g$, $s_1g$ and those on identities, and none of them relates $f$ to $g$. For the proof, choose Two parallel arrows: a category with objects $0,1$ and two different arrows $p,q:0\to1$. In a category $f\simeq g$ means $f=g$, and $p\ne q$.`,
       hints: [
         String.raw`Which triangles exist to start from?`,
-        String.raw`This can't be done. Two objects and two different arrows $0\to 1$ are already a category; send $f$ to one and $g$ to the other.`
+        String.raw`This can't be done. The picture on its own is already a category, so just press Check.`
       ],
       win: [String.raw`Impossible: two distinct parallel arrows in a category aren't homotopic.`],
       term: String.raw`No free homotopy`,
@@ -1384,7 +1384,7 @@ HC.Copy = {
       explain: String.raw`Three sides of a square, and the fourth side $w:c\to d$ is missing. The first triangle is easy: Compose $f,v$ gives a diagonal $x$. The second triangle $(u,w\,;\,x)$ knows its first leg $u$ and its long side $x$ and wants its second leg: two arrows leaving $a$, the outer horn $\Lambda^2_0$. No tool here fills outer horns. The counter-model Open square is a category with objects $0,1,2,3$, arrows $f,v,u$, the composite $x$, and nothing at all from $2$ to $3$, so $w$ has nowhere to go.`,
       hints: [
         String.raw`Which horn would produce the missing side?`,
-        String.raw`This can't be done. Build objects $0,1,2,3$ with arrows for $f:0\to 1$, $v:1\to 3$, $u:0\to 2$ and their composite $0\to 3$, and no arrow from $2$ to $3$.`
+        String.raw`This can't be done. In the builder, decide $f$ then $v$ with + new, and add no arrow from $c$ to $d$. Check.`
       ],
       win: [
         String.raw`Impossible: the missing side comes from an outer horn, and the open square has no arrow from $2$ to $3$.`
@@ -1544,7 +1544,7 @@ HC.Copy = {
       explain: String.raw`In the Kan complexes world this was one Solve. Here the missing second leg would come from the outer horn $\Lambda^2_0$, and only inner horns fill. Starting from one arrow $a\to b$, inner fillings only ever produce arrows $a\to a$, $a\to b$ and $b\to b$, so nothing will ever point from $b$ back to $a$. The counter-model One arrow is the category $0\to1$ with a single arrow $u$: it contains $f$ as $u$, satisfies every inner horn, and has no arrow $1\to0$ at all.`,
       hints: [
         String.raw`Which way do arrows made by inner fillings point?`,
-        String.raw`This can't be done. Two objects and a single arrow $0\to 1$ form a category with nothing going back.`
+        String.raw`This can't be done. The picture on its own is already a category, with nothing going back. Press Check.`
       ],
       win: [String.raw`Impossible: in the category $0\to1$ nothing goes back.`],
       term: String.raw`Not every arrow inverts`,
@@ -1563,7 +1563,7 @@ HC.Copy = {
       explain: String.raw`This is Cancelling an arrow from the Kan complexes world. There, the tetrahedron on $f,1_b,g$ had its missing face at $d_3$, an outer horn $\Lambda^3_3$, and Kan let you fill it. Here that face carries a padlock. The counter-model Fork shows it stays locked for good: a category with $p,q:0\to1$, $g:1\to2$, and $p$ then $g$ equal to $q$ then $g$, both $x$, while $p\ne q$. Send $f$ to $p$ and $k$ to $q$; both triangles hold and the goal fails.`,
       hints: [
         String.raw`Remember which face of the tetrahedron was missing in the Kan version.`,
-        String.raw`This can't be done. Build two different arrows $p,q:0\to 1$, one arrow $1\to 2$ for $g$ and one $0\to 2$ for $x$; set both $p$ then $g$ and $q$ then $g$ to that last arrow.`
+        String.raw`This can't be done. The given triangles already fill in the whole table, and $f$ and $k$ stay different. Press Check.`
       ],
       win: [
         String.raw`Impossible: without an inverse for $g$, different arrows can compose with $g$ to the same thing.`
@@ -1584,7 +1584,7 @@ HC.Copy = {
       explain: String.raw`Going out along $f$ and back along $g$ composes to the identity at $a$, by $\sigma_1$. Going $g$ then $f$ need not compose to the identity at $b$, and the counter-model One-sided inverse shows why: it's a category with arrows $i:0\to1$ and $r:1\to0$ where $i$ then $r$ is the identity of $0$ while $r$ then $i$ is an arrow $\varepsilon:1\to1$ different from the identity. Think of $i$ as including a small set into a bigger one and $r$ as squashing it back down, and send $f\mapsto i$ and $g\mapsto r$.`,
       hints: [
         String.raw`Look for a category where undoing works in one order only.`,
-        String.raw`This can't be done. Build $i:0\to 1$, $r:1\to 0$ and $e:1\to 1$, with $i$ then $r=1_0$, $r$ then $i=e$, $e$ then $e=e$, $i$ then $e=i$, $e$ then $r=r$.`
+        String.raw`This can't be done. Drag a loop $k$ on $b$; set $g$ then $f=k$, $f$ then $k=f$, $k$ then $g=g$, $k$ then $k=k$. Check.`
       ],
       win: [String.raw`Impossible: $r$ then $i$ is $\varepsilon$, which isn't the identity.`],
       term: String.raw`Retraction`,
@@ -1857,7 +1857,7 @@ HC.Copy = {
       explain: String.raw`Earlier you showed that a left inverse and a right inverse of the same arrow must agree up to homotopy. Here both arrows undo $f$ on the same side, which isn't quite the same situation. Before you start building tetrahedra, it's worth asking what you'd expect in ordinary mathematics: think of a function $f$ that embeds a small set into a bigger one, and of the different ways of mapping the bigger set back.`,
       hints: [
         String.raw`Try to imagine an ordinary category where an arrow has two different retractions. If one exists, no proof can.`,
-        String.raw`This can't be done. Take the last level's category and double it: $i:0\to 1$, two arrows $r,r':1\to 0$ and two loops $e,e'$ on $1$, with $i$ then $r$ and $i$ then $r'$ both $1_0$; associativity then decides every other entry.`
+        String.raw`This can't be done. Draw two loops $k,m$ on $b$, with $g$ then $f=k$ and $h$ then $f=m$; then associativity decides every other entry. Check.`
       ],
       win: [
         String.raw`Retractions aren't unique: an arrow can be undone on one side in genuinely different ways.`

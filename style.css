@@ -890,8 +890,46 @@ details.gl-sec > summary.gl-world { cursor: pointer; list-style: revert; }
 .tsub { font-size: 12px; color: var(--muted); margin-left: 2px; } .tool.active .tsub { color: inherit; opacity: .8; }
 .bossmark.challenge { border-color: var(--k-composite); color: var(--k-composite); }
 
-/* building a counterexample category */
-.ce-build { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 6px 26px; margin: 6px 0; }
-.ce-col { min-width: 0; }
-.ce-obj { display: inline-block; min-width: 22px; text-align: center; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; }
 
+
+/* building a counterexample category, on a canvas */
+.why.ce-open { gap: 8px; }
+.ce-head { font-size: 17px; }
+.ce-note { margin: 0; font-size: 15px; color: var(--ink-soft); max-width: 760px; }
+.ce-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-items: start; }
+.ce-canvas { width: 100%; height: auto; border: 1px solid var(--line); background: var(--paper); touch-action: none; user-select: none; cursor: crosshair; display: block; }
+.ce-bg { fill: transparent; }
+.ce-obj { cursor: grab; }
+.ce-ohit { fill: transparent; }
+.ce-dot { fill: var(--dot); stroke: var(--paper); stroke-width: .6; }
+.ce-canvas { max-height: 340px; }
+.ce-obj.hi .ce-dot, .ce-obj.from .ce-dot { fill: var(--accent); }
+.ce-olab { font: bold 3.6px var(--font-math); fill: var(--dot-ink); pointer-events: none; }
+.ce-arrow { cursor: pointer; }
+.ce-hit { fill: none; stroke: transparent; stroke-width: 4; }
+.ce-line { fill: none; stroke: var(--k-given); stroke-width: .7; stroke-linecap: butt; }
+.ce-arrow.made .ce-line { stroke: var(--k-composite); }
+.ce-arrow.hi .ce-line, .ce-arrow.sel .ce-line { stroke: var(--hi); stroke-width: 1.2; }
+.ce-arrow.bad .ce-line { stroke: var(--warn); stroke-width: 1.2; }
+.ce-ah { fill: var(--k-given); } .ce-ah.hi { fill: var(--hi); } .ce-ah.bad { fill: var(--warn); }
+.ce-arrow.made .ce-ah { fill: var(--k-composite); }
+.ce-lab { font: italic 3.6px var(--font-math); fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 1.2px; pointer-events: none; }
+.ce-arrow.made .ce-lab { fill: var(--k-composite); }
+.ce-iso { font: 3px var(--font-math); fill: var(--ink); pointer-events: none; }
+.ce-ghost { fill: none; stroke: var(--hi); stroke-width: .8; stroke-dasharray: 2 1.5; }
+.ce-goal { margin: 8px 0 0; font-size: 15px; }
+.ce-h { margin: 0 0 4px; font-weight: bold; }
+.ce-right { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0 10px; align-content: start; }
+.ce-right > .ce-h, .ce-right > .note { grid-column: 1 / -1; }
+.ce-pair { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; padding: 5px 6px; border-left: 3px solid var(--line); margin-bottom: 4px; background: var(--paper); }
+.ce-pair.done { border-left-color: var(--ok); }
+.ce-pair.bad { border-left-color: var(--warn); background: var(--hi-soft); }
+.ce-pair:hover { background: var(--hi-soft); }
+.ce-eq { margin-right: 4px; }
+.ce-chip { font: inherit; font-size: 15px; padding: 1px 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); cursor: pointer; }
+.ce-chip.on { border-color: var(--ok); background: var(--ok-soft); font-weight: bold; }
+.ce-chip.new { color: var(--link); border-style: dashed; }
+.ce-chip.locked { cursor: default; }
+.ce-act { margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.ce-msg { color: var(--warn); }
+@media (max-width: 899px) { .ce-main { grid-template-columns: minmax(0, 1fr); } }
