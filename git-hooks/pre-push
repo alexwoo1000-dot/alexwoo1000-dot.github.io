@@ -1,6 +1,7 @@
 #!/bin/sh
-# pre-push: one syntax error in any JS file breaks the whole live site (text.js included).
-# This check takes about a second, so it is safe to run on every push.
+# pre-push: check that every JS file parses, and say exactly which line is wrong.
+# One syntax error in any of these files breaks the whole live site (text.js included),
+# and the check takes about a second, so it is safe to run on every push.
 #
 # Enable once, in this repository:
 #   git config core.hooksPath git-hooks
@@ -19,14 +20,32 @@ if [ -z "$NODE" ]; then
     exit 0
 fi
 
+fail=0
 for f in engine.js levels.js text.js tetra3d.js notesview.js ui.js make-site.js; do
-    if [ -f "$f" ]; then
-        if ! "$NODE" --check "$f"; then
-            echo ""
-            echo "pre-push: $f does not parse. Not pushing."
-            echo "          (a stray quote is the usual cause; the line above says where)"
-            exit 1
+    [ -f "$f" ] || continue
+    err=$("$NODE" --check "$f" 2>&1)
+    if [ $? -ne 0 ]; then
+        fail=1
+        # node prints "<path>:<line>" as the first line, then the source line, then the message
+        line=$(printf '%s\n' "$err" | tr -d '\r' | sed -n 's/^.*:\([0-9][0-9]*\)$/\1/p' | head -n 1)
+        message=$(printf '%s\n' "$err" | tr -d '\r' | grep -m1 'SyntaxError' | sed 's/^[[:space:]]*//')
+        echo ""
+        if [ -n "$line" ]; then
+            echo "pre-push: SYNTAX ERROR in $f at line $line"
+            snippet=$(sed -n "${line}p" "$f" | tr -d '\r' | cut -c1-110)
+            echo "    $line | $snippet"
+        else
+            echo "pre-push: SYNTAX ERROR in $f"
         fi
+        [ -n "$message" ] && echo "    $message"
     fi
 done
+
+if [ "$fail" -ne 0 ]; then
+    echo ""
+    echo "pre-push: not pushing. Fix the line(s) above and push again."
+    echo "          A raw line break inside a \"...\" string and an unescaped \" are the usual causes."
+    exit 1
+fi
+
 echo "pre-push: all JS files parse"
