@@ -543,14 +543,13 @@ HC.Copy = {
 
   intro: {
     title: String.raw`Hornfiller`,
-    lede: String.raw`A puzzle game about higher category theory. There's only one kind of move: a shape is missing a side, and you fill it in. Everything else, from composing arrows to Joyal's theorem, gets built out of that.`,
+    lede: String.raw`A puzzle game about higher category theory.`,
     demo: {
-      hint: String.raw`Try it now. Two arrows meet at $b$, and the side from $a$ to $c$ is missing. Tap $f$ and then $g$ to fill it.`,
-      done: String.raw`You filled your first horn. The new arrow $x$ comes with a triangle $(f,g\,;\,x)$, and that triangle is the proof that $x$ is a composite of $f$ then $g$. Every level in the game is about building or finding shapes like this one.`
+      hint: String.raw`Tap $f$, then $g$.`,
+      done: String.raw`The triangle is the proof that $x$ is a composite of $f$ then $g$, and every level in the game is about building or finding shapes like that one.`
     },
     start: String.raw`Start the first level`,
-    note: String.raw`Or read the first note`,
-    skip: String.raw`Skip to the level list`,
+    note: String.raw`Read the first note instead`,
     noteId: String.raw`simplicial`
   },
 

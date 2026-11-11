@@ -895,11 +895,3 @@ details.gl-sec > summary.gl-world { cursor: pointer; list-style: revert; }
 .ce-col { min-width: 0; }
 .ce-obj { display: inline-block; min-width: 22px; text-align: center; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; }
 
-/* intro: the instruction under the pitch turns into the payoff once the horn is filled */
-body[data-demo="on"] .intro-say { display: block; font-size: 18px; line-height: 1.45; margin: 0 0 12px; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); max-width: 680px; }
-body[data-demo="on"] .intro-say.done { border-left-color: var(--ok); background: var(--ok-soft); }
-body[data-demo="on"] .intro-skip { display: block; margin-top: 8px; font-size: 14px; }
-body[data-demo="on"] .intro-act.ready { margin-top: 2px; }
-
-body[data-demo="on"] .intro-act { display: none; }
-body[data-demo="on"] .intro-act.ready { display: flex; }

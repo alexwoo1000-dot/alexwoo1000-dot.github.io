@@ -3594,10 +3594,8 @@
     var offer = $('offer');
     offer.hidden = false;
     offer.innerHTML = '<span class="intro-lede">' + prose(I.lede || '') + '</span>' +
-      '<span class="intro-say" aria-live="polite"></span>' +
-      '<span class="intro-act"><button type="button" class="btn primary" data-act="intro-start">' + prose(I.start || 'Start') + ' <span class="kbd">Enter</span></button>' +
-      (I.note ? ' <button type="button" class="linklike" data-act="intro-note">' + prose(I.note) + '</button>' : '') + '</span>' +
-      '<span class="intro-skip"><button type="button" class="linklike" data-act="intro-skip">' + prose(I.skip || 'Skip to the level list') + '</button></span>';
+      '<span class="intro-act"><button type="button" class="btn primary" data-act="intro-start">' + prose(I.start || 'Start') + '</button>' +
+      (I.note ? ' <button type="button" class="linklike" data-act="intro-note">' + prose(I.note) + '</button>' : '') + '</span>';
     introGate();
   }
   function introGate() {
@@ -3609,9 +3607,6 @@
     });
     var act = document.querySelector('#offer .intro-act');
     if (act) act.classList.toggle('ready', done);
-    var say = document.querySelector('#offer .intro-say');
-    if (say) { var t = done ? (d.done || '') : (d.hint || ''); if (say.getAttribute('data-t') !== t) { say.setAttribute('data-t', t); say.innerHTML = prose(t); say.classList.toggle('done', done); } }
-    var sk = document.querySelector('#offer [data-act="intro-skip"]'); if (sk) { sk.disabled = false; sk.removeAttribute('aria-disabled'); }
   }
   function enterIntro() {
     var base = introBase();
@@ -4011,7 +4006,6 @@
       var b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
       var act = b.getAttribute('data-act');
       if (act === 'intro-start') { introDone(); exitIntro(); startLevel(0); }
-      else if (act === 'intro-skip') { introDone(); exitIntro(); showScreen('map'); }
       else if (act === 'intro-note') { introDone(); exitIntro(); showNote((HC.Intro && HC.Intro.noteId) || 'simplicial'); }
     });
 
