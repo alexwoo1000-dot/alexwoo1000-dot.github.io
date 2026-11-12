@@ -5,7 +5,7 @@
 var HC = (typeof window !== 'undefined' ? window : globalThis).HC || ((typeof window !== 'undefined' ? window : globalThis).HC = {});
 
 /* needs: which worlds the "after ..." line under a world title names. Not prose; the map reads it. */
-HC.WorldNeeds = { 1: [], 2: [1], 3: [2], 4: [3], 5: [4], 6: [3], 7: [2], 8: [4, 5, 6, 7], 9: [5, 8], 10: [5, 8], 11: [10], 12: [11], 13: [2] };
+HC.WorldNeeds = { 1: [], 2: [1], 3: [2], 4: [3], 5: [4], 6: [4], 7: [6], 8: [4], 9: [2], 10: [4, 6, 8, 9], 11: [6, 10], 12: [6, 10], 13: [12], 14: [13], 15: [2] };
 
 (function (C) {
   if (!C) {

@@ -1648,7 +1648,7 @@
         var thw = labelWidth(nm) * LABEL_FONT * 0.3 + 4, thh = LABEL_FONT * 0.4, ty = cs.y, tt = 0;
         var tb = arr(P.tnameBoxes);
         function thit(yy) { return tb.some(function (b) { return Math.abs(b.x - cs.x) < b.hw + thw && Math.abs(b.y - yy) < b.hh + thh; }); }
-        while (thit(ty) && tt < 10) { tt++; ty = cs.y + (tt % 2 ? 1 : -1) * Math.ceil(tt / 2) * thh * 2.3; }
+        while (thit(ty) && tt < 10) { tt++; ty = cs.y + (tt % 2 ? 1 : -1) * Math.ceil(tt / 2) * thh * 2.8; }
         cs = { x: cs.x, y: ty };
         var tn = sEl('text', { x: r1(cs.x), y: r1(cs.y), class: 'tname' + (arr(st.triangles).length > 8 ? ' dense' : ''), 'data-tid': t.id, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': Math.round(LABEL_FONT * 0.72) });
         fillLabel(tn, nm.replace(/([\u2080-\u2089]+)/, function (d) { return '_{' + deSub(d) + '}'; }));
@@ -1663,11 +1663,14 @@
     arr(P.tetLabels).forEach(function (q) {
       var hw = labelWidth(q.name) * LABEL_FONT * 0.3 + 6, hh = LABEL_FONT * 0.42, y = q.y, tries = 0;
       function hits(yy) { return boxes.some(function (b) { return Math.abs(b.x - q.x) < b.hw + hw && Math.abs(b.y - yy) < b.hh + hh; }); }
-      while (hits(y) && tries < 12) { tries++; y = q.y + (tries % 2 ? 1 : -1) * Math.ceil(tries / 2) * hh * 2.2; }
+      var yMax = geo.vb[1] + geo.vb[3] - hh - 4, yMin = geo.vb[1] + hh + 4;
+      function inside(yy) { return yy >= yMin && yy <= yMax; }
+      while ((hits(y) || !inside(y)) && tries < 16) { tries++; y = q.y + (tries % 2 ? 1 : -1) * Math.ceil(tries / 2) * hh * 2.2; }
+      y = Math.max(yMin, Math.min(yMax, y));
       boxes.push({ x: q.x, y: y, hw: hw, hh: hh }); q.y = y;
     });
     arr(P.tetLabels).forEach(function (q) {
-      var tl = sEl('text', { x: r1(q.x), y: r1(q.y), class: 'tetname' + (q.degen ? ' degen' : '') + (P.tetLabels.length > 4 ? ' dense' : ''), 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': Math.round(LABEL_FONT * 0.7), 'data-tet': q.id });
+      var tl = sEl('text', { x: r1(q.x), y: r1(q.y), class: 'tetname' + (q.degen ? ' degen' : '') + (q.degen || P.tetLabels.filter(function (x) { return !x.degen; }).length > 4 ? ' dense' : ''), 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': Math.round(LABEL_FONT * 0.7), 'data-tet': q.id });
       fillLabel(tl, q.name.replace(/([\u2080-\u2089]+)/, function (x) { return '_{' + deSub(x) + '}'; }));
       gF.appendChild(tl);
       if (P.els.tet[q.id]) P.els.tet[q.id].label = tl;
@@ -3463,7 +3466,10 @@
     var choose = '';
     if (q.opts.length > 1) {
       choose = '<p class="trip-horn">These four tetrahedra fit together in ' + q.opts.length + ' ways. Choose one:</p><p class="q-opts">' + q.opts.map(function (o, i) {
-        return '<button type="button" class="mini' + (q.choice === i ? ' on' : '') + '" data-qopt="' + i + '">missing ' + math('D_' + o.k) + (o.allowed ? '' : ' ' + LOCK_SVG) + '</button>';
+        // options can share the missing face and differ only in where the given tetrahedra sit: say where
+        var diff = [0, 1, 2, 3, 4].filter(function (d) { return q.opts.some(function (p) { return p.place[d] !== o.place[d]; }) && o.place[d]; });
+        var where = diff.map(function (d) { return 'D_' + d + ' = ' + solidNameTeX(solidInfo(o.place[d])); }).join(',\ ');
+        return '<button type="button" class="mini' + (q.choice === i ? ' on' : '') + '" data-qopt="' + i + '">missing ' + math('D_' + o.k) + (where ? ' <span class="note">' + math(where) + '</span>' : '') + (o.allowed ? '' : ' ' + LOCK_SVG) + '</button>';
       }).join(' ') + '</p>';
     }
     var o = q.choice != null ? q.opts[q.choice] : null;
@@ -3502,7 +3508,7 @@
     if (isIdentityEdge(P.m, id)) { toast('Identities are always kept: every subcategory contains them.', 'info'); return; }
     if (P.kept[id]) delete P.kept[id]; else P.kept[id] = 1;
     P.selMsg = null;
-    applyHighlights(); renderToolHint();
+    applyHighlights(); renderToolHint(); renderGoals();
   }
   function checkSelection() {
     var ids = Object.keys(P.kept || {});
@@ -4379,6 +4385,7 @@
     if (lv.base) return lv.licence === 'left'
       ? 'You are working with a <b>left fibration</b> X \u2192 S. In X you may lift any arrow of the base S from a vertex of your choice, and fill a horn that is missing its first face, provided a matching shape lies below it.'
       : 'You are working with an <b>inner fibration</b> X \u2192 S: in X only inner horns can be filled, and only when X lies over a matching simplex of the base S.';
+    if (lv.goal && lv.goal.select) return 'This is a <b>quasi-category</b> given by its picture. Nothing gets built here: you select arrows, then check the selection.';
     if (lv.goal && lv.goal.pick != null) return 'A <b>simplicial set</b>: vertices, arrows, triangles. Nothing fills here — you are reading the picture.';
     if (has('witness') || has('isNerve')) return 'A bare <b>simplicial set</b>. Nothing fills here; you judge the picture as it stands.';
     if (has('cell2') || has('addEdge') || has('peel') || has('cosk')) return 'A bare <b>simplicial set</b>: nothing fills by itself, so you add and remove cells by hand.';

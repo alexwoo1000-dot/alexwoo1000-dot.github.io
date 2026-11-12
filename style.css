@@ -944,3 +944,7 @@ details.gl-sec > summary.gl-world { cursor: pointer; list-style: revert; }
 /* busy boards: names of triangles and tetrahedra appear only for what is highlighted */
 .tname.dense:not(.hi), .tetname.dense:not(.hi) { display: none; }
 .tname.hi { fill: var(--accent); opacity: 1; font-weight: bold; }
+.def-fig svg { max-width: 320px; display: block; margin: 0 auto; }
+/* tetrahedron goals: the four face pictures on their own row, the sentence below */
+.goals .pat:has(.solid-pics) { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.goals .solid-pics { display: flex; gap: 4px; }

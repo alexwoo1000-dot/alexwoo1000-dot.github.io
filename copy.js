@@ -124,8 +124,8 @@ HC.Copy = {
       hornsFill: String.raw`inner`,
       brief: {
         sofar: String.raw`You can construct composites, and you have seen one pair of arrows get two different ones.`,
-        now: String.raw`You will hand the Tetrahedron tool three triangles that fit together and receive the fourth face. With it you relate the two ways of composing three arrows, compare two composites of the same pair, and check what composing with an identity does.`,
-        new: String.raw`The tool Tetrahedron, which fills the inner horns $\Lambda^3_1$ and $\Lambda^3_2$; homotopy $x\simeq y$, defined in the note before the third level; the tool Same, which you earn there.`,
+        now: String.raw`You'll hand the Tetrahedron tool three triangles that fit together and receive the fourth face. With it you relate the two ways of composing three arrows, $f$ with $g$ first or $g$ with $h$ first.`,
+        new: String.raw`The tool Tetrahedron, which fills the inner horns $\Lambda^3_1$ and $\Lambda^3_2$.`,
         about: String.raw`Each answer you get here is a triangle, never an equation. A tetrahedron is the smallest place where three triangles can force a fourth.`,
         picture: {
           caption: String.raw`Three faces of a tetrahedron are filled; the tool supplies the fourth.`,
@@ -178,9 +178,9 @@ HC.Copy = {
       },
       hornsFill: String.raw`inner`,
       brief: {
-        sofar: String.raw`You can build tetrahedra, and you showed that two composites of the same pair are homotopic.`,
-        now: String.raw`You will prove that homotopy can be reversed, that it chains, and that a homotopic arrow can replace another inside a triangle. Each proof is one tetrahedron with an identity among its edges, and each one you finish becomes a tool.`,
-        new: String.raw`The theorem tools Flip (reverse a homotopy), Link (chain two) and Swap in (replace an arrow in a triangle by a homotopic one).`,
+        sofar: String.raw`You can build tetrahedra, and you've used one to relate the two bracketings of three arrows.`,
+        now: String.raw`You'll start by comparing two composites of the same pair, which is where homotopy comes in, and check what composing with an identity does. Then you'll prove that homotopy can be reversed, that it chains, and that a homotopic arrow can replace another inside a triangle. Each proof is one tetrahedron with an identity among its edges, and each one you finish becomes a tool.`,
+        new: String.raw`Homotopy $x\simeq y$, explained in the note before the first level; the theorem tools Same (compare two composites of one pair), Flip (reverse a homotopy), Link (chain two) and Swap in (replace an arrow in a triangle by a homotopic one).`,
         about: String.raw`The definition $x\simeq y$ reads in one direction only, with $x$ first and $1_b$ after it. Everything that lets you treat homotopic arrows as interchangeable has to be earned, one tetrahedron at a time.`,
         picture: {
           caption: String.raw`A homotopy from $x$ to $y$: a triangle whose second leg is $1_b$.`,
@@ -200,6 +200,50 @@ HC.Copy = {
     },
     {
       id: 5,
+      title: String.raw`Higher simplices`,
+      mathTitle: String.raw`Higher simplices`,
+      blurb: String.raw``,
+      definition: String.raw`A <b>4-simplex</b> has corners $0,\dots,4$ and five faces $D_0,\dots,D_4$, each a tetrahedron, where $D_i$ omits corner $i$; four faces with $D_k$ missing form the horn $\Lambda^4_k$. A triangle $\sigma$ has three <b>degenerate tetrahedra</b> $s_0\sigma,s_1\sigma,s_2\sigma$, where $s_i\sigma$ repeats corner $i$ and has $d_i=d_{i+1}=\sigma$.`,
+      definitionDiagram: {
+        dots: [
+          { id: `a`, label: `0`, x: 50, y: 6 },
+          { id: `b`, label: `1`, x: 88, y: 26 },
+          { id: `c`, label: `2`, x: 74, y: 56 },
+          { id: `d`, label: `3`, x: 26, y: 56 },
+          { id: `e`, label: `4`, x: 12, y: 26 }
+        ],
+        arrows: [
+          { from: `a`, to: `b`, label: `` }, { from: `b`, to: `c`, label: `` }, { from: `c`, to: `d`, label: `` }, { from: `d`, to: `e`, label: `` },
+          { from: `a`, to: `c`, label: `` }, { from: `b`, to: `d`, label: `` }, { from: `c`, to: `e`, label: `` },
+          { from: `a`, to: `d`, label: `` }, { from: `b`, to: `e`, label: `` }, { from: `a`, to: `e`, label: `` }
+        ]
+      },
+      hornsFill: String.raw`inner`,
+      brief: {
+        sofar: String.raw`You've used Tetrahedron to get triangles, and proved that homotopy behaves like an equivalence relation that respects composition.`,
+        now: String.raw`Tetrahedra now stay on the board as simplices $\tau_1,\tau_2,\dots$ in their own right. You'll pick out degenerate ones, hand four that fit together to the 4-simplex tool to get a fifth, show that two homotopies between the same composites are homotopic, and finish with Mac Lane's pentagon for four arrows.`,
+        new: String.raw`Tetrahedra written by their faces $(d_0,d_1,d_2,d_3)$; degenerate tetrahedra $s_0\sigma,s_1\sigma,s_2\sigma$; the horns $\Lambda^4_k$; the tool 4-simplex.`,
+        about: String.raw`The reasoning is the one you already know, moved up a dimension: four tetrahedra that agree along their shared triangles force a fifth, just as three triangles forced a fourth. That's where homotopies between homotopies come from.`,
+        picture: {
+          caption: String.raw`A 4-simplex drawn flat: five corners and ten arrows.`,
+          dots: [
+            { id: `a`, label: `0`, x: 50, y: 6 },
+            { id: `b`, label: `1`, x: 88, y: 26 },
+            { id: `c`, label: `2`, x: 74, y: 56 },
+            { id: `d`, label: `3`, x: 26, y: 56 },
+            { id: `e`, label: `4`, x: 12, y: 26 }
+          ],
+          arrows: [
+            { from: `a`, to: `b`, label: `` }, { from: `b`, to: `c`, label: `` }, { from: `c`, to: `d`, label: `` }, { from: `d`, to: `e`, label: `` },
+            { from: `a`, to: `c`, label: `` }, { from: `b`, to: `d`, label: `` }, { from: `c`, to: `e`, label: `` },
+            { from: `a`, to: `d`, label: `` }, { from: `b`, to: `e`, label: `` }, { from: `a`, to: `e`, label: `` }
+          ],
+          fills: []
+        }
+      }
+    },
+    {
+      id: 6,
       title: String.raw`Kan complexes`,
       mathTitle: String.raw`Kan complexes`,
       blurb: String.raw``,
@@ -241,7 +285,48 @@ HC.Copy = {
       }
     },
     {
-      id: 6,
+      id: 7,
+      title: String.raw`Subcategories`,
+      mathTitle: String.raw`Subcategories`,
+      blurb: String.raw``,
+      definition: String.raw`A <b>subcategory</b> of a quasi-category $X$ is a set of vertices together with a set of arrows between them that contains the identities and is closed under composition and under homotopy. It is <b>full</b> if it contains every arrow between its vertices, and the <b>core</b> of $X$ is the subcategory of all vertices and all isomorphisms.`,
+      definitionDiagram: {
+        dots: [
+          { id: `a`, label: `a`, x: 12, y: 46 },
+          { id: `b`, label: `b`, x: 50, y: 10 },
+          { id: `c`, label: `c`, x: 88, y: 46 }
+        ],
+        arrows: [
+          { from: `a`, to: `b`, label: `f` },
+          { from: `b`, to: `c`, label: `g` },
+          { from: `a`, to: `c`, label: `x` }
+        ],
+        fills: [[`a`, `b`, `c`]]
+      },
+      hornsFill: String.raw`inner`,
+      brief: {
+        sofar: String.raw`You can compose arrows, recognise homotopic ones, and build inverses for the arrows that have them.`,
+        now: String.raw`Nothing gets built in this world. Each board asks you to select a set of arrows: the ones in a full subcategory, the smallest subcategory containing some given arrows, or the isomorphisms that make up the core. You tap arrows to keep them and press Check.`,
+        new: String.raw`Subcategories, full subcategories, the subcategory generated by a set of arrows, and the core.`,
+        about: String.raw`A subcategory has to be closed under composition and homotopy, so choosing one means following triangles: whenever both legs are in, the long side comes in too, and a homotopy brings its other end along.`,
+        picture: {
+          caption: String.raw`If $f$ and $g$ are in a subcategory, so is the long side $x$.`,
+          dots: [
+            { id: `a`, label: `a`, x: 12, y: 44 },
+            { id: `b`, label: `b`, x: 50, y: 10 },
+            { id: `c`, label: `c`, x: 88, y: 44 }
+          ],
+          arrows: [
+            { from: `a`, to: `b`, label: `f` },
+            { from: `b`, to: `c`, label: `g` },
+            { from: `a`, to: `c`, label: `x` }
+          ],
+          fills: [[`a`, `b`, `c`]]
+        }
+      }
+    },
+    {
+      id: 8,
       title: String.raw`Nerves of categories`,
       mathTitle: String.raw`Nerves of categories`,
       blurb: String.raw``,
@@ -282,7 +367,7 @@ HC.Copy = {
       }
     },
     {
-      id: 7,
+      id: 9,
       title: String.raw`Skeleta and cells`,
       mathTitle: String.raw`Skeleta and cells`,
       blurb: String.raw``,
@@ -324,7 +409,7 @@ HC.Copy = {
       }
     },
     {
-      id: 8,
+      id: 10,
       title: String.raw`Anodyne maps`,
       mathTitle: String.raw`Anodyne maps`,
       blurb: String.raw``,
@@ -367,7 +452,7 @@ HC.Copy = {
       }
     },
     {
-      id: 9,
+      id: 11,
       title: String.raw`Lifting`,
       mathTitle: String.raw`Left fibrations`,
       blurb: String.raw``,
@@ -421,7 +506,7 @@ HC.Copy = {
       }
     },
     {
-      id: 10,
+      id: 12,
       title: String.raw`Isomorphisms`,
       mathTitle: String.raw`Joyal's theorem`,
       blurb: String.raw``,
@@ -457,7 +542,7 @@ HC.Copy = {
       }
     },
     {
-      id: 11,
+      id: 13,
       title: String.raw`Natural transformations`,
       mathTitle: String.raw`Natural transformations`,
       blurb: String.raw``,
@@ -504,7 +589,7 @@ HC.Copy = {
       }
     },
     {
-      id: 12,
+      id: 14,
       title: String.raw`Challenges`,
       mathTitle: String.raw`Challenges`,
       blurb: String.raw``,
@@ -512,12 +597,12 @@ HC.Copy = {
       hornsFill: String.raw`inner`,
       brief: {
         sofar: String.raw`You've met every tool the game has.`,
-        now: String.raw`Challenge puzzles here.`,
+        now: String.raw`Four problems, each stated with no hint of a method. Prove that homotopic arrows have homotopic composites using nothing but Tetrahedron, cancel an isomorphism on the left without Divide, decide whether two retractions of one arrow must be homotopic, and show that if $f$ and a composite of $f$ and $g$ are isomorphisms then so is $g$.`,
         new: String.raw`Nothing new: only harder.`
       }
     },
     {
-      id: 13,
+      id: 15,
       title: String.raw`Sandbox`,
       mathTitle: String.raw`Sandbox`,
       blurb: String.raw``,
@@ -894,6 +979,101 @@ HC.Copy = {
         proof: String.raw`Fill $\Lambda^3_2$ on $(a,c,d,e)$ for $(x,y;w)$, then $\Lambda^3_2$ on $(a,b,c,e)$ for $(f,u;w)$; apply Same to $\sigma_9,\sigma_4$.`
       }
     },
+    /* 0. A tetrahedron as a simplex */
+    solidfact: {
+      title: String.raw`A tetrahedron as a simplex`,
+      bullets: [
+        String.raw`Given $\sigma_1=(f,g\,;\,x)$, $\sigma_2=(g,h\,;\,y)$ and $\sigma_3=(x,h\,;\,z)$.`,
+        String.raw`Prove a tetrahedron with faces $(\sigma_2,\sigma_3,?,\sigma_1)$.`
+      ],
+      explain: String.raw`You've seen this board before, in the first level of the Tetrahedra world, but this time the goal is the tetrahedron itself rather than its new face. The goal lists faces in the order $(d_0,d_1,d_2,d_3)$, so $\sigma_2$ is $d_0$, $\sigma_3$ is $d_1$, $\sigma_1$ is $d_3$, and the question mark is $d_2$. Tetrahedron on the path $f,g,h$ fills that inner horn $\Lambda^3_2$ as before, and the 3-simplex it builds now stays on the board under the name $\tau_1$, listed by its four faces. Later in this world you'll hand tetrahedra like this one to the 4-simplex tool.`,
+      hints: [
+        String.raw`Use Tetrahedron exactly as in the first level of the Tetrahedra world.`,
+        String.raw`Tetrahedron: path $f,g,h$; $d_3=\sigma_1$, $d_0=\sigma_2$, $d_1=\sigma_3$. Fill.`
+      ],
+      win: [String.raw`$\tau_1$ has faces $(\sigma_2,\sigma_3,\sigma_4,\sigma_1)$, where $\sigma_4=(f,y\,;\,z)$.`],
+      term: String.raw`3-simplex`,
+      math: {
+        say: String.raw`Filling an inner horn $\Lambda^3_2\to X$ gives a 3-simplex $\tau$ with $d_0\tau=\sigma_2$, $d_1\tau=\sigma_3$, $d_3\tau=\sigma_1$; its remaining face $d_2\tau$ is new.`,
+        proof: String.raw`Fill $\Lambda^3_2$ on $(a,b,c,d)$; the filler is $\tau_1=(\sigma_2,\sigma_3,\sigma_4,\sigma_1)$.`
+      }
+    },
+    /* 0. Degenerate tetrahedra */
+    thicken: {
+      title: String.raw`Degenerate tetrahedra`,
+      bullets: [
+        String.raw`Given one triangle $\sigma_1=(f,g\,;\,x)$.`,
+        String.raw`Pick the degenerate tetrahedron whose faces $d_2$ and $d_3$ are both $\sigma_1$.`
+      ],
+      explain: String.raw`An arrow $f$ has two degenerate triangles, $s_0f$ and $s_1f$, because it has two corners you can repeat. A triangle has three corners, so it has three degenerate tetrahedra: $s_0\sigma_1$ over $a,a,b,c$, $s_1\sigma_1$ over $a,b,b,c$, and $s_2\sigma_1$ over $a,b,c,c$. They exist for the same reason the degenerate triangles do, so they're always there for free. In $s_i\sigma_1$ the two faces that skip one copy of the repeated corner are both $\sigma_1$ itself, which means $d_i=d_{i+1}=\sigma_1$, and the other two faces are degenerate triangles. You want the one with $d_2=d_3=\sigma_1$.`,
+      hints: [
+        String.raw`Repeating corner $i$ makes $d_i$ and $d_{i+1}$ equal to $\sigma_1$.`,
+        String.raw`Pick $s_2\sigma_1$.`
+      ],
+      win: [String.raw`$s_2\sigma_1$ sits over $a,b,c,c$, and its faces are $(s_1g,\,s_1x,\,\sigma_1,\,\sigma_1)$.`],
+      term: String.raw`Degenerate tetrahedra`,
+      math: {
+        say: String.raw`For a 2-simplex $\sigma$, $s_i\sigma$ is the degenerate 3-simplex that repeats vertex $i$; the simplicial identities give $d_is_i\sigma=d_{i+1}s_i\sigma=\sigma$.`,
+        proof: String.raw`$d_2s_2\sigma_1=d_3s_2\sigma_1=\sigma_1$, $d_0s_2\sigma_1=s_1d_0\sigma_1=s_1g$ and $d_1s_2\sigma_1=s_1d_1\sigma_1=s_1x$.`
+      }
+    },
+    /* 0. Five tetrahedra on five corners */
+    pentagon: {
+      title: String.raw`Five tetrahedra on five corners`,
+      bullets: [
+        String.raw`Given ten triangles on the corners $a,b,c,d,e$, four tetrahedra that fit together, and one more that doesn't.`,
+        String.raw`Prove the tetrahedron with faces $(\sigma_9,\sigma_6,\sigma_3,\sigma_2)$.`
+      ],
+      explain: String.raw`Five corners with ten arrows and ten triangles make the outline of a 4-simplex, whose five faces are tetrahedra, $D_i$ being the one that skips corner $i$. Here $\tau_1$ on $b,c,d,e$ is $D_0$, $\tau_2$ on $a,c,d,e$ is $D_1$, $\tau_3$ on $a,b,c,e$ is $D_3$ and $\tau_4$ on $a,b,c,d$ is $D_4$. That leaves $D_2$ on $a,b,d,e$ missing, so the four you have form the inner horn $\Lambda^4_2$, and the 4-simplex tool fills it just as Tetrahedron filled $\Lambda^3_2$. Watch out for $\tau_5$: it uses $\sigma_{11}$, a second triangle with the same sides as $\sigma_4$, so it doesn't fit with $\tau_4$.`,
+      hints: [
+        String.raw`Each given tetrahedron skips one corner. Which corner does none of the matching four skip?`,
+        String.raw`4-simplex: $\tau_1$, $\tau_2$, $\tau_3$, $\tau_4$.`
+      ],
+      win: [String.raw`$\tau_6=(\sigma_9,\sigma_6,\sigma_3,\sigma_2)$ fills the horn $\Lambda^4_2$.`],
+      term: String.raw`4-simplex`,
+      math: {
+        say: String.raw`A 4-simplex has faces $D_0,\dots,D_4$. Four 3-simplices that agree on shared 2-faces form a horn $\Lambda^4_k$, and in a quasi-category an inner one ($k=1,2,3$) extends to $\Delta^4$.`,
+        proof: String.raw`Fill $\Lambda^4_2$ on $(a,b,c,d,e)$ with $D_0=\tau_1$, $D_1=\tau_2$, $D_3=\tau_3$, $D_4=\tau_4$.`
+      }
+    },
+    /* 0. Two homotopies between the same composites */
+    twohomotopies: {
+      title: String.raw`Two homotopies between the same composites`,
+      bullets: [
+        String.raw`Given composites $\sigma_1=(f,g\,;\,x)$ and $\sigma_2=(f,g\,;\,y)$, two homotopies $\sigma_3,\sigma_4$ from $x$ to $y$, and the tetrahedra $\tau_1,\tau_2$ that produced them.`,
+        String.raw`Prove a tetrahedron with faces $(s_01_c,\,s_1y,\,\sigma_4,\,\sigma_3)$.`
+      ],
+      explain: String.raw`In <i>Comparing two composites</i>, one tetrahedron on $f,g,1_c$ turned the composites $x$ and $y$ into a homotopy $x\simeq y$. Do it twice and you can get two different homotopies, $\sigma_3$ from $\tau_1$ and $\sigma_4$ from $\tau_2$. The goal is a tetrahedron over $a,c,c,c$ with $d_3=\sigma_3$, $d_2=\sigma_4$ and degenerate faces otherwise, which is a homotopy between the two homotopies, the picture $(x,1_c\,;\,y)$ one dimension up. It's the face $D_1$ of a 4-simplex over $a,b,c,c,c$ whose other faces are $\tau_1$, $\tau_2$ and the degenerate tetrahedra $s_2\sigma_2$ and $s_2s_1g$, so it comes from the inner horn $\Lambda^4_1$.`,
+      hints: [
+        String.raw`Two of the four faces you need are degenerate tetrahedra; both repeat the last corner.`,
+        String.raw`4-simplex: $\tau_1$, $\tau_2$, $s_2\sigma_2$, $s_2s_1g$; if asked, choose the horn $\Lambda^4_1$.`
+      ],
+      win: [String.raw`$\tau_3=(s_01_c,s_1y,\sigma_4,\sigma_3)$: the two homotopies are homotopic.`],
+      term: String.raw`Homotopy of homotopies`,
+      math: {
+        say: String.raw`The space of composites $\mathrm{Comp}(f,g)$ is contractible. In particular two homotopies $x\simeq y$ coming from 3-simplices $\tau_1,\tau_2$ on $(f,g,1_c)$ with the same $d_2$ and $d_3$ are joined by a 3-simplex $(s_01_c,s_1y,\sigma_4,\sigma_3)$, from an inner horn $\Lambda^4_1$.`,
+        proof: String.raw`Fill $\Lambda^4_1$ on $(a,b,c,c,c)$ with $D_4=\tau_1$, $D_3=\tau_2$, $D_2=s_2\sigma_2$, $D_0=s_2s_1g$; $D_1$ is the target.`
+      }
+    },
+    /* 0. Mac Lane's pentagon */
+    pentagonproof: {
+      title: String.raw`Mac Lane's pentagon`,
+      bullets: [
+        String.raw`Given $f,g,h,i$ end to end, with $\sigma_1=(f,g\,;\,j)$, $\sigma_2=(g,h\,;\,k)$ and $\sigma_3=(h,i\,;\,l)$.`,
+        String.raw`Prove all five tetrahedra of a 4-simplex on $a,b,c,d,e$.`
+      ],
+      explain: String.raw`Four arrows in a row can be bracketed in five ways, and in an ordinary category the five bracketings sit at the corners of a pentagon whose sides are uses of associativity. Here the whole pentagon is a single 4-simplex. Its ten arrows are the four you're given, the composites $j,k,l$, the composites $x$ of $j,h$ and $y$ of $k,i$, and the long composite $z$ of $x,i$; the arrow $o_0$ is a decoy. Each of its five faces is an associativity tetrahedron. Build four of them with Tetrahedron, each one filling an inner $\Lambda^3_2$, and the fifth comes from the inner horn $\Lambda^4_2$. Plan the order, because the last tetrahedron you build needs triangles made by two of the earlier ones.`,
+      hints: [
+        String.raw`Make $x$, $y$ and $z$ first; then every tetrahedron sits on a path of three arrows whose composites already exist.`,
+        String.raw`Compose: $j$, $h$. Compose: $k$, $i$. Compose: $x$, $i$. Tetrahedron: path $f,g,h$; $d_3=\sigma_1$, $d_0=\sigma_2$, $d_1=\sigma_4$. Tetrahedron: path $g,h,i$; $d_3=\sigma_2$, $d_0=\sigma_3$, $d_1=\sigma_5$. Tetrahedron: path $j,h,i$; $d_3=\sigma_4$, $d_0=\sigma_3$, $d_1=\sigma_6$. Tetrahedron: path $f,g,l$; $d_3=\sigma_1$, $d_0=\sigma_8$, $d_1=\sigma_9$. 4-simplex: $\tau_2$, $\tau_3$, $\tau_4$, $\tau_1$.`
+      ],
+      win: [String.raw`$\tau_5$ completes the 4-simplex: associativity for four arrows is coherent.`],
+      term: String.raw`Pentagon`,
+      math: {
+        say: String.raw`The five bracketings of $f,g,h,i$ and the five associativity 3-simplices between them form a 4-simplex $\Delta^4\to X$; the inner horn $\Lambda^4_2$ supplies the last face. This is Mac Lane's pentagon, up to homotopy.`,
+        proof: String.raw`Fill $\Lambda^2_1$ three times and $\Lambda^3_2$ four times for $\tau_1,\dots,\tau_4$, then $\Lambda^4_2$ with $D_0=\tau_2$, $D_1=\tau_3$, $D_3=\tau_4$, $D_4=\tau_1$.`
+      }
+    },
     /* 0. A left inverse */
     undo: {
       title: String.raw`A left inverse`,
@@ -982,6 +1162,86 @@ HC.Copy = {
       math: {
         say: String.raw`If $f,g$ have left inverses $\bar f,\bar g$, then a composite $w$ of $(\bar g,\bar f)$ is a left inverse of a composite $x$ of $(f,g)$. Only inner horns are used, so this holds in every quasi-category.`,
         proof: String.raw`Swap $\bar g$ in for $\bar g'$; fill $\Lambda^3_1$ on $(a,b,c,b)$ for $(x,\bar g;f)$, then $\Lambda^3_2$ on $(a,c,b,a)$ for $(x,w;1_a)$.`
+      }
+    },
+    /* 0. A full subcategory */
+    fullsub: {
+      title: String.raw`A full subcategory`,
+      bullets: [
+        String.raw`Seven arrows on the vertices $a,b,c$.`,
+        String.raw`Select the arrows of the full subcategory on $a$ and $c$.`
+      ],
+      prompt: String.raw`the arrows of the full subcategory on the vertices $a$ and $c$`,
+      explain: String.raw`A <b>full subcategory</b> is chosen by naming some vertices and taking every arrow between them, in either direction, together with the identities, which come along automatically. There's nothing else to check, because a composite of two arrows that run between $a$ and $c$ also runs between $a$ and $c$, so it's already in. The vertex $b$ is left out, which means any arrow that starts or ends at $b$ goes too. Tap the arrows that run from $a$ to $c$ or from $c$ to $a$, then press Check.`,
+      hints: [
+        String.raw`Only the endpoints matter: is each end $a$ or $c$?`,
+        String.raw`Keep $h$, $h'$ and $k$, then press Check.`
+      ],
+      win: [String.raw`$h$, $h'$, $k$ and the identities make up the full subcategory on $a$ and $c$.`],
+      term: String.raw`Full subcategory`,
+      math: {
+        say: String.raw`The full subcategory of $X$ on a set $S$ of vertices is the simplicial subset of all simplices whose vertices lie in $S$.`,
+        proof: String.raw`The edges with both ends in $\{a,c\}$ are $h$, $h'$ and $k$.`
+      }
+    },
+    /* 0. The subcategory generated by two arrows */
+    subcat: {
+      title: String.raw`The subcategory generated by two arrows`,
+      bullets: [
+        String.raw`$f$ and $g$ are already selected.`,
+        String.raw`Select the smallest subcategory that contains $f$ and $g$.`
+      ],
+      prompt: String.raw`the smallest subcategory containing $f$ and $g$`,
+      explain: String.raw`A subcategory has to contain the identities and has to be closed in two ways: if both legs of a triangle are in, the long side is in too, and if an arrow is in, so is every arrow homotopic to it. So start from $f$ and $g$ and follow the triangles. $\sigma_1=(f,g\,;\,x)$ and $\sigma_2=(f,g\,;\,x')$ bring in both composites $x$ and $x'$, and the homotopy $\sigma_3=(x',1_c\,;\,w)$ then brings in $w$. The arrow $h$ also runs from $a$ to $c$, but no triangle ties it to anything you've selected, so it stays out, and so does $k$.`,
+      hints: [
+        String.raw`Follow the triangles whose legs are already selected, and the homotopies out of what you've got.`,
+        String.raw`Keep $x$, $x'$ and $w$ along with $f$ and $g$, then press Check.`
+      ],
+      win: [String.raw`$f,g,x,x',w$ and the identities: closed under composition and homotopy.`],
+      term: String.raw`Subcategory`,
+      math: {
+        say: String.raw`A subcategory of a quasi-category is given by a set of vertices and a set of edges between them that contains the identities and is closed under composition and under homotopy; it is again a quasi-category.`,
+        proof: String.raw`The closure of $\{f,g\}$: $x$ and $x'$ by $\sigma_1,\sigma_2$, then $w$ by $\sigma_3$.`
+      }
+    },
+    /* 0. Closing up step by step */
+    subcat2: {
+      title: String.raw`Closing up step by step`,
+      bullets: [
+        String.raw`$f$, $g$ and $p$ are already selected.`,
+        String.raw`Select the smallest subcategory that contains them.`
+      ],
+      prompt: String.raw`the smallest subcategory containing $f$, $g$ and $p$`,
+      explain: String.raw`The rules are the same as in the last level, but it takes more rounds, because each arrow you add can be a leg of a triangle you couldn't use before. From $f$ and $g$ you get $x$ by $\sigma_1$, and the homotopy $\sigma_2$ brings in $x'$. Now $x'$ and $p$ are the legs of $\sigma_3$, so $r$ comes in. Separately, $g$ and $p$ give $s$ by $\sigma_4$, and then $f$ and $s$ give $y$ by $\sigma_5$. The triangle $\sigma_6$ has legs $g$ and $q$, and since $q$ isn't selected, neither $q$ nor $t$ belongs.`,
+      hints: [
+        String.raw`After each new arrow, look at the triangles again: one of them may now have both legs selected.`,
+        String.raw`Keep $x$, $x'$, $r$, $s$ and $y$ along with $f$, $g$ and $p$, then press Check.`
+      ],
+      win: [String.raw`Eight arrows: the closure of $f,g,p$ under composition and homotopy.`],
+      term: String.raw`Generated subcategory`,
+      math: {
+        say: String.raw`The subcategory generated by a set of edges is the intersection of all subcategories containing it, and it is computed by closing up under composition and homotopy.`,
+        proof: String.raw`Add $x$ ($\sigma_1$), $x'$ ($\sigma_2$), $r$ ($\sigma_3$), $s$ ($\sigma_4$) and $y$ ($\sigma_5$); $q$ and $t$ stay out.`
+      }
+    },
+    /* 0. The core */
+    core: {
+      title: String.raw`The core`,
+      bullets: [
+        String.raw`Arrows on four vertices, with some inverse triangles among them.`,
+        String.raw`Select the arrows of the core: the ones the board proves are isomorphisms.`
+      ],
+      prompt: String.raw`the arrows of the core, the isomorphisms`,
+      explain: String.raw`The <b>core</b> keeps every vertex and only the isomorphisms, and it's a Kan complex, because every arrow in it can be undone. An arrow counts if the triangles on the board prove it's an isomorphism. $i$ and $j$ undo each other on both sides by $\sigma_1$ and $\sigma_2$, and so do $m$ and $n$ by $\sigma_4$ and $\sigma_5$. Anything homotopic to an isomorphism is one, so $i'$ comes in by $\sigma_3$, and a composite of isomorphisms is one, so $x$ comes in by $\sigma_6$. The arrow $k$ undoes the isomorphism $i$ on one side by $\sigma_8$, which forces $k\simeq j$. The pair $r,s$ has an inverse triangle on one side only, and that isn't enough.`,
+      hints: [
+        String.raw`An arrow belongs if it has inverses on both sides, is homotopic to such an arrow, is a composite of two of them, or is a one-sided inverse of one.`,
+        String.raw`Keep $i$, $j$, $i'$, $k$, $m$, $n$ and $x$, then press Check.`
+      ],
+      win: [String.raw`Seven arrows and the identities: the isomorphisms, which form the core.`],
+      term: String.raw`Core`,
+      math: {
+        say: String.raw`The core $X^{\simeq}$ of a quasi-category $X$ is the subcategory with all vertices and exactly the equivalences as edges; it is the largest Kan complex contained in $X$.`,
+        proof: String.raw`Equivalences: $i,j$ ($\sigma_1,\sigma_2$), $m,n$ ($\sigma_4,\sigma_5$), $i'\simeq i$ ($\sigma_3$), $x$ a composite of $i,m$ ($\sigma_6$), and $k$, a one-sided inverse of $i$ ($\sigma_8$). The edge $r$ has only $(r,s;1_c)$.`
       }
     },
     /* 0. The composition table */
@@ -1949,12 +2209,101 @@ HC.Copy = {
 
   notes: [
     {
+      id: String.raw`highersimp`,
+      before: String.raw`solidfact`,
+      title: String.raw`Tetrahedra as simplices, and the 4-simplex`,
+      body: [
+        {
+          p: String.raw`Until now a tetrahedron has been a way of getting a triangle: you handed three faces to Tetrahedron and kept the fourth. The tetrahedron the tool built is a 3-simplex of the simplicial set in its own right, though, so from now on the board keeps it, names it $\tau_1,\tau_2,\dots$, and writes it by its four faces in the order $(d_0,d_1,d_2,d_3)$.`
+        },
+        {
+          p: String.raw`Tetrahedra have degenerate versions, just as triangles do. An arrow $f$ gave $s_0f$ and $s_1f$ because it has two corners you can repeat, and a triangle $\sigma$ has three corners, so it gives three degenerate tetrahedra $s_0\sigma$, $s_1\sigma$ and $s_2\sigma$. In $s_i\sigma$ the faces $d_i$ and $d_{i+1}$ are both $\sigma$ itself and the other two are degenerate triangles. Like their smaller cousins they always exist, which is why you can use them in a proof without building them.`
+        },
+        {
+          diagram: {
+            caption: String.raw`$s_1\sigma$ for $\sigma=(f,g\,;\,x)$, with its repeated corner drawn twice: corners over $a,b,b,c$, and faces $d_1=d_2=\sigma$.`,
+            dots: [
+              { id: `a`, label: `a`, x: 8, y: 46 },
+              { id: `b`, label: `b`, x: 50, y: 6 },
+              { id: `bb`, label: `b′`, x: 50, y: 30 },
+              { id: `c`, label: `c`, x: 92, y: 46 }
+            ],
+            arrows: [
+              { from: `a`, to: `b`, label: `f` },
+              { from: `b`, to: `bb`, label: `1_b`, kind: `identity` },
+              { from: `bb`, to: `c`, label: `g` },
+              { from: `a`, to: `bb`, label: `f` },
+              { from: `b`, to: `c`, label: `g` },
+              { from: `a`, to: `c`, label: `x` }
+            ],
+            fills: [[`a`, `b`, `bb`], [`b`, `bb`, `c`], [`a`, `bb`, `c`]]
+          }
+        },
+        {
+          p: String.raw`One dimension up from the tetrahedron is the <b>4-simplex</b> $\Delta^4$, with corners $0,\dots,4$, ten arrows, ten triangles and five tetrahedral faces $D_0,\dots,D_4$, where $D_i$ skips corner $i$. Drawn flat it looks like a pentagon with all its diagonals. Four of its faces with $D_k$ missing form the horn $\Lambda^4_k$, which is inner when $k$ is $1$, $2$ or $3$, and in a quasi-category every inner horn has a filler. So the 4-simplex tool takes four tetrahedra that fit together and gives you the fifth, the same way Tetrahedron took three triangles and gave you the fourth.`
+        },
+        {
+          diagram: {
+            caption: String.raw`A 4-simplex drawn flat: five corners, ten arrows, and five tetrahedra hiding inside.`,
+            dots: [
+              { id: `a`, label: `0`, x: 50, y: 6 },
+              { id: `b`, label: `1`, x: 88, y: 26 },
+              { id: `c`, label: `2`, x: 74, y: 56 },
+              { id: `d`, label: `3`, x: 26, y: 56 },
+              { id: `e`, label: `4`, x: 12, y: 26 }
+            ],
+            arrows: [
+              { from: `a`, to: `b`, label: `` }, { from: `b`, to: `c`, label: `` }, { from: `c`, to: `d`, label: `` }, { from: `d`, to: `e`, label: `` },
+              { from: `a`, to: `c`, label: `` }, { from: `b`, to: `d`, label: `` }, { from: `c`, to: `e`, label: `` },
+              { from: `a`, to: `d`, label: `` }, { from: `b`, to: `e`, label: `` }, { from: `a`, to: `e`, label: `` }
+            ]
+          }
+        },
+        {
+          p: String.raw`Why go up a dimension at all? A tetrahedron whose faces include homotopies is a homotopy between homotopies, and a 4-simplex is where you prove that one exists. The last two levels of this world use it to show that two homotopies between the same two composites are homotopic, and that associativity for four arrows is coherent, which is Mac Lane's pentagon.`
+        }
+      ]
+    },
+    {
+      id: String.raw`subcats`,
+      before: String.raw`fullsub`,
+      title: String.raw`Subcategories and the core`,
+      body: [
+        {
+          p: String.raw`In an ordinary category a subcategory is a choice of some objects and some arrows between them that contains the identities and is closed under composition. In a quasi-category composites aren't unique, so the condition becomes: whenever $f$ and $g$ are in, every composite of them is in, and since a homotopic arrow is as good as the original, anything homotopic to an arrow that's in has to be in as well. A subcategory chosen this way is again a quasi-category.`
+        },
+        {
+          diagram: {
+            caption: String.raw`If $f$ and $g$ are in, so is their composite $x$, and so is $x'$, which is homotopic to it.`,
+            dots: [
+              { id: `a`, label: `a`, x: 12, y: 46 },
+              { id: `b`, label: `b`, x: 50, y: 10 },
+              { id: `c`, label: `c`, x: 88, y: 46 }
+            ],
+            arrows: [
+              { from: `a`, to: `b`, label: `f` },
+              { from: `b`, to: `c`, label: `g` },
+              { from: `a`, to: `c`, label: `x`, bend: 0.1 },
+              { from: `a`, to: `c`, label: `x′`, bend: -0.12 }
+            ],
+            fills: [[`a`, `b`, `c`]]
+          }
+        },
+        {
+          p: String.raw`Two ways of choosing one come up all the time. A <b>full subcategory</b> takes a set of vertices and every arrow between them, so there's nothing to check. The subcategory <b>generated</b> by some arrows is the smallest one that contains them: start with those arrows and keep adding the long side of any triangle whose legs are already in, and the other end of any homotopy, until nothing new appears.`
+        },
+        {
+          p: String.raw`The third example is the <b>core</b>, which keeps all the vertices but only the isomorphisms. A composite of isomorphisms is an isomorphism, and so is anything homotopic to one, so the core is a subcategory, and since every arrow in it can be inverted, it's a Kan complex, in fact the largest one sitting inside $X$. You won't build anything in this world: you select arrows by tapping them and then press Check.`
+        }
+      ]
+    },
+    {
       id: String.raw`simplicial`,
       before: String.raw`faces`,
       title: String.raw`Vertices, arrows, triangles`,
       body: [
         {
-          p: String.raw`A <b>simplicial set</b> is a shape built from pieces of a few standard kinds: vertices, arrows between vertices, filled triangles, tetrahedra (3-simplices), and higher versions you'll not need. Pieces are glued along their sides, and every arrow has a direction.`
+          p: String.raw`A <b>simplicial set</b> is a shape built from pieces of a few standard kinds: vertices, arrows between vertices, filled triangles, tetrahedra (3-simplices), and higher versions you won't need. Pieces are glued along their sides, and every arrow has a direction.`
         },
         {
           diagram: {
@@ -2859,6 +3208,69 @@ HC.Copy = {
 
   glossary: [
     {
+      term: String.raw`Degenerate tetrahedron`,
+      world: 5,
+      essential: false,
+      plain: String.raw`A tetrahedron with a repeated corner, built from a triangle the way $s_0f$ and $s_1f$ are built from an arrow. It always exists.`,
+      formal: String.raw`For a 2-simplex $\sigma$, the 3-simplices $s_0\sigma,s_1\sigma,s_2\sigma$, with $d_is_i\sigma=d_{i+1}s_i\sigma=\sigma$.`,
+      eg: String.raw`<i>Degenerate tetrahedra</i> asks you to pick $s_2\sigma_1$.`,
+      see: [String.raw`Degenerate triangle`, String.raw`Tetrahedron`, String.raw`4-simplex`]
+    },
+    {
+      term: String.raw`4-simplex`,
+      world: 5,
+      essential: true,
+      plain: String.raw`The shape one dimension above a tetrahedron: five corners, ten arrows, ten triangles and five tetrahedra as faces. Four faces that fit together force the fifth.`,
+      formal: String.raw`$\Delta^4$, with faces $D_0,\dots,D_4$; the horns $\Lambda^4_k$ with $0<k<4$ are inner and fill in a quasi-category.`,
+      eg: String.raw`<i>Five tetrahedra on five corners</i> fills the horn $\Lambda^4_2$.`,
+      see: [String.raw`Tetrahedron`, String.raw`Horn`, String.raw`Homotopy of homotopies`]
+    },
+    {
+      term: String.raw`Homotopy of homotopies`,
+      world: 5,
+      essential: false,
+      plain: String.raw`A tetrahedron relating two homotopies between the same two arrows, the way a triangle $(x,1_b\,;\,y)$ relates two arrows.`,
+      formal: String.raw`For $\eta,\eta':x\simeq y$, a 3-simplex with faces $(s_01_b,s_1y,\eta',\eta)$. The space of composites $\mathrm{Comp}(f,g)$ is contractible.`,
+      eg: String.raw`<i>Two homotopies between the same composites</i> builds one.`,
+      see: [String.raw`Homotopy`, String.raw`4-simplex`]
+    },
+    {
+      term: String.raw`Pentagon`,
+      world: 5,
+      essential: false,
+      plain: String.raw`The five ways of bracketing four arrows, joined by associativity. In a quasi-category they are the five faces of one 4-simplex.`,
+      formal: String.raw`Mac Lane's pentagon identity; here the 3-simplices of a $\Delta^4\to X$ on a spine of four edges, one obtained from an inner horn $\Lambda^4_2$.`,
+      eg: String.raw`<i>Mac Lane's pentagon</i> is the boss of the Higher simplices world.`,
+      see: [String.raw`Associativity`, String.raw`4-simplex`]
+    },
+    {
+      term: String.raw`Subcategory`,
+      world: 7,
+      essential: true,
+      plain: String.raw`Some vertices and some arrows between them, including the identities, chosen so that composites and homotopic arrows of chosen arrows are chosen too.`,
+      formal: String.raw`A simplicial subset determined by vertices and edges closed under composition and homotopy; it is again a quasi-category.`,
+      eg: String.raw`<i>The subcategory generated by two arrows</i> closes up $f$ and $g$.`,
+      see: [String.raw`Full subcategory`, String.raw`Core`, String.raw`Composite`]
+    },
+    {
+      term: String.raw`Full subcategory`,
+      world: 7,
+      essential: false,
+      plain: String.raw`Pick some vertices and keep every arrow between them.`,
+      formal: String.raw`The simplicial subset of all simplices whose vertices lie in a given set.`,
+      eg: String.raw`<i>A full subcategory</i> keeps the arrows between $a$ and $c$.`,
+      see: [String.raw`Subcategory`]
+    },
+    {
+      term: String.raw`Core`,
+      world: 7,
+      essential: true,
+      plain: String.raw`All the vertices and only the isomorphisms. Every arrow in it can be undone, so it's a Kan complex.`,
+      formal: String.raw`$X^{\simeq}\subseteq X$: the subcategory of all vertices and all equivalences; the largest Kan complex in $X$.`,
+      eg: String.raw`<i>The core</i> asks you to find the isomorphisms on a board.`,
+      see: [String.raw`Isomorphism (equivalence)`, String.raw`Kan complex`, String.raw`Subcategory`]
+    },
+    {
       term: String.raw`Vertex`,
       world: 1,
       essential: false,
@@ -3026,7 +3438,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Outer horn`,
-      world: 5,
+      world: 6,
       essential: true,
       plain: String.raw`A horn missing a face at one of the two ends. A general $\infty$-category need not fill it, except along reversible arrows.`,
       formal: String.raw`$\Lambda^n_0$ or $\Lambda^n_n$.`,
@@ -3035,7 +3447,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Kan complex`,
-      world: 5,
+      world: 6,
       essential: true,
       plain: String.raw`A simplicial set where every horn fills, inner and outer. Every arrow then has inverses up to homotopy.`,
       formal: String.raw`A simplicial set with fillers for all horns $\Lambda^n_k\to\Delta^n$, $0\le k\le n$.`,
@@ -3044,7 +3456,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Left / right inverse`,
-      world: 5,
+      world: 6,
       essential: false,
       plain: String.raw`An arrow that undoes $f$, either before it or after it. One side alone is weaker than an inverse on both sides.`,
       formal: String.raw`$g$ with a triangle $(f,g\,;\,1_a)$ (left inverse), $k$ with $(k,f\,;\,1_b)$ (right inverse).`,
@@ -3053,7 +3465,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Isomorphism (equivalence)`,
-      world: 5,
+      world: 6,
       essential: true,
       plain: String.raw`A reversible arrow: it has inverses on both sides, up to homotopy. Along an isomorphism, outer horns can be filled.`,
       formal: String.raw`An edge with a left and a right inverse up to homotopy; an isomorphism in $hX$.`,
@@ -3062,7 +3474,7 @@ HC.Copy = {
     },
     {
       term: String.raw`∞-groupoid`,
-      world: 5,
+      world: 6,
       essential: true,
       plain: String.raw`Another name for a Kan complex: a shape where every arrow reverses. It models a space.`,
       formal: String.raw`By the homotopy hypothesis, Kan complexes model spaces up to homotopy.`,
@@ -3071,7 +3483,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Homotopy hypothesis`,
-      world: 5,
+      world: 6,
       essential: false,
       plain: String.raw`Kan complexes, where all arrows are invertible, model spaces; and every space can be built this way.`,
       formal: String.raw`The homotopy theory of Kan complexes is equivalent to that of CW complexes; both model homotopy types.`,
@@ -3080,7 +3492,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Fundamental group`,
-      world: 5,
+      world: 6,
       essential: false,
       plain: String.raw`Loops at a point, up to homotopy, with composition. It records which loops can be shrunk to a point.`,
       formal: String.raw`$\pi_1(X,x)$: endomorphisms of $x$ in the homotopy category of a Kan complex $X$.`,
@@ -3089,7 +3501,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Category`,
-      world: 6,
+      world: 8,
       essential: false,
       plain: String.raw`Objects and arrows between them, where arrows compose and every object has an identity arrow. Composition gives a definite arrow instead of a homotopy class.`,
       formal: String.raw`A category $\mathcal C$: objects, morphisms, associative composition, an identity morphism per object.`,
@@ -3098,7 +3510,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Functor`,
-      world: 6,
+      world: 8,
       essential: false,
       plain: String.raw`A map between categories that sends objects to objects and arrows to arrows, keeping composition and identities.`,
       formal: String.raw`A functor $F:\mathcal C\to\mathcal D$ with $F(g\circ f)=F(g)\circ F(f)$ and $F(1_x)=1_{Fx}$.`,
@@ -3107,7 +3519,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Nerve`,
-      world: 6,
+      world: 8,
       essential: true,
       plain: String.raw`A category drawn as shapes: its vertices are objects, its arrows are maps, and its higher simplices are chains of maps run one after another.`,
       formal: String.raw`$N(\mathcal C)$: $n$-simplices are chains of $n$ composable morphisms. Every inner horn fills uniquely.`,
@@ -3116,7 +3528,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Spine`,
-      world: 6,
+      world: 8,
       essential: true,
       plain: String.raw`The path of consecutive arrows inside a simplex, with everything else thrown away. Whether the spine can be filled, and how many ways, tells you what kind of shape you have.`,
       formal: String.raw`$\mathrm{Spine}^n\subset\Delta^n$: the union of the edges $\{i,i+1\}$. The inclusion is inner anodyne, and filling every spine uniquely is the Segal condition.`,
@@ -3125,7 +3537,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Segal condition`,
-      world: 6,
+      world: 8,
       essential: false,
       plain: String.raw`Every spine fills in exactly one way. It is the test that turns a shape into the nerve of a category.`,
       formal: String.raw`$X_n\to X_1\times_{X_0}\cdots\times_{X_0}X_1$ is a bijection for each $n$; equivalent to being a nerve.`,
@@ -3134,7 +3546,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Skeleton`,
-      world: 7,
+      world: 9,
       essential: true,
       plain: String.raw`What is left after you throw away everything above a dimension: the vertices alone, or the vertices and arrows.`,
       formal: String.raw`$\mathrm{sk}_nX$: the simplicial subset generated by simplices of dimension $\le n$.`,
@@ -3143,7 +3555,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Boundary`,
-      world: 7,
+      world: 9,
       essential: false,
       plain: String.raw`The rim of a shape with its inside removed: a hollow triangle, or a hollow tetrahedron.`,
       formal: String.raw`$\partial\Delta^n=\mathrm{sk}_{n-1}\Delta^n$: the union of all faces of $\Delta^n$.`,
@@ -3152,7 +3564,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Cell`,
-      world: 7,
+      world: 9,
       essential: true,
       plain: String.raw`A triangle or tetrahedron glued onto its boundary. Adding cells one dimension at a time is how this world builds shapes and takes them apart.`,
       formal: String.raw`Attaching an $n$-cell: glue $\Delta^n$ to $X$ along a map $\partial\Delta^n\to X$ (a pushout).`,
@@ -3161,7 +3573,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Coskeleton`,
-      world: 7,
+      world: 9,
       essential: true,
       plain: String.raw`Fill every hollow shape in the only way possible. If a filling is not forced, the coskeleton leaves it out.`,
       formal: String.raw`$(\mathrm{cosk}_nX)_m=\mathrm{Hom}(\mathrm{sk}_n\Delta^m,X)$; right adjoint to $\mathrm{sk}_n$.`,
@@ -3170,7 +3582,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Geometric realisation`,
-      world: 7,
+      world: 9,
       essential: false,
       plain: String.raw`The space you get by treating the picture as made of solid pieces: vertices become points, arrows become intervals, triangles become filled triangles.`,
       formal: String.raw`$|X|=\mathrm{colim}_{\Delta^n\to X}|\Delta^n|$, gluing topological simplices along their faces.`,
@@ -3179,7 +3591,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Euler characteristic`,
-      world: 7,
+      world: 9,
       essential: false,
       plain: String.raw`Vertices minus arrows plus triangles, and so on. Horn filling does not change it, so a hole is preserved.`,
       formal: String.raw`$\chi(X)=\sum_n(-1)^n\,\#\{\text{non-degenerate } n\text{-simplices}\}$ for finite $X$.`,
@@ -3188,7 +3600,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Anodyne map`,
-      world: 8,
+      world: 10,
       essential: true,
       plain: String.raw`An inclusion built purely out of horn fillings, so it never changes the shape. If a goal would change the shape, no horn move can reach it.`,
       formal: String.raw`The saturated class generated by $\Lambda^n_k\subset\Delta^n$. $\partial\Delta^2\subset\Delta^2$ is not anodyne.`,
@@ -3197,7 +3609,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Inner anodyne map`,
-      world: 8,
+      world: 10,
       essential: false,
       plain: String.raw`Anodyne, but built only from inner horns. It is weaker than anodyne, and it is the one that matches $\infty$-categories.`,
       formal: String.raw`Saturated class generated by $\Lambda^n_k\subset\Delta^n$ with $0<k<n$.`,
@@ -3206,7 +3618,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Counterexample`,
-      world: 8,
+      world: 10,
       essential: true,
       plain: String.raw`A shape where the givens hold but the goal cannot be reached. Finding one is how you prove that a goal is impossible.`,
       formal: String.raw`A map to the nerve of a category in which the required simplex does not exist.`,
@@ -3215,7 +3627,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Left lifting property`,
-      world: 8,
+      world: 10,
       essential: false,
       plain: String.raw`The property of a shape $A\to B$ that every square from it can be filled. Horn inclusions have it against $\infty$-categories, and that is what makes them anodyne.`,
       formal: String.raw`$i:A\to B$ has the left lifting property against $p:X\to S$ if every square $A\to X$, $B\to S$ has a diagonal.`,
@@ -3224,7 +3636,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Map`,
-      world: 9,
+      world: 11,
       essential: true,
       plain: String.raw`A rule sending each piece of one shape to a piece of another, keeping faces. The first is called the total space and the second the base.`,
       formal: String.raw`A morphism of simplicial sets $p:X\to S$.`,
@@ -3233,7 +3645,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Lift`,
-      world: 9,
+      world: 11,
       essential: true,
       plain: String.raw`A solution to a lifting problem: a simplex of $X$ lying over the given simplex of $S$, extending what is already there.`,
       formal: String.raw`A map $B\to X$ making the square commute.`,
@@ -3242,7 +3654,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Lifting problem`,
-      world: 9,
+      world: 11,
       essential: true,
       plain: String.raw`A square: a simplex of the base $S$, part of it already in $X$, and the question whether the rest can be filled in $X$ over that simplex.`,
       formal: String.raw`A square $A\to X$, $B\to S$ with $A\subset B$; find $B\to X$ making both triangles commute.`,
@@ -3251,7 +3663,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Inner fibration`,
-      world: 9,
+      world: 11,
       essential: true,
       plain: String.raw`A map for which every inner horn in $X$ fills over any filler of its image in $S$.`,
       formal: String.raw`$p$ has the right lifting property against $\Lambda^n_k\subset\Delta^n$ for $0<k<n$.`,
@@ -3260,7 +3672,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Left fibration`,
-      world: 9,
+      world: 11,
       essential: true,
       plain: String.raw`A map that lets you lift any arrow of the base from a start you choose, and fill the horns that already know their first arrow.`,
       formal: String.raw`$p$ has the right lifting property against $\Lambda^n_k\subset\Delta^n$ for $0\le k<n$.`,
@@ -3269,7 +3681,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Kan fibration`,
-      world: 9,
+      world: 11,
       essential: false,
       plain: String.raw`A map for which every horn in $X$ fills over any filler of its image in $S$ — inner and outer alike.`,
       formal: String.raw`$p$ has the right lifting property against all $\Lambda^n_k\subset\Delta^n$, $0\le k\le n$. A Kan complex is a Kan fibration over a point.`,
@@ -3278,7 +3690,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Conservative`,
-      world: 9,
+      world: 11,
       essential: false,
       plain: String.raw`A map that does not lose reversibility: an arrow of $X$ is an isomorphism whenever its image in $S$ is.`,
       formal: String.raw`$p$ reflects equivalences: $p(f)$ an equivalence implies $f$ an equivalence.`,
@@ -3287,7 +3699,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Right lifting property`,
-      world: 9,
+      world: 11,
       essential: false,
       plain: String.raw`The property of a map that every square into it can be filled. Fibrations are exactly the maps with this property against horn inclusions.`,
       formal: String.raw`$p:X\to S$ has the right lifting property against $i:A\to B$ if every square $A\to X$, $B\to S$ has a diagonal $B\to X$.`,
@@ -3296,7 +3708,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Idempotent`,
-      world: 10,
+      world: 12,
       essential: false,
       plain: String.raw`An arrow $e$ with a triangle $(e,e\,;\,e)$: doing it twice is a composite of doing it once.`,
       formal: String.raw`An edge $e$ with a 2-simplex $(e,e,e)$.`,
@@ -3305,7 +3717,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Retraction`,
-      world: 10,
+      world: 12,
       essential: false,
       plain: String.raw`A one-sided inverse: an arrow that undoes $f$ in one direction only.`,
       formal: String.raw`$r$ with $r\circ f\simeq 1$ is a retraction of $f$; dually a section.`,
@@ -3314,7 +3726,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Joyal's theorem`,
-      world: 10,
+      world: 12,
       essential: true,
       plain: String.raw`An outer horn can be filled when the arrow it has to undo is an isomorphism.`,
       formal: String.raw`In an $\infty$-category, $\Lambda^n_0\to X$ ($n\ge2$) extends to $\Delta^n$ if its first edge is an equivalence; conversely such an edge is an equivalence.`,
@@ -3323,7 +3735,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Commuting square`,
-      world: 11,
+      world: 13,
       essential: true,
       plain: String.raw`Two ways round from one corner to the opposite one, plus a filling between them. It is an arrow between arrows.`,
       formal: String.raw`A map $\Delta^1\times\Delta^1\to C$; an edge of $\mathrm{Fun}(\Delta^1,C)$.`,
@@ -3332,7 +3744,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Natural transformation`,
-      world: 11,
+      world: 13,
       essential: true,
       plain: String.raw`A family of arrows, one per object, that makes every square commute. It is how a construction on objects becomes a construction on maps.`,
       formal: String.raw`An edge of $\mathrm{Fun}(K,C)$, i.e. a map $K\times\Delta^1\to C$.`,
@@ -3341,7 +3753,7 @@ HC.Copy = {
     },
     {
       term: String.raw`Natural isomorphism`,
-      world: 11,
+      world: 13,
       essential: false,
       plain: String.raw`A natural transformation whose every side is reversible. It says two constructions agree everywhere, coherently.`,
       formal: String.raw`An equivalence in $\mathrm{Fun}(K,C)$; equivalently each component is an equivalence in $C$.`,
